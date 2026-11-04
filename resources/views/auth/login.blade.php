@@ -63,19 +63,29 @@
                 </button>
             </form>
 
-            <!-- Demo Account Helper -->
+            <!-- Demo Account Helper (Multi-Kasir untuk Sidang Skripsi) -->
             <div class="mt-8 pt-6 border-t border-gray-100">
-                <p class="text-xs text-center font-bold text-gray-500 uppercase tracking-wider mb-3">Akun Demo (Sidang Skripsi):</p>
+                <p class="text-xs text-center font-bold text-gray-500 uppercase tracking-wider mb-3">Akun Akses Multi-Kasir (Sidang Skripsi):</p>
                 <div class="grid grid-cols-2 gap-2">
                     <button type="button" onclick="fillDemo('admin', 'password123')"
                         class="p-2.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 rounded-xl text-xs text-left transition">
-                        <p class="font-bold flex items-center"><i class="fa-solid fa-crown text-amber-500 mr-1.5"></i> Admin</p>
+                        <p class="font-bold flex items-center"><i class="fa-solid fa-crown text-amber-500 mr-1.5"></i> Owner/Admin</p>
                         <p class="text-[11px] text-gray-500 font-mono mt-0.5">admin</p>
                     </button>
-                    <button type="button" onclick="fillDemo('pegawai', 'password123')"
+                    <button type="button" onclick="fillDemo('kasir1', 'password123')"
                         class="p-2.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 rounded-xl text-xs text-left transition">
-                        <p class="font-bold flex items-center"><i class="fa-solid fa-mug-hot text-blue-600 mr-1.5"></i> Pegawai / Barista</p>
-                        <p class="text-[11px] text-gray-500 font-mono mt-0.5">pegawai</p>
+                        <p class="font-bold flex items-center"><i class="fa-solid fa-mug-hot text-blue-600 mr-1.5"></i> Kasir 1 (Bar)</p>
+                        <p class="text-[11px] text-gray-500 font-mono mt-0.5">kasir1</p>
+                    </button>
+                    <button type="button" onclick="fillDemo('kasir2', 'password123')"
+                        class="p-2.5 bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-900 rounded-xl text-xs text-left transition">
+                        <p class="font-bold flex items-center"><i class="fa-solid fa-mug-hot text-teal-600 mr-1.5"></i> Kasir 2 (Espresso)</p>
+                        <p class="text-[11px] text-gray-500 font-mono mt-0.5">kasir2</p>
+                    </button>
+                    <button type="button" onclick="fillDemo('kasir3', 'password123')"
+                        class="p-2.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-900 rounded-xl text-xs text-left transition">
+                        <p class="font-bold flex items-center"><i class="fa-solid fa-mug-hot text-indigo-600 mr-1.5"></i> Kasir 3 (Brew)</p>
+                        <p class="text-[11px] text-gray-500 font-mono mt-0.5">kasir3</p>
                     </button>
                 </div>
             </div>

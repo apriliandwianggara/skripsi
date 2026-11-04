@@ -76,6 +76,7 @@ Route::middleware(['auth', 'role:pegawai,admin'])->prefix('pegawai')->name('pega
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard & Laporan
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/api/live-stats', [DashboardController::class, 'liveStatsApi'])->name('live_stats');
     Route::get('/laporan', [DashboardController::class, 'reports'])->name('reports');
     Route::get('/laporan/cetak', [DashboardController::class, 'printReport'])->name('reports.print');
 

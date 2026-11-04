@@ -35,7 +35,7 @@
                     <i class="fa-solid fa-receipt"></i>
                 </span>
             </div>
-            <p class="text-2xl font-extrabold text-gray-900 font-mono">{{ $totalOrdersToday }}</p>
+            <p class="text-2xl font-extrabold text-gray-900 font-mono" id="kpiTotalOrders">{{ $totalOrdersToday }}</p>
             <p class="text-[10px] text-gray-400 mt-1">pesanan masuk</p>
         </div>
 
@@ -47,7 +47,7 @@
                     <i class="fa-solid fa-clock"></i>
                 </span>
             </div>
-            <p class="text-2xl font-extrabold text-amber-600 font-mono">{{ $waitingCount }}</p>
+            <p class="text-2xl font-extrabold text-amber-600 font-mono" id="kpiWaiting">{{ $waitingCount }}</p>
             <p class="text-[10px] text-gray-400 mt-1">dalam antrean</p>
         </div>
 
@@ -59,7 +59,7 @@
                     <i class="fa-solid fa-fire-burner"></i>
                 </span>
             </div>
-            <p class="text-2xl font-extrabold text-blue-600 font-mono">{{ $processingCount }}</p>
+            <p class="text-2xl font-extrabold text-blue-600 font-mono" id="kpiProcessing">{{ $processingCount }}</p>
             <p class="text-[10px] text-gray-400 mt-1">oleh barista</p>
         </div>
 
@@ -71,7 +71,7 @@
                     <i class="fa-solid fa-bell"></i>
                 </span>
             </div>
-            <p class="text-2xl font-extrabold text-emerald-600 font-mono">{{ $readyCount }}</p>
+            <p class="text-2xl font-extrabold text-emerald-600 font-mono" id="kpiReady">{{ $readyCount }}</p>
             <p class="text-[10px] text-gray-400 mt-1">di counter</p>
         </div>
 
@@ -83,7 +83,7 @@
                     <i class="fa-solid fa-circle-check"></i>
                 </span>
             </div>
-            <p class="text-2xl font-extrabold text-purple-600 font-mono">{{ $completedCount }}</p>
+            <p class="text-2xl font-extrabold text-purple-600 font-mono" id="kpiCompleted">{{ $completedCount }}</p>
             <p class="text-[10px] text-gray-400 mt-1">sukses diambil</p>
         </div>
 
@@ -95,7 +95,7 @@
                     <i class="fa-solid fa-circle-xmark"></i>
                 </span>
             </div>
-            <p class="text-2xl font-extrabold text-red-600 font-mono">{{ $cancelledCount }}</p>
+            <p class="text-2xl font-extrabold text-red-600 font-mono" id="kpiCancelled">{{ $cancelledCount }}</p>
             <p class="text-[10px] text-gray-400 mt-1">dibatalkan</p>
         </div>
     </div>
@@ -219,7 +219,7 @@
                         <th class="p-3.5 text-right">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 font-normal">
+                <tbody id="recentOrdersBody" class="divide-y divide-gray-100 font-normal">
                     @forelse($recentOrders as $ord)
                         <tr class="hover:bg-gray-50/80 transition">
                             <td class="p-3.5 font-bold font-mono text-emerald-800 text-sm">#{{ $ord->queue_number }}</td>
@@ -300,5 +300,68 @@
             }
         }
     });
+
+    // Real-Time Background Sync untuk Dashboard Owner / Admin
+    async function syncAdminDashboard() {
+        try {
+            const res = await fetch("{{ route('admin.live_stats') }}");
+            if (!res.ok) return;
+
+            const data = await res.json();
+            if (!data.success) return;
+
+            // Update KPI cards
+            document.getElementById('kpiTotalOrders').innerText = data.kpi.total_orders;
+            document.getElementById('kpiWaiting').innerText = data.kpi.waiting;
+            document.getElementById('kpiProcessing').innerText = data.kpi.processing;
+            document.getElementById('kpiReady').innerText = data.kpi.ready;
+            document.getElementById('kpiCompleted').innerText = data.kpi.completed;
+            document.getElementById('kpiCancelled').innerText = data.kpi.cancelled;
+
+            // Render Recent Orders
+            const tbody = document.getElementById('recentOrdersBody');
+            if (tbody && data.recent_orders.length > 0) {
+                let html = '';
+                data.recent_orders.forEach(ord => {
+                    let badgeClass = 'bg-gray-100 text-gray-800';
+                    if (ord.status === 'menunggu') badgeClass = 'bg-amber-100 text-amber-800';
+                    else if (ord.status === 'diproses') badgeClass = 'bg-blue-100 text-blue-800';
+                    else if (ord.status === 'siap_diambil') badgeClass = 'bg-emerald-100 text-emerald-800';
+                    else if (ord.status === 'selesai') badgeClass = 'bg-purple-100 text-purple-800';
+                    else if (ord.status === 'dibatalkan') badgeClass = 'bg-red-100 text-red-800';
+
+                    html += `
+                        <tr class="hover:bg-gray-50/80 transition">
+                            <td class="p-3.5 font-bold font-mono text-emerald-800 text-sm">#${ord.queue_number}</td>
+                            <td class="p-3.5 font-mono text-gray-700">${ord.order_number}</td>
+                            <td class="p-3.5 font-semibold text-gray-900">
+                                ${ord.customer_name}
+                                ${ord.table_number ? `<span class="ml-1 text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">M-${ord.table_number}</span>` : ''}
+                            </td>
+                            <td class="p-3.5 text-gray-500 font-mono">${ord.received_at}</td>
+                            <td class="p-3.5">${ord.total_items} porsi</td>
+                            <td class="p-3.5 font-bold text-gray-800 font-mono">${ord.total_price}</td>
+                            <td class="p-3.5">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeClass}">
+                                    ${ord.status_label}
+                                </span>
+                            </td>
+                            <td class="p-3.5 text-right">
+                                <a href="${ord.detail_url}" class="px-2.5 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition">
+                                    Detail
+                                </a>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            }
+        } catch (e) {
+            console.warn('Gagal sync live admin stats:', e);
+        }
+    }
+
+    // Jalankan sync setiap 3.5 detik tanpa reload halaman
+    setInterval(syncAdminDashboard, 3500);
 </script>
 @endpush

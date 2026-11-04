@@ -93,6 +93,63 @@ class DashboardController extends Controller
     }
 
     /**
+     * Endpoint API Live Stats Real-Time untuk Owner / Admin (Tanpa Reload)
+     */
+    public function liveStatsApi()
+    {
+        $today = Carbon::today();
+
+        $totalOrdersToday = Order::whereDate('received_at', $today)->count();
+        $waitingCount = Order::whereDate('received_at', $today)->where('status', 'menunggu')->count();
+        $processingCount = Order::whereDate('received_at', $today)->where('status', 'diproses')->count();
+        $readyCount = Order::whereDate('received_at', $today)->where('status', 'siap_diambil')->count();
+        $completedCount = Order::whereDate('received_at', $today)->where('status', 'selesai')->count();
+        $cancelledCount = Order::whereDate('received_at', $today)->where('status', 'dibatalkan')->count();
+
+        $totalRevenueToday = Order::whereDate('received_at', $today)
+            ->whereIn('status', ['siap_diambil', 'selesai'])
+            ->sum('total_price');
+
+        $recentOrders = Order::with('details', 'pegawai')
+            ->orderBy('received_at', 'desc')
+            ->take(8)
+            ->get();
+
+        $latestUpdate = Order::max('updated_at') ?? '0';
+
+        return response()->json([
+            'success' => true,
+            'version' => strtotime($latestUpdate),
+            'kpi' => [
+                'total_orders' => $totalOrdersToday,
+                'waiting' => $waitingCount,
+                'processing' => $processingCount,
+                'ready' => $readyCount,
+                'completed' => $completedCount,
+                'cancelled' => $cancelledCount,
+                'revenue_raw' => (float) $totalRevenueToday,
+                'revenue_formatted' => 'Rp ' . number_format($totalRevenueToday, 0, ',', '.'),
+            ],
+            'recent_orders' => $recentOrders->map(function ($ord) {
+                return [
+                    'id' => $ord->id,
+                    'queue_number' => $ord->queue_number,
+                    'order_number' => $ord->order_number,
+                    'customer_name' => $ord->customer_name,
+                    'table_number' => $ord->table_number,
+                    'received_at' => $ord->received_at->format('H:i:s'),
+                    'total_items' => $ord->details->sum('quantity'),
+                    'total_price' => 'Rp ' . number_format($ord->total_price, 0, ',', '.'),
+                    'status' => $ord->status,
+                    'status_label' => $ord->status_label,
+                    'handler_name' => $ord->pegawai ? $ord->pegawai->name : '-',
+                    'detail_url' => route('admin.orders.show', $ord),
+                ];
+            }),
+        ]);
+    }
+
+    /**
      * B. Laporan: Rekap Pesanan Berdasarkan Tanggal
      */
     public function reports(Request $request)

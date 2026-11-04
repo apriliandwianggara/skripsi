@@ -31,9 +31,9 @@ class DatabaseSeeder extends Seeder
             'qr_permanent_url' => url('/pesan'),
         ]);
 
-        // 2. Akun Admin dan Pegawai / Barista
+        // 2. Akun Admin dan Kasir / Barista (Multi-Kasir 1, 2, 3 untuk Skripsi)
         $admin = User::create([
-            'name' => 'Administrator Sekarsa',
+            'name' => 'Owner / Admin',
             'username' => 'admin',
             'email' => 'admin@sekarsacoffee.com',
             'phone' => '081234567890',
@@ -42,15 +42,37 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        $pegawai = User::create([
-            'name' => 'Barista Pegawai',
-            'username' => 'pegawai',
-            'email' => 'pegawai@sekarsacoffee.com',
+        $kasir1 = User::create([
+            'name' => 'Kasir 1 (Barista Bar Depan)',
+            'username' => 'kasir1',
+            'email' => 'kasir1@sekarsacoffee.com',
+            'phone' => '081298765431',
+            'role' => 'pegawai',
+            'password' => Hash::make('password123'),
+            'is_active' => true,
+        ]);
+
+        $kasir2 = User::create([
+            'name' => 'Kasir 2 (Barista Espresso)',
+            'username' => 'kasir2',
+            'email' => 'kasir2@sekarsacoffee.com',
             'phone' => '081298765432',
             'role' => 'pegawai',
             'password' => Hash::make('password123'),
             'is_active' => true,
         ]);
+
+        $kasir3 = User::create([
+            'name' => 'Kasir 3 (Barista Manual Brew)',
+            'username' => 'kasir3',
+            'email' => 'kasir3@sekarsacoffee.com',
+            'phone' => '081298765433',
+            'role' => 'pegawai',
+            'password' => Hash::make('password123'),
+            'is_active' => true,
+        ]);
+
+        $pegawai = $kasir1;
 
         // 3. Kategori Menu
         $catSignature = Category::create([
