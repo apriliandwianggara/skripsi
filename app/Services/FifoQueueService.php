@@ -151,10 +151,15 @@ class FifoQueueService
         return [
             'total_hari_ini' => $total,
             'menunggu' => $waiting,
+            'total_menunggu' => $waiting,
             'diproses' => $processing,
+            'total_diproses' => $processing,
             'siap_diambil' => $ready,
+            'total_siap_diambil' => $ready,
             'selesai' => $completed,
+            'total_selesai' => $completed,
             'dibatalkan' => $cancelled,
+            'total_dibatalkan' => $cancelled,
             'rata_rata_waktu_layanan_menit' => $avgMinutes,
         ];
     }
