@@ -11,41 +11,30 @@ class Menu extends Model
     use HasFactory;
 
     protected $fillable = [
-        'kategori_id',
-        'nama',
+        'category_id',
+        'name',
         'slug',
-        'deskripsi',
-        'harga',
-        'harga_promo',
-        'foto',
-        'status_stok',
-        'is_rekomendasi',
-        'urutan',
+        'description',
+        'price',
+        'image',
+        'is_available',
+        'order',
     ];
 
     protected $casts = [
-        'harga' => 'decimal:2',
-        'harga_promo' => 'decimal:2',
-        'is_rekomendasi' => 'boolean',
+        'price' => 'decimal:2',
+        'is_available' => 'boolean',
     ];
 
-    public function kategori(): BelongsTo
+    public function category(): BelongsTo
     {
-        return $this->belongsTo(Kategori::class);
+        return $this->belongsTo(Category::class);
     }
 
-    public function getHargaAktifAttribute(): float
+    public function getImageUrlAttribute(): string
     {
-        if ($this->harga_promo !== null && $this->harga_promo > 0 && $this->harga_promo < $this->harga) {
-            return (float) $this->harga_promo;
-        }
-        return (float) $this->harga;
-    }
-
-    public function getFotoUrlAttribute(): string
-    {
-        if ($this->foto && file_exists(public_path('storage/' . $this->foto))) {
-            return asset('storage/' . $this->foto);
+        if ($this->image && file_exists(public_path('storage/' . $this->image))) {
+            return asset('storage/' . $this->image);
         }
         return asset('images/menu-placeholder.svg');
     }

@@ -3,14 +3,13 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use App\Models\Meja;
-use App\Models\Kategori;
+use App\Models\Category;
 use App\Models\Menu;
-use App\Models\Promo;
-use App\Models\Pesanan;
-use App\Models\PesananItem;
-use App\Models\Pengaturan;
-use App\Models\AktivitasLog;
+use App\Models\Order;
+use App\Models\OrderDetail;
+use App\Models\OrderStatusHistory;
+use App\Models\Notification;
+use App\Models\Setting;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -20,20 +19,21 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Pengaturan Cafe
-        $pengaturan = Pengaturan::create([
-            'nama_cafe' => 'Sekarsa Coffee',
-            'tagline' => 'Warmth, Taste & Harmony in Every Sip',
-            'alamat' => 'Jl. Kaliurang KM 5.8 No. 24, Manggung, Caturtunggal, Sleman, D.I. Yogyakarta 55281',
-            'telepon' => '0812-3456-7890',
-            'instagram' => '@sekarsacoffee',
-            'pesan_struk' => 'Terima kasih atas pesanan Anda di Sekarsa Coffee! Bagikan momen ngopi Anda di Instagram @sekarsacoffee.',
-            'estimasi_menit_per_antrean' => 4,
+        // 1. Pengaturan Sistem Sekarsa Coffee
+        $setting = Setting::create([
+            'cafe_name' => 'Sekarsa Coffee',
+            'cafe_tagline' => 'Warmth, Taste & Harmony in Every Sip',
+            'cafe_address' => 'Jl. Kaliurang KM 5.8 No. 24, Manggung, Caturtunggal, Sleman, D.I. Yogyakarta 55281',
+            'cafe_phone' => '0812-3456-7890',
+            'cafe_instagram' => '@sekarsacoffee',
+            'whatsapp_notification_template' => "Halo Kak {nama_pelanggan}! ☕\n\nPesanan Anda di Sekarsa Coffee dengan Nomor Antrean *{nomor_antrean}* ({nomor_pesanan}) sudah *SIAP DIAMBIL* di counter barista!\n\nSilakan tunjukkan pesan ini atau sebutkan nomor antrean Anda di counter. Selamat menikmati! ✨",
+            'estimated_minutes_per_queue' => 4,
+            'qr_permanent_url' => url('/pesan'),
         ]);
 
-        // 2. Akun Pengguna (Owner & Kasir)
+        // 2. Akun Admin dan Pegawai / Barista
         $admin = User::create([
-            'name' => 'Owner Sekarsa',
+            'name' => 'Administrator Sekarsa',
             'username' => 'admin',
             'email' => 'admin@sekarsacoffee.com',
             'phone' => '081234567890',
@@ -42,273 +42,160 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        $kasir = User::create([
-            'name' => 'Budi Santoso (Kasir)',
-            'username' => 'kasir',
-            'email' => 'kasir@sekarsacoffee.com',
+        $pegawai = User::create([
+            'name' => 'Barista Pegawai',
+            'username' => 'pegawai',
+            'email' => 'pegawai@sekarsacoffee.com',
             'phone' => '081298765432',
-            'role' => 'kasir',
+            'role' => 'pegawai',
             'password' => Hash::make('password123'),
             'is_active' => true,
         ]);
 
-        // 3. Meja Pelanggan
-        $mejas = [
-            ['nomor_meja' => '01', 'kapasitas' => 2, 'lokasi' => 'Indoor Bar Area', 'status' => 'tersedia'],
-            ['nomor_meja' => '02', 'kapasitas' => 2, 'lokasi' => 'Indoor Bar Area', 'status' => 'tersedia'],
-            ['nomor_meja' => '03', 'kapasitas' => 4, 'lokasi' => 'Indoor Main Hall (AC)', 'status' => 'tersedia'],
-            ['nomor_meja' => '04', 'kapasitas' => 4, 'lokasi' => 'Indoor Main Hall (AC)', 'status' => 'tersedia'],
-            ['nomor_meja' => '05', 'kapasitas' => 4, 'lokasi' => 'Indoor Main Hall (AC)', 'status' => 'tersedia'],
-            ['nomor_meja' => '06', 'kapasitas' => 6, 'lokasi' => 'Outdoor Garden Smoking', 'status' => 'tersedia'],
-            ['nomor_meja' => '07', 'kapasitas' => 4, 'lokasi' => 'Outdoor Garden Smoking', 'status' => 'tersedia'],
-            ['nomor_meja' => '08', 'kapasitas' => 4, 'lokasi' => 'Outdoor Garden Smoking', 'status' => 'tersedia'],
-            ['nomor_meja' => '09', 'kapasitas' => 6, 'lokasi' => 'Lantai 2 Mezzanine', 'status' => 'tersedia'],
-            ['nomor_meja' => '10', 'kapasitas' => 8, 'lokasi' => 'VIP Meeting Room', 'status' => 'tersedia'],
-        ];
-
-        $mejaModels = [];
-        foreach ($mejas as $m) {
-            $mejaModels[$m['nomor_meja']] = Meja::create([
-                'nomor_meja' => $m['nomor_meja'],
-                'kapasitas' => $m['kapasitas'],
-                'lokasi' => $m['lokasi'],
-                'status' => $m['status'],
-                'qr_token' => Str::random(32),
-            ]);
-        }
-
-        // 4. Kategori Menu
-        $katSignature = Kategori::create([
-            'nama' => 'Signature Coffee',
+        // 3. Kategori Menu
+        $catSignature = Category::create([
+            'name' => 'Signature Coffee',
             'slug' => 'signature-coffee',
-            'deskripsi' => 'Kopi racikan khas barista Sekarsa dengan biji kopi pilihan nusantara',
+            'description' => 'Racikan kopi khas barista Sekarsa dengan cita rasa unik dan gula aren murni',
             'icon' => 'coffee',
-            'urutan' => 1,
+            'order' => 1,
             'is_active' => true,
         ]);
 
-        $katEspresso = Kategori::create([
-            'nama' => 'Espresso Based',
+        $catEspresso = Category::create([
+            'name' => 'Espresso Based',
             'slug' => 'espresso-based',
-            'deskripsi' => 'Klasik espresso murni dan kombinasi susu segar berkualitas',
-            'icon' => 'cup-hot',
-            'urutan' => 2,
+            'description' => 'Kombinasi espresso murni dan susu segar berkualitas tinggi',
+            'icon' => 'mug-hot',
+            'order' => 2,
             'is_active' => true,
         ]);
 
-        $katNonCoffee = Kategori::create([
-            'nama' => 'Non-Coffee & Tea',
+        $catNonCoffee = Category::create([
+            'name' => 'Non-Coffee & Tea',
             'slug' => 'non-coffee-tea',
-            'deskripsi' => 'Pilihan segar non-kopi mulai dari artisan tea hingga artisan matcha',
-            'icon' => 'droplet',
-            'urutan' => 3,
+            'description' => 'Sajian segar tanpa kopi mulai dari artisan matcha hingga chocolate',
+            'icon' => 'glass-water',
+            'order' => 3,
             'is_active' => true,
         ]);
 
-        $katMakanan = Kategori::create([
-            'nama' => 'Makanan Utama',
-            'slug' => 'makanan-utama',
-            'deskripsi' => 'Sajian makanan hangat mengenyangkan teman santai Anda',
-            'icon' => 'bowl-food',
-            'urutan' => 4,
+        $catFood = Category::create([
+            'name' => 'Makanan & Pastry',
+            'slug' => 'makanan-pastry',
+            'description' => 'Menu makanan hangat dan kudapan renyah pendamping ngopi santai',
+            'icon' => 'utensils',
+            'order' => 4,
             'is_active' => true,
         ]);
 
-        $katSnack = Kategori::create([
-            'nama' => 'Snack & Pastry',
-            'slug' => 'snack-pastry',
-            'deskripsi' => 'Camilan renyah dan pastry gurih manis pendamping ngopi',
-            'icon' => 'cookie',
-            'urutan' => 5,
-            'is_active' => true,
-        ]);
-
-        // 5. Menu Items
+        // 4. Daftar Menu
         $menus = [
             // Signature
             [
-                'kategori_id' => $katSignature->id,
-                'nama' => 'Kopi Susu Sekarsa',
+                'category_id' => $catSignature->id,
+                'name' => 'Kopi Susu Sekarsa',
                 'slug' => 'kopi-susu-sekarsa',
-                'deskripsi' => 'House blend espresso signature Sekarsa dipadukan dengan susu creamy dan gula aren murni.',
-                'harga' => 22000,
-                'harga_promo' => null,
-                'is_rekomendasi' => true,
-                'status_stok' => 'tersedia',
-                'urutan' => 1,
+                'description' => 'Espresso blend khas Sekarsa dengan susu creamy dan gula aren organik pilihan.',
+                'price' => 22000,
+                'is_available' => true,
+                'order' => 1,
             ],
             [
-                'kategori_id' => $katSignature->id,
-                'nama' => 'Karamel Macchiato Sekarsa',
+                'category_id' => $catSignature->id,
+                'name' => 'Karamel Macchiato Sekarsa',
                 'slug' => 'karamel-macchiato-sekarsa',
-                'deskripsi' => 'Espresso layered milk dengan saus karamel artisanal lembut yang lumer di lidah.',
-                'harga' => 28000,
-                'harga_promo' => 25000,
-                'is_rekomendasi' => true,
-                'status_stok' => 'tersedia',
-                'urutan' => 2,
+                'description' => 'Espresso layered milk dengan saus karamel artisanal lembut yang lumer di lidah.',
+                'price' => 28000,
+                'is_available' => true,
+                'order' => 2,
             ],
             [
-                'kategori_id' => $katSignature->id,
-                'nama' => 'Cold Brew Berry Breeze',
+                'category_id' => $catSignature->id,
+                'name' => 'Cold Brew Berry Breeze',
                 'slug' => 'cold-brew-berry-breeze',
-                'deskripsi' => 'Cold brew steeping 16 jam dengan sentuhan ekstrak strawberry alami dan tonic segar.',
-                'harga' => 26000,
-                'harga_promo' => null,
-                'is_rekomendasi' => false,
-                'status_stok' => 'tersedia',
-                'urutan' => 3,
-            ],
-            [
-                'kategori_id' => $katSignature->id,
-                'nama' => 'Avocado Coffee Float',
-                'slug' => 'avocado-coffee-float',
-                'deskripsi' => 'Jus alpukat mentega segar disiram single shot espresso dan vanilla ice cream.',
-                'harga' => 29000,
-                'harga_promo' => null,
-                'is_rekomendasi' => false,
-                'status_stok' => 'tersedia',
-                'urutan' => 4,
+                'description' => 'Cold brew steeping 16 jam dengan ekstrak strawberry alami dan tonic segar.',
+                'price' => 26000,
+                'is_available' => true,
+                'order' => 3,
             ],
 
-            // Espresso
+            // Espresso Based
             [
-                'kategori_id' => $katEspresso->id,
-                'nama' => 'Americano Sekarsa (Hot/Ice)',
+                'category_id' => $catEspresso->id,
+                'name' => 'Americano Sekarsa',
                 'slug' => 'americano-sekarsa',
-                'deskripsi' => 'Double shot espresso murni dengan air mineral dingin/panas, clean dan bold.',
-                'harga' => 18000,
-                'harga_promo' => null,
-                'is_rekomendasi' => false,
-                'status_stok' => 'tersedia',
-                'urutan' => 1,
+                'description' => 'Double shot espresso murni dengan air mineral dingin/panas, clean dan bold.',
+                'price' => 18000,
+                'is_available' => true,
+                'order' => 1,
             ],
             [
-                'kategori_id' => $katEspresso->id,
-                'nama' => 'Cafe Latte',
+                'category_id' => $catEspresso->id,
+                'name' => 'Cafe Latte',
                 'slug' => 'cafe-latte',
-                'deskripsi' => 'Steamed fresh milk dengan single shot espresso dan velvety microfoam.',
-                'harga' => 24000,
-                'harga_promo' => null,
-                'is_rekomendasi' => false,
-                'status_stok' => 'tersedia',
-                'urutan' => 2,
+                'description' => 'Steamed fresh milk dengan single shot espresso dan velvety microfoam.',
+                'price' => 24000,
+                'is_available' => true,
+                'order' => 2,
             ],
             [
-                'kategori_id' => $katEspresso->id,
-                'nama' => 'Cappuccino Brulee',
+                'category_id' => $catEspresso->id,
+                'name' => 'Cappuccino Brulee',
                 'slug' => 'cappuccino-brulee',
-                'deskripsi' => 'Cappuccino hangat dengan lapisan foam tebal dan taburan brown sugar karamel bakar di atasnya.',
-                'harga' => 26000,
-                'harga_promo' => null,
-                'is_rekomendasi' => true,
-                'status_stok' => 'tersedia',
-                'urutan' => 3,
+                'description' => 'Cappuccino dengan lapisan foam tebal dan taburan brown sugar karamel bakar di atasnya.',
+                'price' => 26000,
+                'is_available' => true,
+                'order' => 3,
             ],
 
             // Non-Coffee
             [
-                'kategori_id' => $katNonCoffee->id,
-                'nama' => 'Matcha Oat Latte',
+                'category_id' => $catNonCoffee->id,
+                'name' => 'Matcha Oat Latte',
                 'slug' => 'matcha-oat-latte',
-                'deskripsi' => 'Pure Uji Matcha import dipadukan dengan creamy oat milk bebas laktosa.',
-                'harga' => 28000,
-                'harga_promo' => 24000,
-                'is_rekomendasi' => true,
-                'status_stok' => 'tersedia',
-                'urutan' => 1,
+                'description' => 'Pure Uji Matcha import dipadukan dengan creamy oat milk bebas laktosa.',
+                'price' => 28000,
+                'is_available' => true,
+                'order' => 1,
             ],
             [
-                'kategori_id' => $katNonCoffee->id,
-                'nama' => 'Belgian Dark Chocolate',
+                'category_id' => $catNonCoffee->id,
+                'name' => 'Belgian Dark Chocolate',
                 'slug' => 'belgian-dark-chocolate',
-                'deskripsi' => 'Cokelat Belgia pekat 70% dengan susu segar, rasa cokelat mewah dan tidak serik.',
-                'harga' => 25000,
-                'harga_promo' => null,
-                'is_rekomendasi' => false,
-                'status_stok' => 'tersedia',
-                'urutan' => 2,
-            ],
-            [
-                'kategori_id' => $katNonCoffee->id,
-                'nama' => 'Artisan Lychee Blossom Tea',
-                'slug' => 'artisan-lychee-blossom-tea',
-                'deskripsi' => 'Teh hitam beraroma bunga dengan buah leci utuh dan daun mint segar.',
-                'harga' => 22000,
-                'harga_promo' => null,
-                'is_rekomendasi' => false,
-                'status_stok' => 'tersedia',
-                'urutan' => 3,
+                'description' => 'Cokelat Belgia pekat 70% dengan susu segar, rasa cokelat mewah dan tidak serik.',
+                'price' => 25000,
+                'is_available' => true,
+                'order' => 2,
             ],
 
             // Makanan
             [
-                'kategori_id' => $katMakanan->id,
-                'nama' => 'Rice Bowl Beef Blackpepper',
+                'category_id' => $catFood->id,
+                'name' => 'Rice Bowl Beef Blackpepper',
                 'slug' => 'rice-bowl-beef-blackpepper',
-                'deskripsi' => 'Irisan daging sapi tenderloin empuk dengan saus lada hitam khas Sekarsa, telur mata sapi & nasi hangat.',
-                'harga' => 36000,
-                'harga_promo' => null,
-                'is_rekomendasi' => true,
-                'status_stok' => 'tersedia',
-                'urutan' => 1,
+                'description' => 'Daging sapi tenderloin empuk dengan saus lada hitam khas Sekarsa, telur & nasi hangat.',
+                'price' => 36000,
+                'is_available' => true,
+                'order' => 1,
             ],
             [
-                'kategori_id' => $katMakanan->id,
-                'nama' => 'Chicken Katsu Sambal Matah',
+                'category_id' => $catFood->id,
+                'name' => 'Chicken Katsu Sambal Matah',
                 'slug' => 'chicken-katsu-sambal-matah',
-                'deskripsi' => 'Ayam katsu krispi emas disajikan bersama sambal matah Bali segar dan nasi pulen.',
-                'harga' => 32000,
-                'harga_promo' => 29000,
-                'is_rekomendasi' => true,
-                'status_stok' => 'tersedia',
-                'urutan' => 2,
+                'description' => 'Ayam katsu krispi emas disajikan bersama sambal matah Bali segar dan nasi pulen.',
+                'price' => 32000,
+                'is_available' => true,
+                'order' => 2,
             ],
             [
-                'kategori_id' => $katMakanan->id,
-                'nama' => 'Spaghetti Aglio Olio Smoked Beef',
-                'slug' => 'spaghetti-aglio-olio-smoked-beef',
-                'deskripsi' => 'Pasta al dente ditumis minyak zaitun murni, bawang putih, cabai rawit, dan smoked beef premium.',
-                'harga' => 30000,
-                'harga_promo' => null,
-                'is_rekomendasi' => false,
-                'status_stok' => 'tersedia',
-                'urutan' => 3,
-            ],
-
-            // Snack
-            [
-                'kategori_id' => $katSnack->id,
-                'nama' => 'Truffle Fries Mayo',
+                'category_id' => $catFood->id,
+                'name' => 'Truffle Fries Mayo',
                 'slug' => 'truffle-fries-mayo',
-                'deskripsi' => 'Kentang goreng renyah wangi minyak truffle bertabur keju parmesan & saus garlic mayo.',
-                'harga' => 22000,
-                'harga_promo' => null,
-                'is_rekomendasi' => true,
-                'status_stok' => 'tersedia',
-                'urutan' => 1,
-            ],
-            [
-                'kategori_id' => $katSnack->id,
-                'nama' => 'Churros Cinnamon Sugar Dip',
-                'slug' => 'churros-cinnamon-sugar-dip',
-                'deskripsi' => '6 potong churros Spanyol garing luar lembut dalam dengan baluran gula kayu manis & saus dark chocolate.',
-                'harga' => 22000,
-                'harga_promo' => null,
-                'is_rekomendasi' => false,
-                'status_stok' => 'tersedia',
-                'urutan' => 2,
-            ],
-            [
-                'kategori_id' => $katSnack->id,
-                'nama' => 'Pisang Goreng Wijen Madu',
-                'slug' => 'pisang-goreng-wijen-madu',
-                'deskripsi' => 'Pisang raja manis berselimut tepung krispi wijen disiram madu murni dan parutan keju cheddar.',
-                'harga' => 20000,
-                'harga_promo' => null,
-                'is_rekomendasi' => false,
-                'status_stok' => 'tersedia',
-                'urutan' => 3,
+                'description' => 'Kentang goreng renyah wangi minyak truffle bertabur keju parmesan & saus garlic mayo.',
+                'price' => 22000,
+                'is_available' => true,
+                'order' => 3,
             ],
         ];
 
@@ -317,210 +204,213 @@ class DatabaseSeeder extends Seeder
             $createdMenus[$m['slug']] = Menu::create($m);
         }
 
-        // 6. Promo Berjalan
-        $promo1 = Promo::create([
-            'kode_promo' => 'SEKARSA15',
-            'judul' => 'Promo Diskon 15% Semua Menu',
-            'deskripsi' => 'Potongan 15% khusus pemesanan lewat scan QR code meja, minimal transaksi Rp 40.000.',
-            'tipe' => 'persen',
-            'nilai_potongan' => 15,
-            'min_pembelian' => 40000,
-            'maksimal_potongan' => 15000,
-            'tgl_mulai' => Carbon::now()->subDays(5),
-            'tgl_selesai' => Carbon::now()->addDays(25),
-            'is_active' => true,
+        // 5. Data Demonstrasi Algoritma FIFO (Persis Contoh Skripsi Pengguna)
+        // Pelanggan A | Waktu: 10.00 | Nomor antrean: 001 | Status: diproses
+        // Pelanggan B | Waktu: 10.02 | Nomor antrean: 002 | Status: menunggu
+        // Pelanggan C | Waktu: 10.05 | Nomor antrean: 003 | Status: menunggu
+        // Pelanggan D | Waktu: 10.07 | Nomor antrean: 004 | Status: siap_diambil (Contoh Notifikasi!)
+        // Pelanggan E | Selesai (Riwayat)
+
+        $baseTime = Carbon::now()->subMinutes(25);
+
+        // Pelanggan A (Urutan FIFO #1 - Sedang Diproses)
+        $o1 = Order::create([
+            'order_number' => 'ORD-' . date('Ymd') . '-001',
+            'queue_number' => '001',
+            'customer_name' => 'Pelanggan A (Andi)',
+            'customer_phone' => '081234567801',
+            'table_number' => '01',
+            'customer_notes' => 'Less sugar, es dipisah',
+            'total_price' => 44000,
+            'status' => 'diproses',
+            'received_at' => $baseTime->copy(), // 10.00
+            'processed_at' => $baseTime->copy()->addMinutes(2),
+            'handled_by' => $pegawai->id,
+            'tracking_token' => 'token-demo-001',
         ]);
-
-        $promo2 = Promo::create([
-            'kode_promo' => 'HEMAT5K',
-            'judul' => 'Potongan Langsung Rp 5.000',
-            'deskripsi' => 'Diskon Rp 5.000 tanpa batasan menu untuk minimum belanja Rp 25.000.',
-            'tipe' => 'nominal',
-            'nilai_potongan' => 5000,
-            'min_pembelian' => 25000,
-            'maksimal_potongan' => null,
-            'tgl_mulai' => Carbon::now()->subDays(10),
-            'tgl_selesai' => Carbon::now()->addDays(20),
-            'is_active' => true,
-        ]);
-
-        // 7. Data Pesanan Demonstrasi FIFO (Sesuai skenario skripsi yang diinginkan user)
-        // Nomor A001: Masuk jam 10:01 -> Status: 'diproses' (Urutan 1)
-        // Nomor A002: Masuk jam 10:03 -> Status: 'menunggu' (Urutan 2)
-        // Nomor A003: Masuk jam 10:05 -> Status: 'menunggu' (Urutan 3)
-        // Nomor A004: Masuk jam 10:07 -> Status: 'menunggu' (Urutan 4)
-
-        $now = Carbon::now();
-
-        // A001 (Sedang Diproses)
-        $p1 = Pesanan::create([
-            'nomor_pesanan' => 'A001',
-            'meja_id' => $mejaModels['01']->id,
-            'nama_pelanggan' => 'Andi Pratama',
-            'catatan_umum' => 'Pesanan dine-in, tolong sediakan air putih jika ada.',
-            'subtotal' => 44000,
-            'promo_id' => $promo2->id,
-            'diskon_promo' => 5000,
-            'total_akhir' => 39000,
-            'status_pesanan' => 'diproses',
-            'status_pembayaran' => 'belum_dibayar',
-            'metode_pembayaran' => 'qris',
-            'waktu_masuk' => $now->copy()->subMinutes(12),
-            'waktu_diproses' => $now->copy()->subMinutes(8),
-            'session_token' => 'session-demo-a001',
-        ]);
-        PesananItem::create([
-            'pesanan_id' => $p1->id,
+        OrderDetail::create([
+            'order_id' => $o1->id,
             'menu_id' => $createdMenus['kopi-susu-sekarsa']->id,
-            'nama_menu' => 'Kopi Susu Sekarsa',
-            'harga_satuan' => 22000,
-            'jumlah' => 1,
-            'subtotal' => 22000,
-            'catatan' => 'Less ice, normal sugar',
+            'menu_name' => 'Kopi Susu Sekarsa',
+            'price' => 22000,
+            'quantity' => 2,
+            'subtotal' => 44000,
+            'notes' => 'Less sugar, es dipisah',
         ]);
-        PesananItem::create([
-            'pesanan_id' => $p1->id,
-            'menu_id' => $createdMenus['truffle-fries-mayo']->id,
-            'nama_menu' => 'Truffle Fries Mayo',
-            'harga_satuan' => 22000,
-            'jumlah' => 1,
-            'subtotal' => 22000,
-            'catatan' => 'Mayo dipisah',
+        OrderStatusHistory::create([
+            'order_id' => $o1->id,
+            'previous_status' => null,
+            'new_status' => 'menunggu',
+            'changed_by' => 'Sistem Pemesanan Digital',
+            'notes' => 'Pesanan diterima server dan masuk antrean FIFO urutan #1.',
+            'created_at' => $baseTime->copy(),
+        ]);
+        OrderStatusHistory::create([
+            'order_id' => $o1->id,
+            'previous_status' => 'menunggu',
+            'new_status' => 'diproses',
+            'changed_by' => $pegawai->name,
+            'notes' => 'Barista mulai meracik pesanan sesuai urutan FIFO.',
+            'created_at' => $baseTime->copy()->addMinutes(2),
         ]);
 
-        // A002 (Menunggu - Urutan 2)
-        $p2 = Pesanan::create([
-            'nomor_pesanan' => 'A002',
-            'meja_id' => $mejaModels['03']->id,
-            'nama_pelanggan' => 'Citra Lestari',
-            'catatan_umum' => 'Tolong diantar ke meja 3',
-            'subtotal' => 56000,
-            'promo_id' => $promo1->id,
-            'diskon_promo' => 8400,
-            'total_akhir' => 47600,
-            'status_pesanan' => 'menunggu',
-            'status_pembayaran' => 'belum_dibayar',
-            'waktu_masuk' => $now->copy()->subMinutes(9),
-            'session_token' => 'session-demo-a002',
+        // Pelanggan B (Urutan FIFO #2 - Menunggu Antrean)
+        $o2 = Order::create([
+            'order_number' => 'ORD-' . date('Ymd') . '-002',
+            'queue_number' => '002',
+            'customer_name' => 'Pelanggan B (Bunga)',
+            'customer_phone' => '081234567802',
+            'table_number' => '03',
+            'customer_notes' => 'Mohon jangan terlalu manis',
+            'total_price' => 52000,
+            'status' => 'menunggu',
+            'received_at' => $baseTime->copy()->addMinutes(2), // 10.02
+            'tracking_token' => 'token-demo-002',
         ]);
-        PesananItem::create([
-            'pesanan_id' => $p2->id,
+        OrderDetail::create([
+            'order_id' => $o2->id,
             'menu_id' => $createdMenus['matcha-oat-latte']->id,
-            'nama_menu' => 'Matcha Oat Latte',
-            'harga_satuan' => 24000,
-            'jumlah' => 1,
+            'menu_name' => 'Matcha Oat Latte',
+            'price' => 28000,
+            'quantity' => 1,
+            'subtotal' => 28000,
+        ]);
+        OrderDetail::create([
+            'order_id' => $o2->id,
+            'menu_id' => $createdMenus['cafe-latte']->id,
+            'menu_name' => 'Cafe Latte',
+            'price' => 24000,
+            'quantity' => 1,
             'subtotal' => 24000,
-            'catatan' => 'Dingin, tanpa gula tambahan',
         ]);
-        PesananItem::create([
-            'pesanan_id' => $p2->id,
-            'menu_id' => $createdMenus['chicken-katsu-sambal-matah']->id,
-            'nama_menu' => 'Chicken Katsu Sambal Matah',
-            'harga_satuan' => 29000,
-            'jumlah' => 1,
-            'subtotal' => 29000,
-            'catatan' => 'Sambal agak banyak',
+        OrderStatusHistory::create([
+            'order_id' => $o2->id,
+            'previous_status' => null,
+            'new_status' => 'menunggu',
+            'changed_by' => 'Sistem Pemesanan Digital',
+            'notes' => 'Pesanan diterima server dan masuk antrean FIFO urutan #2.',
+            'created_at' => $baseTime->copy()->addMinutes(2),
         ]);
 
-        // A003 (Menunggu - Urutan 3)
-        $p3 = Pesanan::create([
-            'nomor_pesanan' => 'A003',
-            'meja_id' => $mejaModels['06']->id,
-            'nama_pelanggan' => 'Rian Hidayat',
-            'catatan_umum' => null,
-            'subtotal' => 40000,
-            'promo_id' => null,
-            'diskon_promo' => 0,
-            'total_akhir' => 40000,
-            'status_pesanan' => 'menunggu',
-            'status_pembayaran' => 'belum_dibayar',
-            'waktu_masuk' => $now->copy()->subMinutes(6),
-            'session_token' => 'session-demo-a003',
+        // Pelanggan C (Urutan FIFO #3 - Menunggu Antrean)
+        $o3 = Order::create([
+            'order_number' => 'ORD-' . date('Ymd') . '-003',
+            'queue_number' => '003',
+            'customer_name' => 'Pelanggan C (Citra)',
+            'customer_phone' => '081234567803',
+            'table_number' => '04',
+            'customer_notes' => null,
+            'total_price' => 36000,
+            'status' => 'menunggu',
+            'received_at' => $baseTime->copy()->addMinutes(5), // 10.05
+            'tracking_token' => 'token-demo-003',
         ]);
-        PesananItem::create([
-            'pesanan_id' => $p3->id,
-            'menu_id' => $createdMenus['pisang-goreng-wijen-madu']->id,
-            'nama_menu' => 'Pisang Goreng Wijen Madu',
-            'harga_satuan' => 20000,
-            'jumlah' => 2,
-            'subtotal' => 40000,
-            'catatan' => null,
+        OrderDetail::create([
+            'order_id' => $o3->id,
+            'menu_id' => $createdMenus['rice-bowl-beef-blackpepper']->id,
+            'menu_name' => 'Rice Bowl Beef Blackpepper',
+            'price' => 36000,
+            'quantity' => 1,
+            'subtotal' => 36000,
         ]);
-
-        // A004 (Menunggu - Urutan 4)
-        $p4 = Pesanan::create([
-            'nomor_pesanan' => 'A004',
-            'meja_id' => $mejaModels['04']->id,
-            'nama_pelanggan' => 'Maya Putri',
-            'catatan_umum' => null,
-            'subtotal' => 26000,
-            'promo_id' => null,
-            'diskon_promo' => 0,
-            'total_akhir' => 26000,
-            'status_pesanan' => 'menunggu',
-            'status_pembayaran' => 'belum_dibayar',
-            'waktu_masuk' => $now->copy()->subMinutes(2),
-            'session_token' => 'session-demo-a004',
-        ]);
-        PesananItem::create([
-            'pesanan_id' => $p4->id,
-            'menu_id' => $createdMenus['cappuccino-brulee']->id,
-            'nama_menu' => 'Cappuccino Brulee',
-            'harga_satuan' => 26000,
-            'jumlah' => 1,
-            'subtotal' => 26000,
-            'catatan' => 'Extra hot',
+        OrderStatusHistory::create([
+            'order_id' => $o3->id,
+            'previous_status' => null,
+            'new_status' => 'menunggu',
+            'changed_by' => 'Sistem Pemesanan Digital',
+            'notes' => 'Pesanan diterima server dan masuk antrean FIFO urutan #3.',
+            'created_at' => $baseTime->copy()->addMinutes(5),
         ]);
 
-        // 8. Beberapa pesanan yang SUDAH SELESAI & LUNAS hari ini (untuk laporan & grafik penjualan)
-        for ($i = 1; $i <= 5; $i++) {
-            $selesaiOrder = Pesanan::create([
-                'nomor_pesanan' => 'A00' . (4 + $i),
-                'meja_id' => $mejaModels['0' . $i]->id,
-                'nama_pelanggan' => 'Pelanggan #' . $i,
-                'catatan_umum' => null,
-                'subtotal' => 45000,
-                'promo_id' => null,
-                'diskon_promo' => 0,
-                'total_akhir' => 45000,
-                'status_pesanan' => 'diambil',
-                'status_pembayaran' => 'lunas',
-                'metode_pembayaran' => ($i % 2 === 0) ? 'qris' : 'tunai',
-                'jumlah_bayar' => 50000,
-                'kembalian' => 5000,
-                'waktu_masuk' => $now->copy()->subHours(5)->addMinutes($i * 25),
-                'waktu_diproses' => $now->copy()->subHours(5)->addMinutes($i * 25 + 3),
-                'waktu_selesai' => $now->copy()->subHours(5)->addMinutes($i * 25 + 12),
-                'waktu_diambil' => $now->copy()->subHours(5)->addMinutes($i * 25 + 15),
-                'waktu_bayar' => $now->copy()->subHours(5)->addMinutes($i * 25 + 15),
-                'kasir_id' => $kasir->id,
-            ]);
+        // Pelanggan D (Siap Diambil - Sudah Mendapatkan Notifikasi Suara & WhatsApp!)
+        $o4 = Order::create([
+            'order_number' => 'ORD-' . date('Ymd') . '-004',
+            'queue_number' => '004',
+            'customer_name' => 'Doni Saputra',
+            'customer_phone' => '081234567804',
+            'table_number' => '02',
+            'customer_notes' => null,
+            'total_price' => 28000,
+            'status' => 'siap_diambil',
+            'received_at' => $baseTime->copy()->subMinutes(15),
+            'processed_at' => $baseTime->copy()->subMinutes(10),
+            'ready_at' => $baseTime->copy()->subMinutes(2),
+            'handled_by' => $pegawai->id,
+            'tracking_token' => 'token-demo-004',
+        ]);
+        OrderDetail::create([
+            'order_id' => $o4->id,
+            'menu_id' => $createdMenus['karamel-macchiato-sekarsa']->id,
+            'menu_name' => 'Karamel Macchiato Sekarsa',
+            'price' => 28000,
+            'quantity' => 1,
+            'subtotal' => 28000,
+        ]);
+        OrderStatusHistory::create([
+            'order_id' => $o4->id,
+            'previous_status' => 'diproses',
+            'new_status' => 'siap_diambil',
+            'changed_by' => $pegawai->name,
+            'notes' => 'Pesanan selesai dibuat dan siap diambil di counter. Notifikasi dikirimkan.',
+            'created_at' => $baseTime->copy()->subMinutes(2),
+        ]);
+        Notification::create([
+            'order_id' => $o4->id,
+            'type' => 'web_sound',
+            'recipient' => 'Doni Saputra',
+            'message' => 'Notifikasi suara bel dan visual siap ambil dikirim ke perangkat pelanggan.',
+            'status' => 'sent',
+            'sent_at' => $baseTime->copy()->subMinutes(2),
+        ]);
+        Notification::create([
+            'order_id' => $o4->id,
+            'type' => 'whatsapp',
+            'recipient' => '6281234567804',
+            'message' => "Halo Kak Doni Saputra! ☕\n\nPesanan Anda di Sekarsa Coffee dengan Nomor Antrean *004* (ORD-" . date('Ymd') . "-004) sudah *SIAP DIAMBIL* di counter barista!\n\nSilakan tunjukkan pesan ini atau sebutkan nomor antrean Anda di counter. Terima kasih! ✨",
+            'status' => 'sent',
+            'sent_at' => $baseTime->copy()->subMinutes(2),
+        ]);
 
-            PesananItem::create([
-                'pesanan_id' => $selesaiOrder->id,
-                'menu_id' => $createdMenus['kopi-susu-sekarsa']->id,
-                'nama_menu' => 'Kopi Susu Sekarsa',
-                'harga_satuan' => 22000,
-                'jumlah' => 1,
-                'subtotal' => 22000,
-            ]);
-            PesananItem::create([
-                'pesanan_id' => $selesaiOrder->id,
-                'menu_id' => $createdMenus['truffle-fries-mayo']->id,
-                'nama_menu' => 'Truffle Fries Mayo',
-                'harga_satuan' => 22000,
-                'jumlah' => 1,
-                'subtotal' => 22000,
-            ]);
-        }
-
-        // 9. Catat Log Aktivitas Awal
-        AktivitasLog::create([
-            'user_id' => $admin->id,
-            'user_name' => $admin->name . ' (Admin)',
-            'aksi' => 'INISIALISASI_SISTEM',
-            'deskripsi' => 'Inisialisasi sistem pemesanan Sekarsa Coffee, data menu, meja, dan pengaturan toko berhasil dibuat.',
-            'ip_address' => '127.0.0.1',
+        // Pelanggan E (Selesai Diambil)
+        $o5 = Order::create([
+            'order_number' => 'ORD-' . date('Ymd') . '-005',
+            'queue_number' => '005',
+            'customer_name' => 'Eka Pratama',
+            'customer_phone' => '081234567805',
+            'table_number' => '05',
+            'customer_notes' => null,
+            'total_price' => 40000,
+            'status' => 'selesai',
+            'received_at' => $baseTime->copy()->subHours(2),
+            'processed_at' => $baseTime->copy()->subHours(2)->addMinutes(3),
+            'ready_at' => $baseTime->copy()->subHours(2)->addMinutes(12),
+            'completed_at' => $baseTime->copy()->subHours(2)->addMinutes(15),
+            'handled_by' => $pegawai->id,
+            'tracking_token' => 'token-demo-005',
+        ]);
+        OrderDetail::create([
+            'order_id' => $o5->id,
+            'menu_id' => $createdMenus['americano-sekarsa']->id,
+            'menu_name' => 'Americano Sekarsa',
+            'price' => 18000,
+            'quantity' => 1,
+            'subtotal' => 18000,
+        ]);
+        OrderDetail::create([
+            'order_id' => $o5->id,
+            'menu_id' => $createdMenus['truffle-fries-mayo']->id,
+            'menu_name' => 'Truffle Fries Mayo',
+            'price' => 22000,
+            'quantity' => 1,
+            'subtotal' => 22000,
+        ]);
+        OrderStatusHistory::create([
+            'order_id' => $o5->id,
+            'previous_status' => 'siap_diambil',
+            'new_status' => 'selesai',
+            'changed_by' => $pegawai->name,
+            'notes' => 'Pesanan telah diambil oleh pelanggan. Siklus pesanan selesai.',
+            'created_at' => $baseTime->copy()->subHours(2)->addMinutes(15),
         ]);
     }
 }

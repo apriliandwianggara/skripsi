@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\AktivitasLog;
-use App\Models\Kategori;
+use App\Models\Category;
 use App\Models\Menu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -14,161 +13,115 @@ class MenuController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Menu::with('kategori');
+        $query = Menu::with('category');
 
-        if ($request->filled('kategori_id')) {
-            $query->where('kategori_id', $request->kategori_id);
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
         }
 
-        if ($request->filled('status_stok')) {
-            $query->where('status_stok', $request->status_stok);
+        if ($request->filled('is_available')) {
+            $query->where('is_available', $request->is_available);
         }
 
         if ($request->filled('search')) {
-            $query->where('nama', 'like', "%{$request->search}%");
+            $query->where('name', 'like', "%{$request->search}%");
         }
 
-        $menus = $query->orderBy('kategori_id')->orderBy('urutan')->paginate(15)->withQueryString();
-        $kategoris = Kategori::where('is_active', true)->orderBy('nama')->get();
+        $menus = $query->orderBy('category_id')->orderBy('order')->paginate(15)->withQueryString();
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
 
-        return view('admin.menus.index', compact('menus', 'kategoris'));
+        return view('admin.menus.index', compact('menus', 'categories'));
     }
 
     public function create()
     {
-        $kategoris = Kategori::where('is_active', true)->orderBy('nama')->get();
-        return view('admin.menus.create', compact('kategoris'));
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
+        return view('admin.menus.create', compact('categories'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'kategori_id' => 'required|exists:kategoris,id',
-            'nama' => 'required|string|max:150|unique:menus,nama',
-            'deskripsi' => 'nullable|string',
-            'harga' => 'required|numeric|min:0',
-            'harga_promo' => 'nullable|numeric|min:0|lt:harga',
-            'status_stok' => 'required|in:tersedia,habis',
-            'is_rekomendasi' => 'nullable|boolean',
-            'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|string|max:150|unique:menus,name',
+            'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'is_available' => 'required|boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
-        $slug = Str::slug($request->nama);
-        $fotoPath = null;
-        if ($request->hasFile('foto')) {
-            $fotoPath = $request->file('foto')->store('menus', 'public');
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('menus', 'public');
         }
 
-        $menu = Menu::create([
-            'kategori_id' => $request->kategori_id,
-            'nama' => $request->nama,
-            'slug' => $slug,
-            'deskripsi' => $request->deskripsi,
-            'harga' => $request->harga,
-            'harga_promo' => $request->harga_promo ?: null,
-            'status_stok' => $request->status_stok,
-            'is_rekomendasi' => $request->boolean('is_rekomendasi'),
-            'foto' => $fotoPath,
-            'urutan' => Menu::max('urutan') + 1,
+        Menu::create([
+            'category_id' => $request->category_id,
+            'name' => $request->name,
+            'slug' => Str::slug($request->name),
+            'description' => $request->description,
+            'price' => $request->price,
+            'is_available' => $request->boolean('is_available'),
+            'image' => $imagePath,
+            'order' => Menu::max('order') + 1,
         ]);
 
-        AktivitasLog::catat(
-            'TAMBAH_MENU',
-            "Menambahkan menu baru: [{$menu->nama}] dengan harga Rp " . number_format($menu->harga, 0, ',', '.')
-        );
-
-        return redirect()->route('admin.menus.index')->with('success', "Menu '{$menu->nama}' berhasil ditambahkan.");
+        return redirect()->route('admin.menus.index')->with('success', "Menu '{$request->name}' berhasil ditambahkan.");
     }
 
     public function edit(Menu $menu)
     {
-        $kategoris = Kategori::where('is_active', true)->orderBy('nama')->get();
-        return view('admin.menus.edit', compact('menu', 'kategoris'));
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
+        return view('admin.menus.edit', compact('menu', 'categories'));
     }
 
     public function update(Request $request, Menu $menu)
     {
         $request->validate([
-            'kategori_id' => 'required|exists:kategoris,id',
-            'nama' => 'required|string|max:150|unique:menus,nama,' . $menu->id,
-            'deskripsi' => 'nullable|string',
-            'harga' => 'required|numeric|min:0',
-            'harga_promo' => 'nullable|numeric|min:0|lt:harga',
-            'status_stok' => 'required|in:tersedia,habis',
-            'is_rekomendasi' => 'nullable|boolean',
-            'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|string|max:150|unique:menus,name,' . $menu->id,
+            'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'is_available' => 'required|boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
-        $oldHarga = $menu->harga;
-        $oldPromo = $menu->harga_promo;
-
-        $slug = Str::slug($request->nama);
-        $fotoPath = $menu->foto;
-
-        if ($request->hasFile('foto')) {
-            if ($menu->foto && Storage::disk('public')->exists($menu->foto)) {
-                Storage::disk('public')->delete($menu->foto);
+        $imagePath = $menu->image;
+        if ($request->hasFile('image')) {
+            if ($menu->image && Storage::disk('public')->exists($menu->image)) {
+                Storage::disk('public')->delete($menu->image);
             }
-            $fotoPath = $request->file('foto')->store('menus', 'public');
+            $imagePath = $request->file('image')->store('menus', 'public');
         }
 
         $menu->update([
-            'kategori_id' => $request->kategori_id,
-            'nama' => $request->nama,
-            'slug' => $slug,
-            'deskripsi' => $request->deskripsi,
-            'harga' => $request->harga,
-            'harga_promo' => $request->harga_promo ?: null,
-            'status_stok' => $request->status_stok,
-            'is_rekomendasi' => $request->boolean('is_rekomendasi'),
-            'foto' => $fotoPath,
+            'category_id' => $request->category_id,
+            'name' => $request->name,
+            'slug' => Str::slug($request->name),
+            'description' => $request->description,
+            'price' => $request->price,
+            'is_available' => $request->boolean('is_available'),
+            'image' => $imagePath,
         ]);
 
-        $changes = [];
-        if ((float) $oldHarga !== (float) $request->harga) {
-            $changes[] = "harga diubah dari Rp " . number_format($oldHarga, 0, ',', '.') . " menjadi Rp " . number_format($request->harga, 0, ',', '.');
-        }
-        if ((float) $oldPromo !== (float) $request->harga_promo) {
-            $changes[] = "harga promo diubah";
-        }
-
-        $changeDesc = !empty($changes) ? implode(', ', $changes) : "data menu diperbarui";
-
-        AktivitasLog::catat(
-            'UBAH_MENU',
-            "Mengubah menu [{$menu->nama}]: {$changeDesc}"
-        );
-
-        return redirect()->route('admin.menus.index')->with('success', "Menu '{$menu->nama}' berhasil diperbarui.");
+        return redirect()->route('admin.menus.index')->with('success', "Menu '{$menu->name}' berhasil diperbarui.");
     }
 
     public function destroy(Menu $menu)
     {
-        $nama = $menu->nama;
-        if ($menu->foto && Storage::disk('public')->exists($menu->foto)) {
-            Storage::disk('public')->delete($menu->foto);
+        $name = $menu->name;
+        if ($menu->image && Storage::disk('public')->exists($menu->image)) {
+            Storage::disk('public')->delete($menu->image);
         }
 
         $menu->delete();
-
-        AktivitasLog::catat(
-            'HAPUS_MENU',
-            "Menghapus menu [{$nama}] dari sistem."
-        );
-
-        return redirect()->route('admin.menus.index')->with('success', "Menu '{$nama}' berhasil dihapus.");
+        return redirect()->route('admin.menus.index')->with('success', "Menu '{$name}' berhasil dihapus.");
     }
 
-    public function toggleStock(Menu $menu)
+    public function toggleAvailability(Menu $menu)
     {
-        $newStatus = $menu->status_stok === 'tersedia' ? 'habis' : 'tersedia';
-        $menu->update(['status_stok' => $newStatus]);
-
-        AktivitasLog::catat(
-            'UBAH_STOK',
-            "Mengubah ketersediaan stok menu [{$menu->nama}] menjadi: " . strtoupper($newStatus)
-        );
-
-        return back()->with('success', "Status stok {$menu->nama} diubah menjadi {$newStatus}.");
+        $menu->update(['is_available' => !$menu->is_available]);
+        $statusText = $menu->is_available ? 'Tersedia' : 'Habis';
+        return back()->with('success', "Status ketersediaan menu {$menu->name} diubah menjadi {$statusText}.");
     }
 }

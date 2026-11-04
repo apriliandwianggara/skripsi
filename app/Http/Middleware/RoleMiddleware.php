@@ -18,13 +18,13 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
         if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'Silakan masuk terlebih dahulu untuk mengakses halaman ini.');
+            return redirect()->route('login')->with('error', 'Silakan masuk terlebih dahulu untuk mengakses sistem.');
         }
 
         $user = Auth::user();
         if (!$user->is_active) {
             Auth::logout();
-            return redirect()->route('login')->with('error', 'Akun Anda dinonaktifkan. Silakan hubungi admin.');
+            return redirect()->route('login')->with('error', 'Akun Anda dinonaktifkan. Silakan hubungi administrator.');
         }
 
         if (empty($roles)) {
@@ -40,8 +40,8 @@ class RoleMiddleware
         }
 
         if (!in_array($user->role, $allowedRoles)) {
-            if ($user->role === 'kasir') {
-                return redirect()->route('kasir.dashboard')->with('error', 'Anda tidak memiliki hak akses ke halaman Admin.');
+            if ($user->role === 'pegawai') {
+                return redirect()->route('pegawai.dashboard')->with('error', 'Anda tidak memiliki hak akses ke halaman Administrator.');
             }
             abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengakses halaman ini.');
         }

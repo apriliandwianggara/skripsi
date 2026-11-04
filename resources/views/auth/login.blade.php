@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Masuk Petugas - Sekarsa Coffee')
+@section('title', 'Masuk Petugas - ' . (\App\Models\Setting::get()->cafe_name ?? 'Sekarsa Coffee'))
 
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-sekarsa-950 via-sekarsa-900 to-emerald-900 flex flex-col justify-center items-center px-4 py-8 relative">
-    <!-- Background Coffee Art Elements -->
+    <!-- Background Elements -->
     <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#86efac_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none"></div>
 
     <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-emerald-100 z-10">
@@ -14,7 +14,7 @@
                 <i class="fa-solid fa-mug-hot text-3xl text-emerald-300"></i>
             </div>
             <h1 class="text-2xl font-bold font-serif tracking-wider">SEKARSA COFFEE</h1>
-            <p class="text-xs text-emerald-200 mt-1">Portal Masuk Petugas Kasir & Administrator</p>
+            <p class="text-xs text-emerald-200 mt-1">Portal Masuk Petugas & Administrator</p>
         </div>
 
         <!-- Form Body -->
@@ -30,7 +30,7 @@
                         </div>
                         <input type="text" name="login" id="login" required autofocus
                             value="{{ old('login') }}"
-                            placeholder="admin atau kasir"
+                            placeholder="admin atau pegawai"
                             class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
                     </div>
                 </div>
@@ -53,7 +53,7 @@
                         <span>Ingat Sesi Masuk</span>
                     </label>
                     <a href="{{ route('customer.order') }}" class="text-emerald-700 font-semibold hover:underline">
-                        &larr; Halaman Menu
+                        &larr; Halaman Pelanggan
                     </a>
                 </div>
 
@@ -63,19 +63,19 @@
                 </button>
             </form>
 
-            <!-- Demo Account Helper (Sangat membantu dosen penguji saat sidang skripsi) -->
+            <!-- Demo Account Helper -->
             <div class="mt-8 pt-6 border-t border-gray-100">
-                <p class="text-xs text-center font-bold text-gray-500 uppercase tracking-wider mb-3">Akun Akses Cepat Demo (Skripsi):</p>
+                <p class="text-xs text-center font-bold text-gray-500 uppercase tracking-wider mb-3">Akun Demo (Sidang Skripsi):</p>
                 <div class="grid grid-cols-2 gap-2">
                     <button type="button" onclick="fillDemo('admin', 'password123')"
                         class="p-2.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 rounded-xl text-xs text-left transition">
-                        <p class="font-bold flex items-center"><i class="fa-solid fa-crown text-amber-500 mr-1.5"></i> Admin/Owner</p>
+                        <p class="font-bold flex items-center"><i class="fa-solid fa-crown text-amber-500 mr-1.5"></i> Admin</p>
                         <p class="text-[11px] text-gray-500 font-mono mt-0.5">admin</p>
                     </button>
-                    <button type="button" onclick="fillDemo('kasir', 'password123')"
+                    <button type="button" onclick="fillDemo('pegawai', 'password123')"
                         class="p-2.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 rounded-xl text-xs text-left transition">
-                        <p class="font-bold flex items-center"><i class="fa-solid fa-cash-register text-blue-600 mr-1.5"></i> Kasir Utama</p>
-                        <p class="text-[11px] text-gray-500 font-mono mt-0.5">kasir</p>
+                        <p class="font-bold flex items-center"><i class="fa-solid fa-mug-hot text-blue-600 mr-1.5"></i> Pegawai / Barista</p>
+                        <p class="text-[11px] text-gray-500 font-mono mt-0.5">pegawai</p>
                     </button>
                 </div>
             </div>
@@ -83,7 +83,7 @@
     </div>
 
     <p class="mt-6 text-xs text-emerald-200/80 text-center">
-        Sistem Pemesanan Minuman Menggunakan Algoritma FIFO &bull; Sekarsa Coffee
+        Perancangan Sistem Pemesanan Digital Berbasis FIFO &bull; Sekarsa Coffee
     </p>
 </div>
 

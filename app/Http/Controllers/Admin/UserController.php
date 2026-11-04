@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\AktivitasLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -23,11 +22,11 @@ class UserController extends Controller
             'username' => 'required|string|max:50|alpha_dash|unique:users,username',
             'email' => 'required|email|max:100|unique:users,email',
             'phone' => 'nullable|string|max:20',
-            'role' => 'required|in:admin,kasir',
+            'role' => 'required|in:admin,pegawai',
             'password' => 'required|string|min:6',
         ]);
 
-        $user = User::create([
+        User::create([
             'name' => $request->name,
             'username' => strtolower($request->username),
             'email' => strtolower($request->email),
@@ -37,12 +36,7 @@ class UserController extends Controller
             'is_active' => true,
         ]);
 
-        AktivitasLog::catat(
-            'TAMBAH_USER',
-            "Membuat akun pengguna baru: [{$user->name}] dengan peran " . strtoupper($user->role)
-        );
-
-        return back()->with('success', "Pengguna {$user->name} berhasil ditambahkan.");
+        return back()->with('success', "Akun pengguna {$request->name} berhasil dibuat.");
     }
 
     public function update(Request $request, User $user)
@@ -52,7 +46,7 @@ class UserController extends Controller
             'username' => 'required|string|max:50|alpha_dash|unique:users,username,' . $user->id,
             'email' => 'required|email|max:100|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
-            'role' => 'required|in:admin,kasir',
+            'role' => 'required|in:admin,pegawai',
             'is_active' => 'nullable|boolean',
             'password' => 'nullable|string|min:6',
         ]);
@@ -72,11 +66,6 @@ class UserController extends Controller
 
         $user->update($updateData);
 
-        AktivitasLog::catat(
-            'UBAH_USER',
-            "Memperbarui akun pengguna [{$user->name}]."
-        );
-
         return back()->with('success', "Akun {$user->name} berhasil diperbarui.");
     }
 
@@ -86,14 +75,9 @@ class UserController extends Controller
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         }
 
-        $nama = $user->name;
+        $name = $user->name;
         $user->delete();
 
-        AktivitasLog::catat(
-            'HAPUS_USER',
-            "Menghapus akun pengguna [{$nama}]."
-        );
-
-        return back()->with('success', "Akun {$nama} berhasil dihapus.");
+        return back()->with('success', "Akun {$name} berhasil dihapus.");
     }
 }

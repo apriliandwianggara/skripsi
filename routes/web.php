@@ -2,52 +2,47 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Customer\OrderController;
-use App\Http\Controllers\Kasir\KasirController;
-use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Customer\CustomerOrderController;
+use App\Http\Controllers\Pegawai\PegawaiDashboardController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MenuController;
-use App\Http\Controllers\Admin\KategoriController;
-use App\Http\Controllers\Admin\PromoController;
-use App\Http\Controllers\Admin\MejaController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\OrderManagementController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\AktivitasLogController;
-use App\Http\Controllers\Admin\PengaturanController;
+use App\Http\Controllers\Admin\SettingController;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes - Sistem Pemesanan QR Code Sekarsa Coffee (Skripsi)
+| Web Routes - Skripsi Sekarsa Coffee
+| Judul: Perancangan Sistem Pemesanan Digital dan Notifikasi Pengambilan Pesanan 
+|        Berbasis Web dengan Algoritma First In First Out (FIFO) pada Sekarsa Coffee
 |--------------------------------------------------------------------------
 */
 
-// Redirect root to customer order page
+// Redirect root ke halaman pemesanan pelanggan
 Route::get('/', function () {
     return redirect()->route('customer.order');
 });
 
-// Quick link meja: /meja/01
-Route::get('/meja/{nomor_meja}', function ($nomor_meja) {
-    return redirect()->route('customer.order', ['meja' => $nomor_meja]);
-})->name('customer.meja_direct');
-
 /*
 |--------------------------------------------------------------------------
-| Alur 1, 2, 5, 7, 8, 9: Tampilan & Fitur Pelanggan (Tanpa Perlu Login)
+| A. Halaman Pelanggan (Tanpa Perlu Login)
 |--------------------------------------------------------------------------
 */
-Route::prefix('pesan')->group(function () {
-    Route::get('/', [OrderController::class, 'index'])->name('customer.order');
-    Route::post('/pilih-meja', [OrderController::class, 'setMeja'])->name('customer.set_meja');
-    Route::post('/cek-promo', [OrderController::class, 'checkPromo'])->name('customer.check_promo');
-    Route::post('/kirim', [OrderController::class, 'submitOrder'])->name('customer.submit_order');
-});
+// 1. Halaman Pemesanan
+Route::get('/pesan', [CustomerOrderController::class, 'index'])->name('customer.order');
+Route::post('/pesan/kirim', [CustomerOrderController::class, 'submitOrder'])->name('customer.submit_order');
 
-Route::get('/pesanan/{nomor_pesanan}', [OrderController::class, 'trackOrder'])->name('customer.track');
-Route::get('/api/pesanan/{nomor_pesanan}/status', [OrderController::class, 'statusApi'])->name('customer.status_api');
-Route::post('/pesanan/{nomor_pesanan}/upload-qris', [OrderController::class, 'uploadQris'])->name('customer.upload_qris');
+// 2. Halaman Konfirmasi Pesanan
+Route::get('/pesanan/{token}/konfirmasi', [CustomerOrderController::class, 'confirmation'])->name('customer.confirmation');
+
+// 3. Halaman Pelacakan Pesanan & 4. Notifikasi Suara Pengambilan
+Route::get('/pesanan/{token}', [CustomerOrderController::class, 'track'])->name('customer.track');
+Route::get('/api/pesanan/{token}/status', [CustomerOrderController::class, 'trackStatusApi'])->name('customer.status_api');
 
 /*
 |--------------------------------------------------------------------------
-| Otentikasi Petugas (Admin & Kasir)
+| Otentikasi Petugas (Admin & Pegawai / Barista)
 |--------------------------------------------------------------------------
 */
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -56,67 +51,49 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 /*
 |--------------------------------------------------------------------------
-| Tampilan & Fitur Kasir (Antrean FIFO, Proses, Selesai, Pembayaran)
+| C. Dashboard Pegawai / Barista (Pusat Operasional Algoritma FIFO)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:kasir,admin'])->prefix('kasir')->name('kasir.')->group(function () {
-    Route::get('/dashboard', [KasirController::class, 'dashboard'])->name('dashboard');
-    Route::get('/api/antrean', [KasirController::class, 'queueApi'])->name('queue_api');
+Route::middleware(['auth', 'role:pegawai,admin'])->prefix('pegawai')->name('pegawai.')->group(function () {
+    Route::get('/dashboard', [PegawaiDashboardController::class, 'dashboard'])->name('dashboard');
+    Route::get('/api/antrean', [PegawaiDashboardController::class, 'queueApi'])->name('queue_api');
     
-    // Alur Status Pesanan
-    Route::post('/pesanan/{pesanan}/proses', [KasirController::class, 'processOrder'])->name('order.process');
-    Route::post('/pesanan/{pesanan}/selesai', [KasirController::class, 'completeOrder'])->name('order.complete');
-    Route::post('/pesanan/{pesanan}/ambil', [KasirController::class, 'pickupOrder'])->name('order.pickup');
-    Route::post('/pesanan/{pesanan}/batal', [KasirController::class, 'cancelOrder'])->name('order.cancel');
+    // Alur Status Pesanan FIFO
+    Route::post('/pesanan/{order}/proses', [PegawaiDashboardController::class, 'processOrder'])->name('order.process');
+    Route::post('/pesanan/{order}/siap', [PegawaiDashboardController::class, 'readyOrder'])->name('order.ready');
+    Route::post('/pesanan/{order}/selesai', [PegawaiDashboardController::class, 'completeOrder'])->name('order.complete');
+    Route::post('/pesanan/{order}/batal', [PegawaiDashboardController::class, 'cancelOrder'])->name('order.cancel');
     
-    // Alur Pembayaran (Tunai / QRIS)
-    Route::post('/pesanan/{pesanan}/bayar', [KasirController::class, 'processPayment'])->name('order.payment');
-    Route::get('/pesanan/{pesanan}/struk', [KasirController::class, 'printReceipt'])->name('order.receipt');
-    
-    // Quick Toggle Stok Menu
-    Route::post('/menu/{menu}/toggle-stok', [KasirController::class, 'toggleMenuStock'])->name('menu.toggle_stock');
+    // Notifikasi WhatsApp
+    Route::get('/pesanan/{order}/whatsapp', [PegawaiDashboardController::class, 'sendWhatsApp'])->name('order.whatsapp');
 });
 
 /*
 |--------------------------------------------------------------------------
-| Modul Pengelolaan Menu, Kategori & Promo (Bisa diakses Kasir & Admin dengan Audit Log)
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth', 'role:admin,kasir'])->prefix('kelola')->group(function () {
-    // Menu
-    Route::resource('menus', MenuController::class)->names('admin.menus');
-    Route::post('menus/{menu}/toggle-stok', [MenuController::class, 'toggleStock'])->name('admin.menus.toggle_stock');
-
-    // Kategori
-    Route::resource('kategoris', KategoriController::class)->names('admin.kategoris')->except(['create', 'show', 'edit']);
-
-    // Promo
-    Route::resource('promos', PromoController::class)->names('admin.promos')->except(['create', 'show', 'edit']);
-});
-
-/*
-|--------------------------------------------------------------------------
-| Tampilan & Fitur Admin/Owner
+| B. Dashboard Admin & D. Pengaturan Sistem
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/laporan', [AdminDashboardController::class, 'reports'])->name('reports');
-    Route::get('/laporan/cetak', [AdminDashboardController::class, 'printReport'])->name('reports.print');
+    // Dashboard & Laporan
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/laporan', [DashboardController::class, 'reports'])->name('reports');
+    Route::get('/laporan/cetak', [DashboardController::class, 'printReport'])->name('reports.print');
 
-    // Manajemen Meja & QR Code Generator
-    Route::resource('mejas', MejaController::class)->except(['create', 'show', 'edit']);
-    Route::post('mejas/{meja}/reset', [MejaController::class, 'resetStatus'])->name('mejas.reset');
-    Route::get('mejas/{meja}/qr', [MejaController::class, 'showQr'])->name('mejas.qr');
-    Route::get('mejas/cetak-semua/qr', [MejaController::class, 'printAllQr'])->name('mejas.print_all_qr');
+    // Manajemen Menu & Kategori
+    Route::resource('menus', MenuController::class);
+    Route::post('menus/{menu}/toggle', [MenuController::class, 'toggleAvailability'])->name('menus.toggle');
+    Route::resource('categories', CategoryController::class)->except(['create', 'show', 'edit']);
 
-    // Kelola Akun Pengguna
+    // Manajemen Pesanan & Riwayat Transaksi
+    Route::get('/pesanan', [OrderManagementController::class, 'index'])->name('orders.index');
+    Route::get('/pesanan/{order}', [OrderManagementController::class, 'show'])->name('orders.show');
+    Route::get('/riwayat-pesanan', [OrderManagementController::class, 'history'])->name('orders.history');
+
+    // Manajemen Pengguna (Admin & Pegawai)
     Route::resource('users', UserController::class)->except(['create', 'show', 'edit']);
 
-    // Log Aktivitas Petugas
-    Route::get('/logs', [AktivitasLogController::class, 'index'])->name('logs.index');
-
-    // Pengaturan Cafe & QRIS
-    Route::get('/pengaturan', [PengaturanController::class, 'index'])->name('pengaturan.index');
-    Route::post('/pengaturan', [PengaturanController::class, 'update'])->name('pengaturan.update');
+    // Pengaturan Sistem & Kode QR Pemesanan (Pakai Selamanya)
+    Route::get('/pengaturan', [SettingController::class, 'index'])->name('settings.index');
+    Route::post('/pengaturan', [SettingController::class, 'update'])->name('settings.update');
+    Route::get('/pengaturan/qr/cetak', [SettingController::class, 'printPermanentQr'])->name('settings.qr_print');
 });
