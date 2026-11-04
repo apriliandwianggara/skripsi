@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 480" width="350" height="480">
+  <rect width="100%" height="100%" fill="#ffffff" rx="16"/>
+  <!-- Header QRIS -->
+  <rect width="100%" height="70" fill="#dc2626" rx="16 16 0 0"/>
+  <text x="175" y="44" fill="#ffffff" font-family="'Segoe UI', Roboto, sans-serif" font-size="24" font-weight="900" text-anchor="middle" letter-spacing="2">QRIS</text>
+  <text x="175" y="60" fill="#fee2e2" font-family="'Segoe UI', Roboto, sans-serif" font-size="10" text-anchor="middle">PEMBAYARAN DIGITAL NASIONAL</text>
+  
+  <text x="175" y="105" fill="#064e3b" font-family="'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="700" text-anchor="middle">SEKARSA COFFEE</text>
+  <text x="175" y="125" fill="#6b7280" font-family="'Segoe UI', Roboto, sans-serif" font-size="11" text-anchor="middle">NMID: ID1029384756102 - A01</text>
+
+  <!-- QR Box -->
+  <rect x="35" y="145" width="280" height="280" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" rx="12"/>
+  
+  <!-- QR Code Mock Matrix -->
+  <g fill="#0f172a">
+    <!-- Top-Left Corner -->
+    <rect x="55" y="165" width="60" height="60" rx="4"/>
+    <rect x="67" y="177" width="36" height="36" fill="#f8fafc"/>
+    <rect x="75" y="185" width="20" height="20" rx="2"/>
+    
+    <!-- Top-Right Corner -->
+    <rect x="235" y="165" width="60" height="60" rx="4"/>
+    <rect x="247" y="177" width="36" height="36" fill="#f8fafc"/>
+    <rect x="255" y="185" width="20" height="20" rx="2"/>
+
+    <!-- Bottom-Left Corner -->
+    <rect x="55" y="345" width="60" height="60" rx="4"/>
+    <rect x="67" y="357" width="36" height="36" fill="#f8fafc"/>
+    <rect x="75" y="365" width="20" height="20" rx="2"/>
+
+    <!-- Pattern blocks -->
+    <rect x="135" y="165" width="16" height="32" rx="2"/>
+    <rect x="165" y="165" width="48" height="16" rx="2"/>
+    <rect x="195" y="195" width="16" height="48" rx="2"/>
+    <rect x="135" y="215" width="45" height="16" rx="2"/>
+    
+    <rect x="70" y="245" width="45" height="16" rx="2"/>
+    <rect x="55" y="280" width="32" height="32" rx="2"/>
+    <rect x="100" y="280" width="16" height="48" rx="2"/>
+
+    <rect x="135" y="250" width="80" height="80" rx="4" fill="#047857"/>
+    <text x="175" y="295" fill="#ffffff" font-family="'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="bold" text-anchor="middle">SEKARSA</text>
+
+    <rect x="235" y="245" width="32" height="48" rx="2"/>
+    <rect x="280" y="245" width="15" height="30" rx="2"/>
+    <rect x="250" y="310" width="45" height="20" rx="2"/>
+
+    <rect x="135" y="350" width="35" height="50" rx="2"/>
+    <rect x="185" y="350" width="45" height="18" rx="2"/>
+    <rect x="195" y="380" width="95" height="22" rx="2"/>
+  </g>
+
+  <!-- Footer -->
+  <text x="175" y="445" fill="#374151" font-family="'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Scan dengan BCA, GoPay, OVO, ShopeePay, Dana, dll</text>
+  <text x="175" y="462" fill="#9ca3af" font-family="'Segoe UI', Roboto, sans-serif" font-size="9" text-anchor="middle">Dicetak oleh Sistem Otomasi Sekarsa Coffee</text>
+</svg>
