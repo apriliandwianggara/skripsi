@@ -364,3 +364,4 @@
     setInterval(syncQueue, 4000);
 </script>
 @endpush
+

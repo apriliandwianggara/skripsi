@@ -113,7 +113,7 @@
             <div class="overflow-hidden">
                 <p class="text-sm font-semibold text-white truncate">{{ auth()->user()->name ?? 'Pengguna' }}</p>
                 <div class="flex items-center space-x-1.5">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
                     <span class="text-xs text-emerald-300 capitalize font-medium">
                         {{ auth()->user()->role === 'admin' ? 'Admin / Owner' : 'Pegawai / Barista' }}
                     </span>

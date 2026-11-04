@@ -570,3 +570,4 @@
     document.addEventListener('DOMContentLoaded', loadCart);
 </script>
 @endpush
+
