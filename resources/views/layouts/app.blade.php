@@ -116,8 +116,9 @@
         });
 
         /**
-         * Synthesizer Web Audio API Chime
-         * Memainkan nada lonceng kafe yang merdu tanpa memerlukan file audio eksternal!
+         * Nada Dering Pesanan Selesai / Siap Diambil Sekarsa Coffee
+         * Nada melodi ramah (Melodic Chime 4 Nada + Harmoni Bell)
+         * Nada: C5 (523.25Hz) -> E5 (659.25Hz) -> G5 (783.99Hz) -> C6 (1046.50Hz)
          */
         function playSekarsaChime() {
             try {
@@ -125,47 +126,52 @@
                 if (!AudioContext) return;
                 const ctx = new AudioContext();
 
-                // Bell note 1: E5 (659.25 Hz)
-                const osc1 = ctx.createOscillator();
-                const gain1 = ctx.createGain();
-                osc1.type = 'sine';
-                osc1.frequency.setValueAtTime(659.25, ctx.currentTime);
-                gain1.gain.setValueAtTime(0.3, ctx.currentTime);
-                gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
-                osc1.connect(gain1);
-                gain1.connect(ctx.destination);
-                osc1.start(ctx.currentTime);
-                osc1.stop(ctx.currentTime + 1.2);
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
 
-                // Bell note 2: G#5 (830.61 Hz)
-                setTimeout(() => {
-                    if (ctx.state === 'closed') return;
-                    const osc2 = ctx.createOscillator();
-                    const gain2 = ctx.createGain();
-                    osc2.type = 'sine';
-                    osc2.frequency.setValueAtTime(830.61, ctx.currentTime);
-                    gain2.gain.setValueAtTime(0.35, ctx.currentTime);
-                    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
-                    osc2.connect(gain2);
-                    gain2.connect(ctx.destination);
-                    osc2.start(ctx.currentTime);
-                    osc2.stop(ctx.currentTime + 1.5);
-                }, 200);
+                const notes = [
+                    { freq: 523.25, time: 0.00, dur: 0.6 },  // C5
+                    { freq: 659.25, time: 0.18, dur: 0.6 },  // E5
+                    { freq: 783.99, time: 0.36, dur: 0.7 },  // G5
+                    { freq: 1046.50, time: 0.54, dur: 1.6 }, // C6 (High Ding panjang)
+                ];
 
-                // Bell note 3: B5 (987.77 Hz)
-                setTimeout(() => {
-                    if (ctx.state === 'closed') return;
-                    const osc3 = ctx.createOscillator();
-                    const gain3 = ctx.createGain();
-                    osc3.type = 'sine';
-                    osc3.frequency.setValueAtTime(987.77, ctx.currentTime);
-                    gain3.gain.setValueAtTime(0.4, ctx.currentTime);
-                    gain3.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.0);
-                    osc3.connect(gain3);
-                    gain3.connect(ctx.destination);
-                    osc3.start(ctx.currentTime);
-                    osc3.stop(ctx.currentTime + 2.0);
-                }, 400);
+                notes.forEach(note => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    // Menggunakan triangle + sine untuk nada jernih seperti bel kafe/airport chime
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(note.freq, ctx.currentTime + note.time);
+
+                    gain.gain.setValueAtTime(0.001, ctx.currentTime + note.time);
+                    gain.gain.exponentialRampToValueAtTime(0.45, ctx.currentTime + note.time + 0.04);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + note.time + note.dur);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.start(ctx.currentTime + note.time);
+                    osc.stop(ctx.currentTime + note.time + note.dur);
+
+                    // Tambahan nada pendukung (harmoni hangat)
+                    const subOsc = ctx.createOscillator();
+                    const subGain = ctx.createGain();
+                    subOsc.type = 'sine';
+                    subOsc.frequency.setValueAtTime(note.freq * 2, ctx.currentTime + note.time);
+                    subGain.gain.setValueAtTime(0.12, ctx.currentTime + note.time);
+                    subGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + note.time + note.dur * 0.8);
+                    subOsc.connect(subGain);
+                    subGain.connect(ctx.destination);
+                    subOsc.start(ctx.currentTime + note.time);
+                    subOsc.stop(ctx.currentTime + note.time + note.dur * 0.8);
+                });
+
+                // Getar HP jika browser smartphone mendukung Vibration API
+                if ('vibrate' in navigator) {
+                    navigator.vibrate([300, 150, 300, 150, 500]);
+                }
             } catch (e) {
                 console.warn('Audio Chime tidak dapat dimainkan:', e);
             }

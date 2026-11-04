@@ -6,6 +6,22 @@
 <div class="min-h-screen bg-slate-50 flex flex-col py-6 px-4">
     <div class="max-w-md mx-auto w-full">
 
+        <!-- Banner Pop-up Siap Diambil (Otomatis Muncul di HP Pelanggan Tanpa Perlu Klik Pantau) -->
+        <div id="readyAlertBanner" class="{{ $order->status === 'siap_diambil' ? '' : 'hidden' }} mb-4 bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 text-white rounded-3xl p-5 shadow-2xl text-center space-y-3 border-2 border-amber-300">
+            <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto text-amber-300 text-3xl shadow-inner">
+                <i class="fa-solid fa-bell"></i>
+            </div>
+            <div>
+                <h2 class="font-black text-xl text-white font-serif tracking-wide">PESANAN ANDA SIAP DIAMBIL!</h2>
+                <p class="text-xs text-emerald-100 mt-1">
+                    Silakan menuju ke meja kasir/counter dan tunjukkan nomor antrean Anda.
+                </p>
+            </div>
+            <div class="inline-block bg-white text-emerald-950 font-black text-3xl px-6 py-2 rounded-2xl shadow font-mono">
+                {{ $order->queue_number }}
+            </div>
+        </div>
+
         <!-- Card Konfirmasi Utama -->
         <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
             <!-- Header Status Sukses -->
@@ -44,11 +60,11 @@
                     <div class="grid grid-cols-2 gap-2 text-center pt-1">
                         <div class="bg-white rounded-xl p-2 border border-emerald-100">
                             <span class="text-[10px] text-gray-500 block">Pesanan di Depan</span>
-                            <span class="font-bold text-emerald-800 text-base font-mono">{{ $queueInfo['pesanan_di_depan'] }}</span>
+                            <span id="confDepanVal" class="font-bold text-emerald-800 text-base font-mono">{{ $queueInfo['pesanan_di_depan'] }}</span>
                         </div>
                         <div class="bg-white rounded-xl p-2 border border-emerald-100">
                             <span class="text-[10px] text-gray-500 block">Estimasi Menunggu</span>
-                            <span class="font-bold text-emerald-800 text-base font-mono">&plusmn; {{ $queueInfo['estimasi_waktu_menit'] }} mnt</span>
+                            <span id="confEstimasiVal" class="font-bold text-emerald-800 text-base font-mono">&plusmn; {{ $queueInfo['estimasi_waktu_menit'] }} mnt</span>
                         </div>
                     </div>
                 </div>
@@ -71,9 +87,9 @@
                     </div>
                     <div class="flex justify-between text-gray-600">
                         <span>Status Saat Ini:</span>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                        <span id="confStatusBadge" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
                             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1 animate-pulse"></span>
-                            {{ $order->status_label }}
+                            <span id="confStatusText">{{ $order->status_label }}</span>
                         </span>
                     </div>
                 </div>
@@ -141,4 +157,77 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    const orderToken = "{{ $order->tracking_token }}";
+    let currentStatus = "{{ $order->status }}";
+    let chimePlayed = (currentStatus === 'siap_diambil' || currentStatus === 'selesai');
+
+    async function checkConfirmationStatus() {
+        try {
+            const res = await fetch(`/api/pesanan/${orderToken}/status`);
+            if (!res.ok) return;
+
+            const data = await res.json();
+            if (!data.success) return;
+
+            const newStatus = data.status;
+
+            // Update info antrean
+            const depanEl = document.getElementById('confDepanVal');
+            const estimasiEl = document.getElementById('confEstimasiVal');
+            if (depanEl) depanEl.innerText = data.pesanan_di_depan;
+            if (estimasiEl) estimasiEl.innerText = `± ${data.estimasi_waktu_menit} mnt`;
+
+            if (newStatus !== currentStatus) {
+                currentStatus = newStatus;
+
+                const badge = document.getElementById('confStatusBadge');
+                const text = document.getElementById('confStatusText');
+                if (text) text.innerText = data.status_label;
+
+                // Jika status Siap Diambil
+                if (newStatus === 'siap_diambil') {
+                    const banner = document.getElementById('readyAlertBanner');
+                    if (banner) banner.classList.remove('hidden');
+
+                    if (badge) {
+                        badge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800';
+                    }
+
+                    if (!chimePlayed) {
+                        chimePlayed = true;
+                        // Putar nada dering pesanan selesai
+                        playSekarsaChime();
+
+                        Swal.fire({
+                            title: 'PESANAN ANDA SIAP!',
+                            html: `Nomor Antrean <b>#${data.queue_number}</b> siap diambil di meja kasir.`,
+                            icon: 'success',
+                            confirmButtonColor: '#16a34a',
+                            confirmButtonText: 'Baik, Saya Menuju Kasir'
+                        });
+                    }
+                } else if (newStatus === 'diproses') {
+                    if (badge) {
+                        badge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800';
+                    }
+                } else if (newStatus === 'selesai') {
+                    const banner = document.getElementById('readyAlertBanner');
+                    if (banner) banner.classList.add('hidden');
+                    if (badge) {
+                        badge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-800';
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Sync status konfirmasi gagal:', e);
+        }
+    }
+
+    // Auto Polling Real-time setiap 2.5 Detik
+    setInterval(checkConfirmationStatus, 2500);
+</script>
+@endpush
 
