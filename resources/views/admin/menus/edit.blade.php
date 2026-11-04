@@ -64,7 +64,7 @@
                 <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Ganti Foto Menu (Opsional)</label>
                 @if($menu->image)
                     <div class="mb-2 flex items-center space-x-3 p-2 bg-gray-50 rounded-xl border border-gray-200">
-                        <img src="{{ $menu->image_url }}" class="w-12 h-12 rounded-lg object-cover" onerror="this.src='{{ asset('images/menu-placeholder.svg') }}'">
+                        <img src="{{ $menu->image_url }}" class="w-12 h-12 rounded-lg object-cover" onerror="this.onerror=null; this.src='/images/menu-placeholder.svg';">
                         <span class="text-xs text-gray-500">Foto saat ini tersimpan</span>
                     </div>
                 @endif

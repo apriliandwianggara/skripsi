@@ -119,7 +119,7 @@
                                  alt="{{ $menu->name }}"
                                  class="w-full h-full object-cover"
                                  loading="lazy"
-                                 onerror="this.src='{{ asset('images/menu-placeholder.svg') }}'">
+                                 onerror="this.onerror=null; this.src='/images/menu-placeholder.svg';">
                             <span class="absolute bottom-1 left-1 bg-black/60 backdrop-blur-sm text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
                                 {{ $menu->category->name ?? 'Menu' }}
                             </span>
@@ -438,7 +438,7 @@
                 <div class="bg-gray-50 border border-gray-200/80 rounded-2xl p-3 flex flex-col space-y-2">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2.5 min-w-0 pr-2">
-                            <img src="${item.image}" class="w-10 h-10 rounded-lg object-cover bg-emerald-100 shrink-0" onerror="this.src='{{ asset('images/menu-placeholder.svg') }}'">
+                            <img src="${item.image}" class="w-10 h-10 rounded-lg object-cover bg-emerald-100 shrink-0" onerror="this.onerror=null; this.src='/images/menu-placeholder.svg';">
                             <div class="truncate">
                                 <h4 class="font-bold text-xs text-gray-800 truncate">${item.name}</h4>
                                 <span class="text-xs text-emerald-800 font-semibold">${formatRupiah(item.price)}</span>

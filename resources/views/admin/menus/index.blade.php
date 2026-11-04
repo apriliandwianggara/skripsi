@@ -81,7 +81,7 @@
                     @forelse($menus as $menu)
                         <tr class="hover:bg-gray-50/80 transition">
                             <td class="p-3.5">
-                                <img src="{{ $menu->image_url }}" alt="{{ $menu->name }}" class="w-12 h-12 rounded-xl object-cover bg-emerald-50" onerror="this.src='{{ asset('images/menu-placeholder.svg') }}'">
+                                <img src="{{ $menu->image_url }}" alt="{{ $menu->name }}" class="w-12 h-12 rounded-xl object-cover bg-emerald-50" onerror="this.onerror=null; this.src='/images/menu-placeholder.svg';">
                             </td>
                             <td class="p-3.5">
                                 <span class="font-bold text-gray-900 block text-sm">{{ $menu->name }}</span>
