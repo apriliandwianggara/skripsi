@@ -186,9 +186,11 @@
         <!-- Kolom Preview QR Code Permanen -->
         <div class="space-y-6">
             <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm text-center space-y-4">
-                <div class="flex items-center justify-center space-x-2 text-emerald-900 font-bold text-sm">
-                    <i class="fa-solid fa-qrcode text-lg text-emerald-600"></i>
-                    <span>Kode QR Pemesanan</span>
+                <div class="flex items-center justify-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-white p-0.5 border border-gray-200 shadow-sm flex items-center justify-center overflow-hidden">
+                        <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
+                    </div>
+                    <span class="text-emerald-950 font-bold text-sm">Kode QR Pemesanan</span>
                 </div>
 
                 <div class="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 flex flex-col items-center">

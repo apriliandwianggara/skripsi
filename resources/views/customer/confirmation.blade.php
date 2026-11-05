@@ -25,12 +25,12 @@
         <!-- Card Konfirmasi Utama -->
         <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
             <!-- Header Status Sukses -->
-            <div class="bg-gradient-to-br from-emerald-800 to-emerald-950 text-white p-6 text-center relative">
-                <div class="w-16 h-16 bg-emerald-500/20 border-2 border-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-emerald-300 text-3xl shadow-lg">
-                    <i class="fa-solid fa-check"></i>
+            <div class="bg-gradient-to-br from-emerald-800 to-emerald-950 text-white p-6 text-center relative overflow-hidden">
+                <div class="w-14 h-14 bg-white p-1 rounded-2xl mx-auto mb-3 shadow-lg border border-white/40 overflow-hidden flex items-center justify-center">
+                    <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
                 </div>
                 <h1 class="font-bold text-xl font-serif">Pesanan Berhasil Diterima!</h1>
-                <p class="text-xs text-emerald-200/90 mt-1">
+                <p class="text-xs text-emerald-200/90 mt-0.5">
                     Pesanan Anda telah masuk ke dalam antrean sistem FIFO
                 </p>
 

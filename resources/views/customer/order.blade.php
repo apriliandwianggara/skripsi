@@ -7,17 +7,17 @@
 
     <!-- Header Sticky Mobile & Desktop -->
     <header class="glass-header text-white sticky top-0 z-30 shadow-md">
-        <div class="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between">
+        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-emerald-400 flex items-center justify-center text-white shadow-md">
-                    <i class="fa-solid fa-mug-hot text-lg"></i>
+                <div class="w-11 h-11 rounded-xl bg-white p-0.5 flex items-center justify-center shadow-md overflow-hidden shrink-0 border border-emerald-400/40">
+                    <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
                 </div>
                 <div>
                     <h1 class="font-bold text-base tracking-wide font-serif leading-tight">
                         {{ $setting->cafe_name ?? 'SEKARSA COFFEE' }}
                     </h1>
                     <p class="text-[11px] text-emerald-200">
-                        {{ $setting->cafe_tagline ?? 'Coffee & Eatery' }}
+                        {{ $setting->cafe_tagline ?? 'Coffee & Space' }}
                         @if($tableParam)
                             <span class="ml-1 px-1.5 py-0.5 rounded bg-emerald-800 text-emerald-100 font-semibold font-mono text-[10px]">Meja {{ $tableParam }}</span>
                         @endif
@@ -48,6 +48,21 @@
 
     <!-- Main Container -->
     <main class="max-w-3xl mx-auto w-full px-4 pt-4 flex-1">
+
+        <!-- Hero Banner Suasana Kafe Sekarsa -->
+        <div class="mb-4 relative rounded-2xl overflow-hidden shadow-md border border-emerald-900/10 h-32 sm:h-44 group">
+            <img src="{{ asset('images/sekarsa-cafe.jpg') }}" alt="Sekarsa Coffee & Space" class="w-full h-full object-cover object-center filter brightness-90 transition duration-500 group-hover:scale-105">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/30 to-transparent flex flex-col justify-end p-3.5 sm:p-4 text-white">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white w-max mb-1 shadow-sm">
+                    <i class="fa-solid fa-mug-hot mr-1 text-[9px]"></i> Sekarsa Coffee & Space
+                </span>
+                <h2 class="text-base sm:text-xl font-bold font-serif leading-tight">Warmth, Taste & Harmony in Every Sip</h2>
+                <p class="text-[11px] text-emerald-200 flex items-center mt-0.5">
+                    <i class="fa-solid fa-location-dot mr-1 text-amber-400"></i>
+                    <span>Jl. Kaliurang KM 5.8, Manggung, Caturtunggal, Sleman</span>
+                </p>
+            </div>
+        </div>
 
         @if($setting->enable_gps_radius)
         <!-- Badge Status Radius GPS Kafe -->

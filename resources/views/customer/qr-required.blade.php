@@ -6,26 +6,28 @@
 <div class="min-h-screen bg-gradient-to-b from-sekarsa-950 via-sekarsa-900 to-slate-900 flex items-center justify-center p-4">
     <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-emerald-900/20 text-center relative animate-fade-in">
         
-        <!-- Top Ornamental Header -->
-        <div class="bg-gradient-to-b from-sekarsa-900 to-emerald-800 text-white p-8 relative overflow-hidden">
-            <!-- Glow background effect -->
-            <div class="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500/20 rounded-full blur-2xl"></div>
-            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-amber-500/20 rounded-full blur-xl"></div>
+        <!-- Top Ornamental Header with Sekarsa Photo & Logo -->
+        <div class="relative overflow-hidden text-white p-8 text-center">
+            <!-- Background Foto Kafe Sekarsa -->
+            <img src="{{ asset('images/sekarsa-cafe.jpg') }}" alt="Sekarsa Cafe" class="absolute inset-0 w-full h-full object-cover object-center filter brightness-40">
+            <!-- Overlay Gradien Hijau Emerald -->
+            <div class="absolute inset-0 bg-gradient-to-b from-sekarsa-950/90 via-sekarsa-900/85 to-emerald-950/95"></div>
 
             <div class="relative z-10 flex flex-col items-center">
-                <div class="w-20 h-20 bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl flex items-center justify-center mb-4 shadow-xl ring-8 ring-white/5">
-                    <i class="fa-solid fa-qrcode text-4xl text-amber-300 animate-pulse"></i>
+                <!-- Logo Sekarsa Coffee -->
+                <div class="w-20 h-20 bg-white p-1.5 rounded-3xl shadow-2xl mb-3 border border-white/40 overflow-hidden flex items-center justify-center">
+                    <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
                 </div>
                 
-                <span class="px-3 py-1 bg-amber-400 text-slate-950 text-[10px] font-extrabold uppercase tracking-widest rounded-full shadow-sm mb-2">
+                <span class="px-3.5 py-1 bg-amber-400 text-slate-950 text-[10px] font-extrabold uppercase tracking-widest rounded-full shadow-md mb-2">
                     <i class="fa-solid fa-lock mr-1"></i> Akses Meja Diperlukan
                 </span>
 
-                <h1 class="text-2xl font-bold font-serif tracking-tight text-white">
+                <h1 class="text-2xl font-bold font-serif tracking-tight text-white drop-shadow">
                     {{ $setting->cafe_name ?? 'Sekarsa Coffee' }}
                 </h1>
-                <p class="text-xs text-emerald-200 mt-1">
-                    {{ $setting->cafe_tagline ?? 'Warmth, Taste & Harmony in Every Sip' }}
+                <p class="text-xs text-emerald-200 mt-1 drop-shadow">
+                    {{ $setting->cafe_tagline ?? 'Coffee & Space' }}
                 </p>
             </div>
         </div>

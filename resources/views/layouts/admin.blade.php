@@ -81,11 +81,11 @@
 
     <!-- Mobile Header -->
     <header class="md:hidden bg-sekarsa-900 text-white flex items-center justify-between p-4 sticky top-0 z-40 shadow">
-        <div class="flex items-center space-x-2">
-            <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-white shadow">
-                <i class="fa-solid fa-mug-hot text-sm"></i>
+        <div class="flex items-center space-x-2.5">
+            <div class="w-9 h-9 rounded-xl bg-white p-0.5 flex items-center justify-center font-bold text-white shadow overflow-hidden">
+                <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
             </div>
-            <span class="font-bold text-lg tracking-wide">SEKARSA COFFEE</span>
+            <span class="font-bold text-base tracking-wide font-serif">SEKARSA COFFEE</span>
         </div>
         <button id="mobileMenuBtn" class="text-white hover:text-emerald-300 focus:outline-none p-1">
             <i class="fa-solid fa-bars text-xl"></i>
@@ -95,13 +95,13 @@
     <!-- Sidebar Navigation -->
     <aside id="sidebar" class="hidden md:flex flex-col w-64 bg-sekarsa-950 text-emerald-100 shrink-0 min-h-screen sticky top-0 shadow-2xl z-30">
         <!-- Logo Brand -->
-        <div class="p-6 border-b border-sekarsa-800/80 flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center text-white shadow-lg">
-                <i class="fa-solid fa-mug-saucer text-lg"></i>
+        <div class="p-5 border-b border-sekarsa-800/80 flex items-center space-x-3">
+            <div class="w-12 h-12 rounded-2xl bg-white p-1 flex items-center justify-center shadow-lg overflow-hidden shrink-0 border border-white/20">
+                <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
             </div>
             <div>
-                <h1 class="font-bold text-lg text-white tracking-wider font-serif">SEKARSA</h1>
-                <p class="text-xs text-emerald-400 font-medium">Coffee & Eatery</p>
+                <h1 class="font-bold text-base text-white tracking-wider font-serif">SEKARSA</h1>
+                <p class="text-[11px] text-emerald-400 font-medium">Coffee & Space</p>
             </div>
         </div>
 

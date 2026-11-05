@@ -3,17 +3,18 @@
 @section('title', 'Masuk Petugas - ' . (\App\Models\Setting::get()->cafe_name ?? 'Sekarsa Coffee'))
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-sekarsa-950 via-sekarsa-900 to-emerald-900 flex flex-col justify-center items-center px-4 py-8 relative">
-    <!-- Background Elements -->
-    <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#86efac_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none"></div>
+<div class="min-h-screen relative flex flex-col justify-center items-center px-4 py-8">
+    <!-- Background Foto Kafe Sekarsa & Gradien Gelap -->
+    <img src="{{ asset('images/sekarsa-cafe.jpg') }}" alt="Sekarsa Cafe" class="absolute inset-0 w-full h-full object-cover object-center filter brightness-40">
+    <div class="absolute inset-0 bg-gradient-to-br from-sekarsa-950/90 via-sekarsa-900/85 to-emerald-950/95 backdrop-blur-[2px]"></div>
 
     <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-emerald-100 z-10">
-        <!-- Header Brand -->
+        <!-- Header Brand with Sekarsa Logo -->
         <div class="bg-gradient-to-r from-sekarsa-900 to-emerald-800 p-8 text-center text-white relative">
-            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner">
-                <i class="fa-solid fa-mug-hot text-3xl text-emerald-300"></i>
+            <div class="w-20 h-20 mx-auto mb-3 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-xl border border-white/40 overflow-hidden">
+                <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
             </div>
-            <h1 class="text-2xl font-bold font-serif tracking-wider">SEKARSA COFFEE</h1>
+            <h1 class="text-2xl font-bold font-serif tracking-wider text-white">SEKARSA COFFEE</h1>
             <p class="text-xs text-emerald-200 mt-1">Portal Masuk Petugas & Administrator</p>
         </div>
 

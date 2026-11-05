@@ -33,6 +33,23 @@
         </div>
     </div>
 
+    <!-- Banner Suasana Sekarsa Coffee -->
+    <div class="relative rounded-2xl overflow-hidden shadow-sm border border-emerald-900/10 h-24 sm:h-28">
+        <img src="{{ asset('images/sekarsa-cafe.jpg') }}" alt="Sekarsa Cafe" class="w-full h-full object-cover object-center filter brightness-75">
+        <div class="absolute inset-0 bg-gradient-to-r from-emerald-950/90 via-emerald-950/60 to-transparent flex items-center p-4 sm:p-5 text-white space-x-3.5">
+            <div class="w-12 h-12 rounded-xl bg-white p-1 shadow-md shrink-0 flex items-center justify-center border border-white/40">
+                <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
+            </div>
+            <div>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-600 text-white shadow-sm inline-block mb-0.5">
+                    Sekarsa Coffee & Space
+                </span>
+                <h2 class="text-sm sm:text-base font-bold font-serif leading-tight">Pos Barista & Kasir &bull; {{ auth()->user()->name }}</h2>
+                <p class="text-[11px] text-emerald-200">Pesanan pelanggan diproses berurutan sesuai waktu masuk (FIFO).</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Quick Stat Cards -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex items-center space-x-3">

@@ -46,23 +46,31 @@
     <!-- STANDEE CARD (Ukuran Ideal Akrilik A6 / Meja) -->
     <div class="w-80 bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-emerald-900/10 text-center flex flex-col items-center">
 
-        <!-- Top Header Card -->
-        <div class="w-full bg-gradient-to-b from-emerald-950 via-emerald-900 to-sekarsa-900 text-white pt-8 pb-6 px-6 relative">
-            <div class="w-14 h-14 bg-emerald-500/20 border-2 border-emerald-400/40 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-                <i class="fa-solid fa-mug-hot text-2xl text-emerald-300"></i>
-            </div>
-            <h1 class="font-bold text-2xl font-serif tracking-wider text-white">
-                {{ $setting->cafe_name ?? 'SEKARSA COFFEE' }}
-            </h1>
-            <p class="text-xs text-emerald-200 mt-0.5 tracking-wide">
-                {{ $setting->cafe_tagline ?? 'Coffee & Eatery' }}
-            </p>
+        <!-- Top Header Card with Sekarsa Photo & Logo -->
+        <div class="w-full relative overflow-hidden text-white pt-8 pb-6 px-6">
+            <!-- Background Foto Kafe Sekarsa -->
+            <img src="{{ asset('images/sekarsa-cafe.jpg') }}" alt="Sekarsa Cafe" class="absolute inset-0 w-full h-full object-cover object-center filter brightness-50">
+            <!-- Overlay Gradien Hijau Emerald Sekarsa -->
+            <div class="absolute inset-0 bg-gradient-to-b from-emerald-950/90 via-emerald-900/85 to-emerald-950/95"></div>
 
-            @if($tableNumber)
-                <div class="mt-3 inline-block bg-amber-400 text-slate-950 text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow">
-                    MEJA {{ $tableNumber }}
+            <div class="relative z-10 flex flex-col items-center">
+                <!-- Logo Sekarsa Coffee -->
+                <div class="w-16 h-16 bg-white p-1 rounded-2xl shadow-xl mx-auto mb-3 border border-white/40 overflow-hidden flex items-center justify-center">
+                    <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
                 </div>
-            @endif
+                <h1 class="font-bold text-2xl font-serif tracking-wider text-white drop-shadow-md">
+                    {{ $setting->cafe_name ?? 'SEKARSA COFFEE' }}
+                </h1>
+                <p class="text-xs text-emerald-200 mt-0.5 tracking-wide drop-shadow">
+                    {{ $setting->cafe_tagline ?? 'Coffee & Space' }}
+                </p>
+
+                @if($tableNumber)
+                    <div class="mt-3 inline-block bg-amber-400 text-slate-950 text-xs font-extrabold px-4 py-1 rounded-full uppercase tracking-widest shadow-md">
+                        MEJA {{ $tableNumber }}
+                    </div>
+                @endif
+            </div>
         </div>
 
         <!-- QR Body Container -->

@@ -25,6 +25,23 @@
         </div>
     </div>
 
+    <!-- Banner Suasana Sekarsa Coffee -->
+    <div class="relative rounded-2xl overflow-hidden shadow-sm border border-emerald-900/10 h-28 sm:h-32">
+        <img src="{{ asset('images/sekarsa-cafe.jpg') }}" alt="Sekarsa Cafe" class="w-full h-full object-cover object-center filter brightness-75">
+        <div class="absolute inset-0 bg-gradient-to-r from-emerald-950/90 via-emerald-950/60 to-transparent flex items-center p-4 sm:p-5 text-white space-x-4">
+            <div class="w-14 h-14 rounded-2xl bg-white p-1.5 shadow-xl shrink-0 hidden sm:flex items-center justify-center border border-white/40">
+                <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
+            </div>
+            <div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white shadow-sm inline-block mb-1">
+                    Sekarsa Coffee & Space
+                </span>
+                <h2 class="text-base sm:text-lg font-bold font-serif leading-tight">Selamat Datang, {{ auth()->user()->name }}!</h2>
+                <p class="text-xs text-emerald-200 mt-0.5">Sistem Pemesanan Digital & Algoritma FIFO beroperasi secara real-time.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- 6 KPI Status Cards Hari Ini -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
         <!-- Total Pesanan -->

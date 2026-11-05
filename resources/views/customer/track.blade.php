@@ -9,8 +9,8 @@
         <!-- Top Brand Header -->
         <div class="flex items-center justify-between px-1">
             <div class="flex items-center space-x-2.5">
-                <div class="w-8 h-8 rounded-lg bg-emerald-700 flex items-center justify-center text-white shadow">
-                    <i class="fa-solid fa-mug-hot text-xs"></i>
+                <div class="w-9 h-9 rounded-xl bg-white p-0.5 border border-emerald-600/30 flex items-center justify-center shadow overflow-hidden">
+                    <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
                 </div>
                 <div>
                     <h2 class="font-bold text-sm text-gray-800 font-serif">{{ $setting->cafe_name ?? 'Sekarsa Coffee' }}</h2>
