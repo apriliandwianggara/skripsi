@@ -11,6 +11,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Kecualikan endpoint pemesanan pelanggan & API publik dari CSRF
+        // agar pemesanan dari kamera HP / embedded browser QR tidak terblokir Token Mismatch
+        $middleware->validateCsrfTokens(except: [
+            'pesan/kirim',
+            'api/*',
+        ]);
+
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);

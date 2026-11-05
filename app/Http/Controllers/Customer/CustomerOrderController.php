@@ -175,13 +175,15 @@ class CustomerOrderController extends Controller
     {
         $setting = Setting::get();
 
-        // Validasi QR Gate: Cegah inject pesanan tanpa sesi scan QR
+        // Validasi QR Gate: Cegah inject pesanan tanpa otorisasi scan QR di meja
         if ($setting->require_qr_scan && !auth()->check()) {
+            $providedToken = $request->input('qr_token') ?: $request->query('token') ?: session('qr_token');
+            $isTokenValid = $providedToken && hash_equals((string)$setting->qr_access_key, (string)$providedToken);
             $hasValidSession = session('qr_scanned') === true && 
                                !empty(session('qr_token')) && 
                                hash_equals((string)$setting->qr_access_key, (string)session('qr_token'));
 
-            if (!$hasValidSession) {
+            if (!$isTokenValid && !$hasValidSession) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Sesi pemesanan Anda telah berakhir. Silakan scan ulang Kode QR di meja untuk memesan.',

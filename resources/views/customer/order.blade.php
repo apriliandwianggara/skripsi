@@ -571,6 +571,8 @@
         const originalHtml = btnSubmit.innerHTML;
 
         const payload = {
+            _token: csrfToken,
+            qr_token: "{{ $tokenParam }}",
             customer_name: customerName,
             customer_phone: customerPhone,
             table_number: tableNumber,
@@ -586,9 +588,9 @@
         btnSubmit.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i><span>Mencatat Pesanan ke Server...</span>`;
 
         try {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const res = await fetch("{{ route('customer.submit_order') }}", {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
@@ -605,7 +607,7 @@
                 cart = [];
 
                 // Redirect to confirmation page
-                window.location.href = data.confirmation_url;
+                window.location.replace(data.confirmation_url);
             } else {
                 if (data.redirect_url) {
                     Swal.fire({
