@@ -34,7 +34,7 @@ class SettingController extends Controller
      */
     public function update(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'cafe_name' => 'required|string|max:100',
             'cafe_tagline' => 'nullable|string|max:200',
             'cafe_address' => 'nullable|string',
@@ -43,10 +43,21 @@ class SettingController extends Controller
             'whatsapp_notification_template' => 'required|string',
             'estimated_minutes_per_queue' => 'required|integer|min:1|max:30',
             'qr_permanent_url' => 'required|url',
+            'qr_access_key' => 'nullable|string|max:64',
+            'cafe_latitude' => 'nullable|numeric|between:-90,90',
+            'cafe_longitude' => 'nullable|numeric|between:-180,180',
+            'cafe_radius_meters' => 'nullable|integer|min:10|max:5000',
         ]);
 
+        $data['require_qr_scan'] = $request->boolean('require_qr_scan');
+        $data['enable_gps_radius'] = $request->boolean('enable_gps_radius');
+
+        if (empty($data['qr_access_key'])) {
+            $data['qr_access_key'] = 'sekarsa_qr_cafe_2026';
+        }
+
         $setting = Setting::get();
-        $setting->update($request->all());
+        $setting->update($data);
 
         return back()->with('success', 'Pengaturan sistem Sekarsa Coffee berhasil diperbarui.');
     }
@@ -61,7 +72,7 @@ class SettingController extends Controller
 
         if ($tableNumber) {
             $qrSvg = $this->qrService->generateTableSvg($tableNumber);
-            $orderUrl = url('/pesan?meja=' . urlencode($tableNumber));
+            $orderUrl = $this->qrService->getTableOrderUrl($tableNumber);
         } else {
             $qrSvg = $this->qrService->generatePermanentSvg();
             $orderUrl = $this->qrService->getPermanentOrderUrl();

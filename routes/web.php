@@ -19,7 +19,7 @@ use App\Http\Controllers\Admin\SettingController;
 |--------------------------------------------------------------------------
 */
 
-// Redirect root ke halaman pemesanan pelanggan
+// Redirect root ke halaman pemesanan pelanggan (akan diverifikasi oleh QR Gate)
 Route::get('/', function () {
     return redirect()->route('customer.order');
 });
@@ -29,9 +29,14 @@ Route::get('/', function () {
 | A. Halaman Pelanggan (Tanpa Perlu Login)
 |--------------------------------------------------------------------------
 */
-// 1. Halaman Pemesanan
+// Gerbang Validasi Scan QR Code di Meja
+Route::get('/scan', [CustomerOrderController::class, 'scanQr'])->name('customer.scan');
+Route::get('/akses-qr-diperlukan', [CustomerOrderController::class, 'qrRequired'])->name('customer.qr_required');
+
+// 1. Halaman Pemesanan (Hanya dapat diakses setelah scan QR)
 Route::get('/pesan', [CustomerOrderController::class, 'index'])->name('customer.order');
 Route::get('/api/menu-status', [CustomerOrderController::class, 'menuStatusApi'])->name('customer.menu_status_api');
+Route::post('/api/verify-location', [CustomerOrderController::class, 'verifyLocationApi'])->name('customer.verify_location');
 Route::post('/pesan/kirim', [CustomerOrderController::class, 'submitOrder'])->name('customer.submit_order');
 
 // 2. Halaman Konfirmasi Pesanan

@@ -78,7 +78,7 @@
 
             <!-- SVG QR Code Frame -->
             <div class="p-4 bg-emerald-50/60 rounded-2xl border-2 border-emerald-200/80 shadow-inner flex items-center justify-center">
-                <div class="w-48 h-48 bg-white p-2 rounded-xl shadow-sm">
+                <div class="w-48 h-48 bg-white p-2 rounded-xl shadow-sm overflow-hidden flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:block">
                     {!! $qrSvg !!}
                 </div>
             </div>

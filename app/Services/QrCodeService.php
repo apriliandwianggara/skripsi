@@ -18,15 +18,44 @@ use App\Models\Setting;
 class QrCodeService
 {
     /**
-     * Dapatkan URL permanen pemesanan Sekarsa Coffee.
+     * Dapatkan URL permanen pemesanan Sekarsa Coffee (dengan proteksi QR token).
      */
     public function getPermanentOrderUrl(): string
     {
         $setting = Setting::get();
+        $key = $setting->qr_access_key ?? 'sekarsa_qr_cafe_2026';
+
         if ($setting && !empty($setting->qr_permanent_url)) {
-            return $setting->qr_permanent_url;
+            $base = rtrim($setting->qr_permanent_url, '/');
+            if (str_contains($base, '/scan')) {
+                return str_contains($base, '?') ? $base . '&token=' . $key : $base . '?token=' . $key;
+            }
+            if (str_ends_with($base, '/pesan')) {
+                $base = substr($base, 0, -6);
+            }
+            return $base . '/scan?token=' . $key;
         }
-        return url('/pesan');
+
+        return url('/scan?token=' . $key);
+    }
+
+    /**
+     * Dapatkan URL pemesanan langsung untuk nomor meja tertentu.
+     */
+    public function getTableOrderUrl(string $tableNumber): string
+    {
+        $setting = Setting::get();
+        $key = $setting->qr_access_key ?? 'sekarsa_qr_cafe_2026';
+
+        if ($setting && !empty($setting->qr_permanent_url)) {
+            $base = rtrim($setting->qr_permanent_url, '/');
+            if (str_ends_with($base, '/pesan')) {
+                $base = substr($base, 0, -6);
+            }
+            return $base . '/scan?token=' . $key . '&meja=' . urlencode($tableNumber);
+        }
+
+        return url('/scan?token=' . $key . '&meja=' . urlencode($tableNumber));
     }
 
     /**
@@ -38,11 +67,12 @@ class QrCodeService
 
         $options = new QROptions();
         $options->outputInterface = QRMarkupSVG::class;
-        $options->eccLevel = EccLevel::H; // Error correction tinggi (High 30%)
-        $options->imageBase64 = false;
+        $options->eccLevel = EccLevel::H;
+        $options->outputBase64 = false; // Kembalikan raw SVG XML murni, bukan data:image/svg+xml;base64
         $options->addQuietzone = true;
 
-        return (new QRCode($options))->render($url);
+        $svg = (new QRCode($options))->render($url);
+        return trim(preg_replace('/<\?xml[^\?]*\?>/i', '', (string)$svg));
     }
 
     /**
@@ -66,15 +96,16 @@ class QrCodeService
      */
     public function generateTableSvg(string $tableNumber): string
     {
-        $url = url('/pesan?meja=' . urlencode($tableNumber));
+        $url = $this->getTableOrderUrl($tableNumber);
 
         $options = new QROptions();
         $options->outputInterface = QRMarkupSVG::class;
         $options->eccLevel = EccLevel::H;
-        $options->imageBase64 = false;
+        $options->outputBase64 = false;
         $options->addQuietzone = true;
 
-        return (new QRCode($options))->render($url);
+        $svg = (new QRCode($options))->render($url);
+        return trim(preg_replace('/<\?xml[^\?]*\?>/i', '', (string)$svg));
     }
 }
 

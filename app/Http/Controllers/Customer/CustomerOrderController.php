@@ -25,11 +25,77 @@ class CustomerOrderController extends Controller
     }
 
     /**
+     * Gerbang Pemindaian Kode QR Meja Kafe
+     * Menverifikasi token QR fisik dan memberikan sesi akses ke menu.
+     */
+    public function scanQr(Request $request)
+    {
+        $setting = Setting::get();
+        $token = $request->query('token');
+        $table = $request->query('meja');
+
+        // Jika QR Gate dinonaktifkan atau token valid
+        if (!$setting->require_qr_scan || ($token && hash_equals((string)$setting->qr_access_key, (string)$token))) {
+            session([
+                'qr_scanned' => true,
+                'qr_scanned_at' => now()->timestamp,
+                'table_number' => $table ?: session('table_number'),
+            ]);
+
+            // Set cookie valid selama 4 jam (240 menit)
+            cookie()->queue('sekarsa_qr_verified', $setting->qr_access_key, 240);
+
+            $params = [];
+            if ($table) {
+                $params['meja'] = $table;
+            }
+
+            return redirect()->route('customer.order', $params)->with('qr_success', 'Kode QR Meja berhasil diverifikasi. Selamat memesan!');
+        }
+
+        return redirect()->route('customer.qr_required')->with('error', 'Kode QR tidak dikenali atau tidak valid. Silakan scan ulang Kode QR di meja.');
+    }
+
+    /**
+     * Tampilan Khusus: Akses Ditolak Karena Belum Scan QR di Meja
+     */
+    public function qrRequired()
+    {
+        $setting = Setting::get();
+        return view('customer.qr-required', compact('setting'));
+    }
+
+    /**
      * A.1 Halaman Pemesanan (Dibuka setelah memindai QR Code)
      */
     public function index(Request $request)
     {
-        $tableParam = $request->query('meja');
+        $setting = Setting::get();
+
+        // Pemeriksaan Gerbang Keamanan QR Code
+        if ($setting->require_qr_scan) {
+            // 1. Cek jika query membawa token QR valid secara langsung
+            $tokenParam = $request->query('token');
+            if ($tokenParam && hash_equals((string)$setting->qr_access_key, (string)$tokenParam)) {
+                session([
+                    'qr_scanned' => true,
+                    'qr_scanned_at' => now()->timestamp,
+                    'table_number' => $request->query('meja') ?: session('table_number'),
+                ]);
+                cookie()->queue('sekarsa_qr_verified', $setting->qr_access_key, 240);
+            }
+
+            // 2. Cek apakah pengguna staf/admin yang login, atau memiliki session/cookie valid
+            $isStaff = auth()->check();
+            $hasValidSession = session('qr_scanned') === true;
+            $hasValidCookie = $request->cookie('sekarsa_qr_verified') === $setting->qr_access_key;
+
+            if (!$isStaff && !$hasValidSession && !$hasValidCookie) {
+                return redirect()->route('customer.qr_required');
+            }
+        }
+
+        $tableParam = $request->query('meja', session('table_number'));
 
         $categories = Category::where('is_active', true)->orderBy('order')->get();
         $selectedCategory = $request->query('kategori');
@@ -52,7 +118,6 @@ class CustomerOrderController extends Controller
         }
 
         $menus = $menuQuery->orderBy('order')->orderBy('name')->get();
-        $setting = Setting::get();
 
         return view('customer.order', compact(
             'categories',
@@ -69,6 +134,45 @@ class CustomerOrderController extends Controller
      */
     public function submitOrder(Request $request)
     {
+        $setting = Setting::get();
+
+        // Validasi proteksi QR Gate saat pengiriman pesanan
+        if ($setting->require_qr_scan) {
+            $isStaff = auth()->check();
+            $hasValidSession = session('qr_scanned') === true;
+            $hasValidCookie = $request->cookie('sekarsa_qr_verified') === $setting->qr_access_key;
+
+            if (!$isStaff && !$hasValidSession && !$hasValidCookie) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pemesanan ditolak: Anda harus memindai Kode QR resmi di meja kafe untuk melakukan pemesanan.'
+                ], 403);
+            }
+        }
+
+        // Validasi Proteksi Lokasi GPS Kafe (Geofencing Radius)
+        if ($setting->enable_gps_radius && !auth()->check()) {
+            $lat = $request->input('customer_lat');
+            $lng = $request->input('customer_lng');
+
+            if ($lat === null || $lng === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Izin lokasi GPS ponsel diperlukan untuk memastikan Anda berada di area Sekarsa Coffee. Harap aktifkan GPS ponsel Anda.'
+                ], 422);
+            }
+
+            if (!$setting->isWithinCafeRadius((float)$lat, (float)$lng)) {
+                $distance = $setting->calculateDistanceToCafe((float)$lat, (float)$lng);
+                $formattedDist = $distance >= 1000 ? round($distance / 1000, 2) . ' km' : round($distance) . ' meter';
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "Pemesanan ditolak: Anda terdeteksi berada di luar area kafe (Jarak Anda: {$formattedDist}, batas radius: {$setting->cafe_radius_meters} meter). Pemesanan hanya dapat dilakukan di dalam area Sekarsa Coffee."
+                ], 403);
+            }
+        }
+
         $request->validate([
             'customer_name' => 'required|string|max:100',
             'customer_phone' => 'nullable|string|max:20',
@@ -238,6 +342,48 @@ class CustomerOrderController extends Controller
                     'is_available' => (bool) $m->is_available,
                 ];
             }),
+        ]);
+    }
+
+    /**
+     * Endpoint API Verifikasi Lokasi GPS Pelanggan (Geofencing Radius)
+     */
+    public function verifyLocationApi(Request $request)
+    {
+        $setting = Setting::get();
+
+        if (!$setting->enable_gps_radius) {
+            return response()->json([
+                'enabled' => false,
+                'within_radius' => true,
+                'message' => 'Proteksi radius GPS tidak aktif.',
+            ]);
+        }
+
+        $lat = $request->input('latitude');
+        $lng = $request->input('longitude');
+
+        if ($lat === null || $lng === null) {
+            return response()->json([
+                'enabled' => true,
+                'within_radius' => false,
+                'message' => 'Koordinat GPS tidak diterima.',
+            ], 422);
+        }
+
+        $distance = $setting->calculateDistanceToCafe((float)$lat, (float)$lng);
+        $withinRadius = $distance <= (float)$setting->cafe_radius_meters;
+        $formattedDist = $distance >= 1000 ? round($distance / 1000, 2) . ' km' : round($distance) . ' meter';
+
+        return response()->json([
+            'enabled' => true,
+            'within_radius' => $withinRadius,
+            'distance_meters' => $distance,
+            'formatted_distance' => $formattedDist,
+            'max_radius_meters' => $setting->cafe_radius_meters,
+            'message' => $withinRadius
+                ? "Lokasi terverifikasi di Sekarsa Coffee (Jarak: {$formattedDist})"
+                : "Anda berada di luar area kafe (Jarak: {$formattedDist}, batas radius: {$setting->cafe_radius_meters} m)",
         ]);
     }
 }

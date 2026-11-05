@@ -69,6 +69,80 @@
                             <i class="fa-solid fa-network-wired mr-1"></i> Parameter FIFO & Kode QR Permanen
                         </h4>
 
+                        <!-- Fitur Proteksi Akses QR Meja -->
+                        <div class="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-3">
+                            <div class="flex items-start justify-between">
+                                <div class="pr-3">
+                                    <label for="require_qr_scan" class="text-xs font-extrabold text-emerald-950 flex items-center cursor-pointer">
+                                        <i class="fa-solid fa-shield-halved text-emerald-600 mr-1.5"></i>
+                                        Proteksi Gerbang QR (Wajibkan Scan QR Fisik Meja)
+                                    </label>
+                                    <p class="text-[11px] text-emerald-800/80 mt-1 leading-relaxed">
+                                        Bila diaktifkan, pelanggan <strong>tidak bisa mengetik link /pesan secara manual</strong> di browser. Pelanggan wajib memindai QR fisik di meja kafe untuk membuka menu.
+                                    </p>
+                                </div>
+                                <div class="pt-0.5">
+                                    <input type="checkbox" id="require_qr_scan" name="require_qr_scan" value="1" {{ old('require_qr_scan', $setting->require_qr_scan) ? 'checked' : '' }}
+                                           class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300 transition cursor-pointer">
+                                </div>
+                            </div>
+
+                            <div class="pt-2 border-t border-emerald-100">
+                                <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                                    Token Kunci Keamanan QR (Otomatis Disematkan di QR Meja)
+                                </label>
+                                <input type="text" name="qr_access_key" value="{{ old('qr_access_key', $setting->qr_access_key ?? 'sekarsa_qr_cafe_2026') }}" 
+                                       class="w-full text-xs p-2.5 bg-white border border-gray-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <span class="text-[10px] text-gray-500 mt-1 block">Token ini menjadi kunci otentikasi unik di setiap QR Standee meja Anda.</span>
+                            </div>
+                        </div>
+
+                        <!-- Fitur Proteksi Radius Lokasi Kafe (GPS Geofencing) -->
+                        <div class="p-4 bg-amber-50/70 border border-amber-200 rounded-2xl space-y-3">
+                            <div class="flex items-start justify-between">
+                                <div class="pr-3">
+                                    <label for="enable_gps_radius" class="text-xs font-extrabold text-amber-950 flex items-center cursor-pointer">
+                                        <i class="fa-solid fa-location-dot text-amber-600 mr-1.5"></i>
+                                        Proteksi Radius GPS Kafe (Anti-Pemesanan dari Luar Kafe)
+                                    </label>
+                                    <p class="text-[11px] text-amber-900/80 mt-1 leading-relaxed">
+                                        Mencegah pemesanan jika pelanggan berada di luar radius kafe (misal jika ada yang <strong>memfoto QR lalu membawanya pulang ke rumah</strong>).
+                                    </p>
+                                </div>
+                                <div class="pt-0.5">
+                                    <input type="checkbox" id="enable_gps_radius" name="enable_gps_radius" value="1" {{ old('enable_gps_radius', $setting->enable_gps_radius) ? 'checked' : '' }}
+                                           class="w-5 h-5 rounded text-amber-600 focus:ring-amber-500 border-gray-300 transition cursor-pointer">
+                                </div>
+                            </div>
+
+                            <div class="pt-2 border-t border-amber-200/60 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Latitude Kafe</label>
+                                    <input type="text" id="cafe_latitude" name="cafe_latitude" value="{{ old('cafe_latitude', $setting->cafe_latitude ?? -7.7588000) }}" 
+                                           class="w-full text-xs p-2.5 bg-white border border-gray-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Longitude Kafe</label>
+                                    <input type="text" id="cafe_longitude" name="cafe_longitude" value="{{ old('cafe_longitude', $setting->cafe_longitude ?? 110.3855000) }}" 
+                                           class="w-full text-xs p-2.5 bg-white border border-gray-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Radius Maksimal (Meter)</label>
+                                    <input type="number" name="cafe_radius_meters" value="{{ old('cafe_radius_meters', $setting->cafe_radius_meters ?? 100) }}" min="10" max="5000"
+                                           class="w-full text-xs p-2.5 bg-white border border-gray-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between pt-1">
+                                <span class="text-[10px] text-gray-500">Default radius 100 meter melingkupi seluruh area indoor & outdoor Sekarsa Coffee.</span>
+                                <button type="button" onclick="detectCurrentLocation()" 
+                                        class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10px] font-bold transition flex items-center space-x-1 shrink-0">
+                                    <i class="fa-solid fa-crosshairs"></i>
+                                    <span>Ambil Titik Lokasi Sekarang</span>
+                                </button>
+                            </div>
+                        </div>
+
                         <div>
                             <label class="block text-xs font-bold uppercase text-gray-700 mb-1">
                                 URL Tujuan Kode QR Pemesanan (Permanen) <span class="text-red-500">*</span>
@@ -118,7 +192,7 @@
                 </div>
 
                 <div class="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 flex flex-col items-center">
-                    <div class="w-48 h-48 bg-white p-2 rounded-xl shadow-inner flex items-center justify-center">
+                    <div class="w-48 h-48 bg-white p-2 rounded-xl shadow-inner flex items-center justify-center overflow-hidden [&>svg]:w-full [&>svg]:h-full [&>svg]:block">
                         {!! $qrSvg !!}
                     </div>
                     <span class="mt-2 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
@@ -155,5 +229,44 @@
     </div>
 
 </div>
+
+<script>
+function detectCurrentLocation() {
+    if (!navigator.geolocation) {
+        Swal.fire('Tidak Didukung', 'Browser Anda tidak mendukung deteksi lokasi GPS.', 'warning');
+        return;
+    }
+
+    Swal.fire({
+        title: 'Mendeteksi Lokasi GPS...',
+        text: 'Mohon izinkan akses lokasi pada browser Anda.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            document.getElementById('cafe_latitude').value = pos.coords.latitude.toFixed(7);
+            document.getElementById('cafe_longitude').value = pos.coords.longitude.toFixed(7);
+            Swal.fire({
+                icon: 'success',
+                title: 'Titik Lokasi Berhasil Diambil!',
+                text: `Koordinat: ${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`,
+                timer: 2500
+            });
+        },
+        (err) => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal Mendeteksi Lokasi',
+                text: 'Pastikan GPS perangkat dan izin lokasi browser Anda aktif: ' + err.message
+            });
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+</script>
 @endsection
 

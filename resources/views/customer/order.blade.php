@@ -49,6 +49,17 @@
     <!-- Main Container -->
     <main class="max-w-3xl mx-auto w-full px-4 pt-4 flex-1">
 
+        @if($setting->enable_gps_radius)
+        <!-- Badge Status Radius GPS Kafe -->
+        <div id="gpsStatusBadge" class="bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2 text-xs text-amber-900 flex items-center justify-between mb-4 shadow-sm">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-location-dot text-amber-600 text-sm"></i>
+                <span id="gpsStatusText" class="font-medium text-[11px]">Memeriksa posisi GPS Anda di Sekarsa Coffee...</span>
+            </div>
+            <span id="gpsStatusDot" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+        </div>
+        @endif
+
         <!-- Search Bar -->
         <div class="mb-4">
             <form action="{{ route('customer.order') }}" method="GET" class="relative">
@@ -508,6 +519,76 @@
         document.body.style.overflow = 'auto';
     }
 
+    let customerGps = { lat: null, lng: null, verified: false };
+    const isGpsRequired = {{ $setting->enable_gps_radius ? 'true' : 'false' }};
+
+    function getCustomerCoordinates() {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject(new Error("Browser ponsel Anda tidak mendukung deteksi lokasi GPS."));
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    customerGps.lat = pos.coords.latitude;
+                    customerGps.lng = pos.coords.longitude;
+                    resolve(customerGps);
+                },
+                (err) => {
+                    let msg = "Harap aktifkan GPS ponsel dan izinkan akses lokasi di browser untuk memesan.";
+                    if (err.code === 1) msg = "Izin lokasi ditolak. Harap izinkan akses lokasi pada browser Anda agar sistem dapat memvalidasi Anda berada di kafe.";
+                    reject(new Error(msg));
+                },
+                { enableHighAccuracy: true, timeout: 8000 }
+            );
+        });
+    }
+
+    async function checkGpsLocation() {
+        if (!isGpsRequired) return;
+        const badge = document.getElementById('gpsStatusBadge');
+        const text = document.getElementById('gpsStatusText');
+        const dot = document.getElementById('gpsStatusDot');
+
+        try {
+            await getCustomerCoordinates();
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const res = await fetch("{{ route('customer.verify_location') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ latitude: customerGps.lat, longitude: customerGps.lng })
+            });
+
+            const data = await res.json();
+            if (data.within_radius) {
+                customerGps.verified = true;
+                if (badge && text && dot) {
+                    badge.className = "bg-emerald-50 border border-emerald-200 rounded-xl px-3.5 py-2 text-xs text-emerald-900 flex items-center justify-between mb-4 shadow-sm";
+                    text.innerHTML = `<strong>Di Sekarsa Coffee</strong> &bull; Terverifikasi (${data.formatted_distance})`;
+                    dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0";
+                }
+            } else {
+                customerGps.verified = false;
+                if (badge && text && dot) {
+                    badge.className = "bg-red-50 border border-red-200 rounded-xl px-3.5 py-2 text-xs text-red-900 flex items-center justify-between mb-4 shadow-sm";
+                    text.innerHTML = `<strong>Di Luar Area Kafe</strong> &bull; Jarak Anda ${data.formatted_distance} (Maks ${data.max_radius_meters}m)`;
+                    dot.className = "w-2.5 h-2.5 rounded-full bg-red-500 shrink-0";
+                }
+            }
+        } catch (err) {
+            customerGps.verified = false;
+            if (badge && text && dot) {
+                badge.className = "bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2 text-xs text-amber-900 flex items-center justify-between mb-4 shadow-sm";
+                text.innerText = "Izin GPS diperlukan: " + err.message;
+                dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0";
+            }
+        }
+    }
+
     // Submit Order to Server via AJAX POST
     async function submitOrder() {
         if (cart.length === 0) {
@@ -531,11 +612,38 @@
             return;
         }
 
+        const btnSubmit = document.getElementById('btnSubmitOrder');
+        const originalHtml = btnSubmit.innerHTML;
+
+        // Pemeriksaan Radius GPS jika diwajibkan
+        if (isGpsRequired && !customerGps.verified) {
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-location-crosshairs fa-spin"></i><span>Memeriksa Radius Lokasi Kafe...</span>`;
+            try {
+                await checkGpsLocation();
+                if (!customerGps.verified) {
+                    throw new Error("Pemesanan ditolak: Anda terdeteksi berada di luar area Sekarsa Coffee.");
+                }
+            } catch (gpsErr) {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = originalHtml;
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Lokasi Tidak Sesuai',
+                    text: gpsErr.message,
+                    confirmButtonColor: '#d97706'
+                });
+                return;
+            }
+        }
+
         const payload = {
             customer_name: customerName,
             customer_phone: customerPhone,
             table_number: tableNumber,
             customer_notes: customerNotes,
+            customer_lat: customerGps.lat,
+            customer_lng: customerGps.lng,
             items: cart.map(item => ({
                 menu_id: item.id,
                 quantity: item.quantity,
@@ -543,8 +651,6 @@
             }))
         };
 
-        const btnSubmit = document.getElementById('btnSubmitOrder');
-        const originalHtml = btnSubmit.innerHTML;
         btnSubmit.disabled = true;
         btnSubmit.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i><span>Mencatat Pesanan ke Server...</span>`;
 
@@ -587,6 +693,9 @@
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {
         loadCart();
+        if (isGpsRequired) {
+            checkGpsLocation();
+        }
         // Polling Real-time Status Ketersediaan Menu (Jika Kasir Mengubah Menu Jadi Habis)
         setInterval(checkRealtimeMenuAvailability, 3000);
     });
