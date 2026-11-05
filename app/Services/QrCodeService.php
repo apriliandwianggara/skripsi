@@ -65,11 +65,10 @@ class QrCodeService
         $url = $this->getPermanentOrderUrl();
 
         $options = new QROptions();
-        $options->version = QRCode::VERSION_AUTO;
-        $options->eccLevel = EccLevel::M;
         $options->outputInterface = QRMarkupSVG::class;
+        $options->eccLevel = EccLevel::H;
         $options->outputBase64 = false;
-        $options->svgUseFillAttribute = true;
+        $options->addQuietzone = true;
 
         $svg = (new QRCode($options))->render($url);
 
@@ -84,11 +83,10 @@ class QrCodeService
         $url = $this->getPermanentOrderUrl();
 
         $options = new QROptions();
-        $options->version = QRCode::VERSION_AUTO;
-        $options->eccLevel = EccLevel::H;
         $options->outputInterface = QRGdImagePNG::class;
+        $options->eccLevel = EccLevel::H;
         $options->scale = 10;
-        $options->outputBase64 = true;
+        $options->addQuietzone = true;
 
         return (new QRCode($options))->render($url);
     }
@@ -101,11 +99,10 @@ class QrCodeService
         $url = $this->getTableOrderUrl($tableNumber);
 
         $options = new QROptions();
-        $options->version = QRCode::VERSION_AUTO;
-        $options->eccLevel = EccLevel::M;
         $options->outputInterface = QRMarkupSVG::class;
+        $options->eccLevel = EccLevel::H;
         $options->outputBase64 = false;
-        $options->svgUseFillAttribute = true;
+        $options->addQuietzone = true;
 
         $svg = (new QRCode($options))->render($url);
 
