@@ -177,6 +177,28 @@
                         <i class="fa-solid fa-shield-halved mr-2 text-emerald-600"></i> Keamanan QR Meja & Radius GPS Kafe
                     </h3>
 
+                    <!-- Fitur Mode Demo Sidang Skripsi (Penyelamat Saat Sidang) -->
+                    <div class="p-4 bg-blue-50/90 border-2 border-blue-300 rounded-2xl space-y-3 shadow-sm">
+                        <div class="flex items-start justify-between">
+                            <div class="pr-3">
+                                <div class="flex items-center space-x-2">
+                                    <span class="px-2 py-0.5 bg-blue-600 text-white rounded text-[9px] font-black uppercase tracking-wider">Penting untuk Sidang</span>
+                                    <label for="demo_mode_enabled" class="text-xs font-black text-blue-950 flex items-center cursor-pointer">
+                                        <i class="fa-solid fa-graduation-cap text-blue-600 mr-1.5"></i>
+                                        Mode Uji Coba / Sidang Skripsi (Bypass GPS Otomatis)
+                                    </label>
+                                </div>
+                                <p class="text-[11px] text-blue-900/80 mt-1 leading-relaxed">
+                                    Aktifkan opsi ini saat <strong>Sidang Skripsi di depan Dosen Penguji</strong> atau saat simulasi di rumah/kampus. Lokasi pemesanan akan otomatis terverifikasi 100% berada di meja kafe (0 meter), sehingga demo alur sistem di depan dosen dijamin lancar tanpa takut sinyal GPS gedung drop!
+                                </p>
+                            </div>
+                            <div class="pt-0.5">
+                                <input type="checkbox" id="demo_mode_enabled" name="demo_mode_enabled" value="1" {{ old('demo_mode_enabled', $setting->demo_mode_enabled) ? 'checked' : '' }}
+                                       class="w-5 h-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300 transition cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Fitur Proteksi Akses QR Meja -->
                     <div class="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-3">
                         <div class="flex items-start justify-between">

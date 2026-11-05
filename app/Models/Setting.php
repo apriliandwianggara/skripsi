@@ -34,11 +34,14 @@ class Setting extends Model
         'cafe_longitude',
         'cafe_radius_meters',
         'gps_tolerance_meters',
+        'demo_mode_enabled',
+        'demo_mode_label',
     ];
 
     protected $casts = [
         'require_qr_scan' => 'boolean',
         'enable_gps_radius' => 'boolean',
+        'demo_mode_enabled' => 'boolean',
         'alarm_sound_enabled' => 'boolean',
         'alarm_repeat_interval' => 'integer',
         'estimated_minutes_per_queue' => 'integer',
@@ -102,7 +105,8 @@ class Setting extends Model
      */
     public function isWithinCafeRadius(float $latitude, float $longitude, ?float $accuracy = null): bool
     {
-        if (!$this->enable_gps_radius) {
+        // Jika Mode Demo Sidang Skripsi aktif atau proteksi radius nonaktif, langsung izinkan
+        if ($this->demo_mode_enabled || !$this->enable_gps_radius) {
             return true;
         }
 
@@ -111,7 +115,7 @@ class Setting extends Model
 
         // Jika ponsel melaporkan margin of error akurasi GPS (umumnya 15-50m di dalam ruangan kafe),
         // kurangkan deviasi tersebut dari jarak hitung agar pelanggan di dalam ruangan tidak tertolak
-        $accuracyDeduction = $accuracy ? min((float)$accuracy, 60.0) : 0;
+        $accuracyDeduction = $accuracy ? min((float)$accuracy, 100.0) : 0;
         $effectiveDistance = max(0, $distance - $accuracyDeduction);
 
         $maxAllowed = (float)$this->cafe_radius_meters + $tolerance;

@@ -2,21 +2,37 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use chillerlan\QRCode\Common\EccLevel;
 use chillerlan\QRCode\Output\QRMarkupSVG;
 use chillerlan\QRCode\Output\QRGdImagePNG;
-use App\Models\Setting;
 
 /**
  * Service Pembuatan Kode QR Permanen Sekarsa Coffee
- * 
  * Kode QR ini digunakan permanen / selamanya untuk dicetak pada akrilik meja,
- * stiker meja, atau banner kafe sehingga pelanggan dapat memindai kapan saja.
+ * mengarahkan langsung ke halaman pemesanan dengan proteksi token QR gate.
  */
 class QrCodeService
 {
+    /**
+     * Dapatkan Base URL yang bersih (hanya scheme://host[:port]).
+     */
+    public function getCleanBaseUrl(): string
+    {
+        $setting = Setting::get();
+        $raw = !empty($setting->qr_permanent_url) ? trim($setting->qr_permanent_url) : url('/');
+
+        $parsed = parse_url($raw);
+        $scheme = $parsed['scheme'] ?? 'http';
+        $host = $parsed['host'] ?? 'sekarsacoffee.gt.tc';
+        $port = isset($parsed['port']) ? ':' . $parsed['port'] : '';
+
+        // Hapus path apapun seperti /scan, /pesan, ? dsb.
+        return $scheme . '://' . $host . $port;
+    }
+
     /**
      * Dapatkan URL permanen pemesanan Sekarsa Coffee (dengan proteksi QR token).
      */
@@ -24,19 +40,9 @@ class QrCodeService
     {
         $setting = Setting::get();
         $key = $setting->qr_access_key ?? 'sekarsa_qr_cafe_2026';
+        $base = $this->getCleanBaseUrl();
 
-        if ($setting && !empty($setting->qr_permanent_url)) {
-            $base = rtrim($setting->qr_permanent_url, '/');
-            if (str_contains($base, '/scan')) {
-                return str_contains($base, '?') ? $base . '&token=' . $key : $base . '?token=' . $key;
-            }
-            if (str_ends_with($base, '/pesan')) {
-                $base = substr($base, 0, -6);
-            }
-            return $base . '/scan?token=' . $key;
-        }
-
-        return url('/scan?token=' . $key);
+        return $base . '/pesan?token=' . urlencode($key);
     }
 
     /**
@@ -46,16 +52,9 @@ class QrCodeService
     {
         $setting = Setting::get();
         $key = $setting->qr_access_key ?? 'sekarsa_qr_cafe_2026';
+        $base = $this->getCleanBaseUrl();
 
-        if ($setting && !empty($setting->qr_permanent_url)) {
-            $base = rtrim($setting->qr_permanent_url, '/');
-            if (str_ends_with($base, '/pesan')) {
-                $base = substr($base, 0, -6);
-            }
-            return $base . '/scan?token=' . $key . '&meja=' . urlencode($tableNumber);
-        }
-
-        return url('/scan?token=' . $key . '&meja=' . urlencode($tableNumber));
+        return $base . '/pesan?token=' . urlencode($key) . '&meja=' . urlencode($tableNumber);
     }
 
     /**
@@ -66,13 +65,15 @@ class QrCodeService
         $url = $this->getPermanentOrderUrl();
 
         $options = new QROptions();
+        $options->version = QRCode::VERSION_AUTO;
+        $options->eccLevel = EccLevel::M;
         $options->outputInterface = QRMarkupSVG::class;
-        $options->eccLevel = EccLevel::H;
-        $options->outputBase64 = false; // Kembalikan raw SVG XML murni, bukan data:image/svg+xml;base64
-        $options->addQuietzone = true;
+        $options->outputBase64 = false;
+        $options->svgUseFillAttribute = true;
 
         $svg = (new QRCode($options))->render($url);
-        return trim(preg_replace('/<\?xml[^\?]*\?>/i', '', (string)$svg));
+
+        return $this->cleanSvg($svg);
     }
 
     /**
@@ -83,10 +84,11 @@ class QrCodeService
         $url = $this->getPermanentOrderUrl();
 
         $options = new QROptions();
-        $options->outputInterface = QRGdImagePNG::class;
+        $options->version = QRCode::VERSION_AUTO;
         $options->eccLevel = EccLevel::H;
+        $options->outputInterface = QRGdImagePNG::class;
         $options->scale = 10;
-        $options->addQuietzone = true;
+        $options->outputBase64 = true;
 
         return (new QRCode($options))->render($url);
     }
@@ -99,13 +101,24 @@ class QrCodeService
         $url = $this->getTableOrderUrl($tableNumber);
 
         $options = new QROptions();
+        $options->version = QRCode::VERSION_AUTO;
+        $options->eccLevel = EccLevel::M;
         $options->outputInterface = QRMarkupSVG::class;
-        $options->eccLevel = EccLevel::H;
         $options->outputBase64 = false;
-        $options->addQuietzone = true;
+        $options->svgUseFillAttribute = true;
 
         $svg = (new QRCode($options))->render($url);
-        return trim(preg_replace('/<\?xml[^\?]*\?>/i', '', (string)$svg));
+
+        return $this->cleanSvg($svg);
+    }
+
+    /**
+     * Bersihkan XML declaration jika ada dari SVG agar bisa di-inline ke blade.
+     */
+    private function cleanSvg(string $svg): string
+    {
+        $svg = preg_replace('/<\?xml[^\>]*\?>/i', '', $svg);
+        $svg = preg_replace('/<!DOCTYPE[^\>]*>/i', '', $svg);
+        return trim($svg);
     }
 }
-

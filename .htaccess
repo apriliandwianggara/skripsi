@@ -2,7 +2,7 @@
     RewriteEngine On
 
     # Don't rewrite maintenance or utility scripts
-    RewriteCond %{REQUEST_URI} ^/(extract\.php|test_db\.php|update_db_remote\.php)
+    RewriteCond %{REQUEST_URI} ^/(extract\.php|test_db\.php|update_db_remote\.php|update_db_remote2\.php|clear_cache_remote\.php)
     RewriteRule ^ - [L]
 
     # Block direct access to sensitive files

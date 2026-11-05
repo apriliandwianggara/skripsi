@@ -86,6 +86,7 @@ class SettingController extends Controller
 
         $data['require_qr_scan'] = $request->boolean('require_qr_scan');
         $data['enable_gps_radius'] = $request->boolean('enable_gps_radius');
+        $data['demo_mode_enabled'] = $request->boolean('demo_mode_enabled');
         $data['alarm_sound_enabled'] = $request->boolean('alarm_sound_enabled');
 
         if (empty($data['qr_access_key'])) {

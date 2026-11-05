@@ -49,6 +49,9 @@ class CustomerOrderController extends Controller
             if ($table) {
                 $params['meja'] = $table;
             }
+            if ($token) {
+                $params['token'] = $token;
+            }
 
             return redirect()->route('customer.order', $params)->with('qr_success', 'Kode QR Meja berhasil diverifikasi. Selamat memesan!');
         }
@@ -151,7 +154,7 @@ class CustomerOrderController extends Controller
         }
 
         // Validasi Proteksi Lokasi GPS Kafe (Geofencing Radius)
-        if ($setting->enable_gps_radius && !auth()->check()) {
+        if (!$setting->demo_mode_enabled && $setting->enable_gps_radius && !auth()->check()) {
             $lat = $request->input('customer_lat');
             $lng = $request->input('customer_lng');
             $accuracy = $request->input('customer_accuracy');
@@ -355,9 +358,24 @@ class CustomerOrderController extends Controller
     {
         $setting = Setting::get();
 
+        // Mode Demo Sidang Skripsi: Otomatis valid 100% tanpa risiko sinyal satelit drop di ruang sidang
+        if ($setting->demo_mode_enabled) {
+            return response()->json([
+                'enabled' => true,
+                'demo_mode' => true,
+                'within_radius' => true,
+                'distance_meters' => 0,
+                'formatted_distance' => '0 meter',
+                'max_radius_meters' => $setting->cafe_radius_meters,
+                'tolerance_meters' => $setting->gps_tolerance_meters ?? 50,
+                'message' => 'Mode Demo Sidang Skripsi: Lokasi otomatis terverifikasi di Sekarsa Coffee (0 meter)',
+            ]);
+        }
+
         if (!$setting->enable_gps_radius) {
             return response()->json([
                 'enabled' => false,
+                'demo_mode' => false,
                 'within_radius' => true,
                 'message' => 'Proteksi radius GPS tidak aktif.',
             ]);
