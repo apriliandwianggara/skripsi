@@ -219,6 +219,8 @@ class CustomerOrderController extends Controller
             'ready_at' => $order->ready_at ? $order->ready_at->format('H:i') : null,
             'completed_at' => $order->completed_at ? $order->completed_at->format('H:i') : null,
         ]);
+    }
+
     /**
      * Endpoint API Status Ketersediaan Menu Real-Time (Jika Menu Habis di Kasir)
      */
