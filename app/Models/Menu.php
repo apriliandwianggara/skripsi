@@ -31,11 +31,46 @@ class Menu extends Model
         return $this->belongsTo(Category::class);
     }
 
+    /**
+     * URL Foto Menu Cerdas (Kompatibel 100% untuk Shared Hosting & Local)
+     */
     public function getImageUrlAttribute(): string
     {
-        if ($this->image && file_exists(public_path('storage/' . $this->image))) {
-            return '/storage/' . $this->image;
+        if (!empty($this->image)) {
+            if (str_starts_with($this->image, 'http://') || str_starts_with($this->image, 'https://')) {
+                return $this->image;
+            }
+
+            $cleanPath = ltrim($this->image, '/');
+
+            // 1. Cek langsung di public/ (misal 'images/menus/xxx.jpg' atau 'images/xxx.jpg')
+            if (file_exists(public_path($cleanPath))) {
+                return asset($cleanPath);
+            }
+
+            // 2. Cek di public/images/
+            if (file_exists(public_path('images/' . $cleanPath))) {
+                return asset('images/' . $cleanPath);
+            }
+
+            // 3. Cek di public/storage/ (jika symlink aktif)
+            if (file_exists(public_path('storage/' . $cleanPath))) {
+                return asset('storage/' . $cleanPath);
+            }
+
+            // 4. Auto-recovery: Jika file terlanjur di storage/app/public/ (bawaan store()), salin otomatis ke public/images/
+            $storageCandidate = storage_path('app/public/' . $cleanPath);
+            if (file_exists($storageCandidate)) {
+                $targetFile = public_path('images/' . $cleanPath);
+                @mkdir(dirname($targetFile), 0755, true);
+                @copy($storageCandidate, $targetFile);
+                return asset('images/' . $cleanPath);
+            }
+
+            // 5. Fallback ke asset path langsung
+            return asset($cleanPath);
         }
-        return '/images/menu-placeholder.svg';
+
+        return asset('images/menu-placeholder.svg');
     }
 }

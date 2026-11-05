@@ -6,29 +6,28 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Menu;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class MenuController extends Controller
 {
     public function index(Request $request)
     {
+        $categories = Category::orderBy('order')->get();
         $query = Menu::with('category');
 
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
         }
 
-        if ($request->filled('is_available')) {
-            $query->where('is_available', $request->is_available);
-        }
-
         if ($request->filled('search')) {
-            $query->where('name', 'like', "%{$request->search}%");
+            $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        $menus = $query->orderBy('category_id')->orderBy('order')->paginate(15)->withQueryString();
-        $categories = Category::where('is_active', true)->orderBy('name')->get();
+        if ($request->filled('status')) {
+            $query->where('is_available', $request->status === 'available');
+        }
+
+        $menus = $query->orderBy('category_id')->orderBy('order')->paginate(15);
 
         return view('admin.menus.index', compact('menus', 'categories'));
     }
@@ -47,12 +46,19 @@ class MenuController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'is_available' => 'required|boolean',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
         ]);
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('menus', 'public');
+            $file = $request->file('image');
+            $filename = 'menu_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $targetDir = public_path('images/menus');
+            if (!file_exists($targetDir)) {
+                @mkdir($targetDir, 0755, true);
+            }
+            $file->move($targetDir, $filename);
+            $imagePath = 'images/menus/' . $filename;
         }
 
         Menu::create([
@@ -63,7 +69,7 @@ class MenuController extends Controller
             'price' => $request->price,
             'is_available' => $request->boolean('is_available'),
             'image' => $imagePath,
-            'order' => Menu::max('order') + 1,
+            'order' => (int)Menu::max('order') + 1,
         ]);
 
         return redirect()->route('admin.menus.index')->with('success', "Menu '{$request->name}' berhasil ditambahkan.");
@@ -83,15 +89,24 @@ class MenuController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'is_available' => 'required|boolean',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
         ]);
 
         $imagePath = $menu->image;
         if ($request->hasFile('image')) {
-            if ($menu->image && Storage::disk('public')->exists($menu->image)) {
-                Storage::disk('public')->delete($menu->image);
+            // Hapus foto lama jika ada di public_path
+            if ($menu->image && file_exists(public_path($menu->image))) {
+                @unlink(public_path($menu->image));
             }
-            $imagePath = $request->file('image')->store('menus', 'public');
+
+            $file = $request->file('image');
+            $filename = 'menu_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $targetDir = public_path('images/menus');
+            if (!file_exists($targetDir)) {
+                @mkdir($targetDir, 0755, true);
+            }
+            $file->move($targetDir, $filename);
+            $imagePath = 'images/menus/' . $filename;
         }
 
         $menu->update([
@@ -110,18 +125,19 @@ class MenuController extends Controller
     public function destroy(Menu $menu)
     {
         $name = $menu->name;
-        if ($menu->image && Storage::disk('public')->exists($menu->image)) {
-            Storage::disk('public')->delete($menu->image);
+        if ($menu->image && file_exists(public_path($menu->image))) {
+            @unlink(public_path($menu->image));
         }
-
         $menu->delete();
+
         return redirect()->route('admin.menus.index')->with('success', "Menu '{$name}' berhasil dihapus.");
     }
 
     public function toggleAvailability(Menu $menu)
     {
         $menu->update(['is_available' => !$menu->is_available]);
-        $statusText = $menu->is_available ? 'Tersedia' : 'Habis';
-        return back()->with('success', "Status ketersediaan menu {$menu->name} diubah menjadi {$statusText}.");
+        $status = $menu->is_available ? 'Tersedia' : 'Habis';
+
+        return back()->with('success', "Status menu '{$menu->name}' diubah menjadi: {$status}.");
     }
 }
