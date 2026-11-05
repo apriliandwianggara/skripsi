@@ -139,10 +139,10 @@
                         <span>Pantau Status Pesanan (Live)</span>
                     </a>
 
-                    <a href="{{ route('customer.order', $order->table_number ? ['meja' => $order->table_number] : []) }}"
+                    <a href="{{ route('customer.qr_required') }}"
                        class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-2xl text-xs transition flex items-center justify-center space-x-1.5">
-                        <i class="fa-solid fa-plus"></i>
-                        <span>Pesan Menu Lain</span>
+                        <i class="fa-solid fa-qrcode"></i>
+                        <span>Pesan Tambahan? Pindai QR di Meja</span>
                     </a>
                 </div>
 

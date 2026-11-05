@@ -242,10 +242,10 @@
 
         <!-- Tombol Pesan Lagi -->
         <div class="text-center pt-2">
-            <a href="{{ route('customer.order', $order->table_number ? ['meja' => $order->table_number] : []) }}"
+            <a href="{{ route('customer.qr_required') }}"
                class="inline-flex items-center space-x-2 text-xs font-semibold text-emerald-700 hover:text-emerald-900 py-2 px-4 rounded-xl hover:bg-emerald-50 transition">
-                <i class="fa-solid fa-arrow-left"></i>
-                <span>Kembali ke Menu Pemesanan</span>
+                <i class="fa-solid fa-qrcode"></i>
+                <span>Ingin Pesan Lagi? Pindai QR di Meja</span>
             </a>
         </div>
 

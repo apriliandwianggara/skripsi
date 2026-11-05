@@ -80,15 +80,21 @@ class QrCodeService
      */
     public function generatePermanentDataUri(): string
     {
-        $url = $this->getPermanentOrderUrl();
+        try {
+            $url = $this->getPermanentOrderUrl();
 
-        $options = new QROptions();
-        $options->outputInterface = QRGdImagePNG::class;
-        $options->eccLevel = EccLevel::H;
-        $options->scale = 10;
-        $options->addQuietzone = true;
+            $options = new QROptions();
+            $options->outputInterface = QRGdImagePNG::class;
+            $options->eccLevel = EccLevel::H;
+            $options->scale = 10;
+            $options->addQuietzone = true;
 
-        return (new QRCode($options))->render($url);
+            return (new QRCode($options))->render($url);
+        } catch (\Throwable $e) {
+            // Fallback SVG data URI jika server hosting tidak mendukung ekstensi GD Image PNG
+            $svg = $this->generatePermanentSvg();
+            return 'data:image/svg+xml;base64,' . base64_encode($svg);
+        }
     }
 
     /**

@@ -171,116 +171,42 @@
                     </div>
                 </div>
 
-                <!-- KARTU 4: PROTEKSI QR GATE & RADIUS GPS (GEOFENCING) -->
+                <!-- KARTU 4: PROTEKSI QR GATE & FIFO SETTINGS -->
                 <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-4">
                     <h3 class="font-bold text-sm uppercase tracking-wider text-gray-800 pb-2 border-b border-gray-100 flex items-center">
-                        <i class="fa-solid fa-shield-halved mr-2 text-emerald-600"></i> Keamanan QR Meja & Radius GPS Kafe
+                        <i class="fa-solid fa-shield-halved mr-2 text-emerald-600"></i> Keamanan Akses Pemesanan Meja (QR Gate)
                     </h3>
 
-                    <!-- Fitur Mode Demo Sidang Skripsi (Penyelamat Saat Sidang) -->
-                    <div class="p-4 bg-blue-50/90 border-2 border-blue-300 rounded-2xl space-y-3 shadow-sm">
-                        <div class="flex items-start justify-between">
-                            <div class="pr-3">
-                                <div class="flex items-center space-x-2">
-                                    <span class="px-2 py-0.5 bg-blue-600 text-white rounded text-[9px] font-black uppercase tracking-wider">Penting untuk Sidang</span>
-                                    <label for="demo_mode_enabled" class="text-xs font-black text-blue-950 flex items-center cursor-pointer">
-                                        <i class="fa-solid fa-graduation-cap text-blue-600 mr-1.5"></i>
-                                        Mode Uji Coba / Sidang Skripsi (Bypass GPS Otomatis)
-                                    </label>
-                                </div>
-                                <p class="text-[11px] text-blue-900/80 mt-1 leading-relaxed">
-                                    Aktifkan opsi ini saat <strong>Sidang Skripsi di depan Dosen Penguji</strong> atau saat simulasi di rumah/kampus. Lokasi pemesanan akan otomatis terverifikasi 100% berada di meja kafe (0 meter), sehingga demo alur sistem di depan dosen dijamin lancar tanpa takut sinyal GPS gedung drop!
-                                </p>
-                            </div>
-                            <div class="pt-0.5">
-                                <input type="checkbox" id="demo_mode_enabled" name="demo_mode_enabled" value="1" {{ old('demo_mode_enabled', $setting->demo_mode_enabled) ? 'checked' : '' }}
-                                       class="w-5 h-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300 transition cursor-pointer">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Fitur Proteksi Akses QR Meja -->
+                    <!-- Fitur Proteksi Akses QR Meja (Selalu Aktif) -->
                     <div class="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-3">
                         <div class="flex items-start justify-between">
                             <div class="pr-3">
                                 <label for="require_qr_scan" class="text-xs font-extrabold text-emerald-950 flex items-center cursor-pointer">
                                     <i class="fa-solid fa-qrcode text-emerald-600 mr-1.5"></i>
-                                    Proteksi Gerbang QR Meja (Wajib Scan Fisik)
+                                    Proteksi Gerbang QR Meja (Wajib Scan Fisik di Meja)
                                 </label>
                                 <p class="text-[11px] text-emerald-800/80 mt-1 leading-relaxed">
-                                    Bila aktif, pelanggan <strong>wajib memindai QR fisik di meja</strong> dan tidak bisa mengetik manual URL di browser.
+                                    Pelanggan <strong>wajib memindai QR fisik di meja</strong> untuk membuka menu dan tidak dapat mengetik tautan secara manual di browser. Setelah pesanan berhasil dikirim, sesi ditutup seketika dan jika pelanggan ingin memesan lagi di lain waktu, pelanggan wajib memindai QR fisik di meja kembali.
                                 </p>
                             </div>
                             <div class="pt-0.5">
-                                <input type="checkbox" id="require_qr_scan" name="require_qr_scan" value="1" {{ old('require_qr_scan', $setting->require_qr_scan) ? 'checked' : '' }}
-                                       class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300 transition cursor-pointer">
+                                <input type="checkbox" id="require_qr_scan" name="require_qr_scan" value="1" checked disabled
+                                       class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300 opacity-80 cursor-not-allowed">
+                                <input type="hidden" name="require_qr_scan" value="1">
                             </div>
                         </div>
 
                         <div class="pt-2 border-t border-emerald-100">
                             <label class="block text-[11px] font-bold text-gray-700 mb-1">
-                                Token Kunci Keamanan QR
+                                Token Kunci Keamanan QR Meja
                             </label>
                             <input type="text" name="qr_access_key" value="{{ old('qr_access_key', $setting->qr_access_key ?? 'sekarsa_qr_cafe_2026') }}" 
                                    class="w-full text-xs p-2.5 bg-white border border-gray-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <span class="text-[10px] text-gray-400 mt-1 block">Token keamanan unik yang ditautkan ke QR fisik di meja kafe.</span>
                         </div>
                     </div>
 
-                    <!-- Fitur Proteksi Radius Lokasi Kafe (GPS Geofencing) -->
-                    <div class="p-4 bg-amber-50/70 border border-amber-200 rounded-2xl space-y-3">
-                        <div class="flex items-start justify-between">
-                            <div class="pr-3">
-                                <label for="enable_gps_radius" class="text-xs font-extrabold text-amber-950 flex items-center cursor-pointer">
-                                    <i class="fa-solid fa-location-dot text-amber-600 mr-1.5"></i>
-                                    Proteksi Radius GPS Kafe (Geofencing)
-                                </label>
-                                <p class="text-[11px] text-amber-900/80 mt-1 leading-relaxed">
-                                    Mencegah pemesanan jika pelanggan berada di luar area kafe. Dilengkapi <strong>toleransi deviasi GPS indoor</strong> agar pelanggan di dalam ruangan tidak salah tertolak.
-                                </p>
-                            </div>
-                            <div class="pt-0.5">
-                                <input type="checkbox" id="enable_gps_radius" name="enable_gps_radius" value="1" {{ old('enable_gps_radius', $setting->enable_gps_radius) ? 'checked' : '' }}
-                                       class="w-5 h-5 rounded text-amber-600 focus:ring-amber-500 border-gray-300 transition cursor-pointer">
-                            </div>
-                        </div>
 
-                        <div class="pt-2 border-t border-amber-200/60 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[11px] font-bold text-gray-700 mb-1">Latitude Kafe</label>
-                                <input type="text" id="cafe_latitude" name="cafe_latitude" value="{{ old('cafe_latitude', $setting->cafe_latitude ?? -7.7588000) }}" 
-                                       class="w-full text-xs p-2.5 bg-white border border-gray-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-bold text-gray-700 mb-1">Longitude Kafe</label>
-                                <input type="text" id="cafe_longitude" name="cafe_longitude" value="{{ old('cafe_longitude', $setting->cafe_longitude ?? 110.3855000) }}" 
-                                       class="w-full text-xs p-2.5 bg-white border border-gray-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[11px] font-bold text-gray-700 mb-1">Radius Kafe (Meter)</label>
-                                <input type="number" name="cafe_radius_meters" value="{{ old('cafe_radius_meters', $setting->cafe_radius_meters ?? 150) }}" min="10" max="5000"
-                                       class="w-full text-xs p-2.5 bg-white border border-gray-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
-                                <span class="text-[9px] text-gray-500 mt-0.5 block">Disarankan 150 – 250 meter</span>
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-bold text-gray-700 mb-1">Toleransi GPS Indoor (Meter)</label>
-                                <input type="number" name="gps_tolerance_meters" value="{{ old('gps_tolerance_meters', $setting->gps_tolerance_meters ?? 50) }}" min="0" max="500"
-                                       class="w-full text-xs p-2.5 bg-white border border-gray-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
-                                <span class="text-[9px] text-gray-500 mt-0.5 block">Kompensasi sinyal GPS terhalang atap ruangan</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between pt-1">
-                            <span class="text-[10px] text-gray-500">Bisa dimatikan sementara jika sinyal GPS kafe sedang gangguan.</span>
-                            <button type="button" onclick="detectCurrentLocation()" 
-                                    class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10px] font-bold transition flex items-center space-x-1 shrink-0">
-                                <i class="fa-solid fa-crosshairs"></i>
-                                <span>Ambil Titik Lokasi Sekarang</span>
-                            </button>
-                        </div>
-                    </div>
 
                     <div>
                         <label class="block text-xs font-bold uppercase text-gray-700 mb-1">
@@ -359,43 +285,6 @@
 </div>
 
 <script>
-function detectCurrentLocation() {
-    if (!navigator.geolocation) {
-        Swal.fire('Tidak Didukung', 'Browser Anda tidak mendukung deteksi lokasi GPS.', 'warning');
-        return;
-    }
-
-    Swal.fire({
-        title: 'Mendeteksi Lokasi GPS...',
-        text: 'Mohon izinkan akses lokasi pada browser Anda.',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-
-    navigator.geolocation.getCurrentPosition(
-        (pos) => {
-            document.getElementById('cafe_latitude').value = pos.coords.latitude.toFixed(7);
-            document.getElementById('cafe_longitude').value = pos.coords.longitude.toFixed(7);
-            Swal.fire({
-                icon: 'success',
-                title: 'Titik Lokasi Berhasil Diambil!',
-                text: `Koordinat: ${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)} (Akurasi: ±${Math.round(pos.coords.accuracy)}m)`,
-                timer: 2500
-            });
-        },
-        (err) => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal Mendeteksi Lokasi',
-                text: 'Pastikan GPS dan izin lokasi browser aktif: ' + err.message
-            });
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
-}
-
 function testAlarmSound() {
     startSekarsaContinuousAlarm();
     Swal.fire({

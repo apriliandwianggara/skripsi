@@ -82,38 +82,12 @@
             </div>
         </div>
 
-        @if($setting->demo_mode_enabled)
-        <!-- Badge Status Mode Demo Sidang Skripsi -->
-        <div class="bg-blue-50 border border-blue-200 rounded-xl px-3.5 py-2 text-xs text-blue-900 flex items-center justify-between mb-4 shadow-sm">
-            <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-graduation-cap text-blue-600 text-sm"></i>
-                <span class="font-bold text-[11px]">{{ $setting->demo_mode_label ?? 'Mode Demo Sidang Skripsi' }}: Lokasi Otomatis di Kafe</span>
-            </div>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white shadow-sm flex items-center space-x-1">
-                <i class="fa-solid fa-check text-[9px]"></i>
-                <span>Terverifikasi</span>
-            </span>
-        </div>
-        @elseif($setting->enable_gps_radius)
-        <!-- Badge Status Radius GPS Kafe -->
-        <div id="gpsStatusBadge" class="bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2 text-xs text-amber-900 flex items-center justify-between mb-4 shadow-sm">
-            <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-location-dot text-amber-600 text-sm"></i>
-                <span id="gpsStatusText" class="font-medium text-[11px]">Memeriksa posisi GPS Anda di {{ $setting->cafe_name ?? 'Sekarsa Coffee' }}...</span>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button type="button" onclick="checkGpsLocation(true)" title="Deteksi Ulang GPS" class="text-[10px] text-amber-700 hover:text-amber-900 underline font-semibold flex items-center space-x-0.5">
-                    <i class="fa-solid fa-rotate text-[9px]"></i>
-                    <span>Ulangi</span>
-                </button>
-                <span id="gpsStatusDot" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
-            </div>
-        </div>
-        @endif
-
         <!-- Search Bar -->
         <div class="mb-4">
             <form action="{{ route('customer.order') }}" method="GET" class="relative">
+                @if(!empty($tokenParam))
+                    <input type="hidden" name="token" value="{{ $tokenParam }}">
+                @endif
                 @if($tableParam)
                     <input type="hidden" name="meja" value="{{ $tableParam }}">
                 @endif
@@ -128,7 +102,7 @@
                            class="w-full bg-white pl-10 pr-10 py-3 rounded-2xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm">
                     <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-gray-400 text-sm"></i>
                     @if($search)
-                        <a href="{{ route('customer.order', array_filter(['meja' => $tableParam, 'kategori' => $selectedCategory])) }}"
+                        <a href="{{ route('customer.order', array_filter(['token' => $tokenParam, 'meja' => $tableParam, 'kategori' => $selectedCategory])) }}"
                            class="absolute right-3.5 top-3 text-gray-400 hover:text-gray-600">
                             <i class="fa-solid fa-circle-xmark text-base"></i>
                         </a>
@@ -139,13 +113,13 @@
 
         <!-- Category Horizontal Filter (Scrollable) -->
         <div class="mb-5 -mx-4 px-4 overflow-x-auto scrollbar-hide flex items-center space-x-2 pb-1">
-            <a href="{{ route('customer.order', array_filter(['meja' => $tableParam, 'q' => $search])) }}"
+            <a href="{{ route('customer.order', array_filter(['token' => $tokenParam, 'meja' => $tableParam, 'q' => $search])) }}"
                class="shrink-0 px-4 py-2 rounded-xl text-xs font-semibold transition shadow-sm {{ empty($selectedCategory) ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200' }}">
                 <i class="fa-solid fa-border-all mr-1.5"></i> Semua Menu
             </a>
 
             @foreach($categories as $cat)
-                <a href="{{ route('customer.order', array_filter(['meja' => $tableParam, 'kategori' => $cat->slug, 'q' => $search])) }}"
+                <a href="{{ route('customer.order', array_filter(['token' => $tokenParam, 'meja' => $tableParam, 'kategori' => $cat->slug, 'q' => $search])) }}"
                    class="shrink-0 px-4 py-2 rounded-xl text-xs font-semibold transition shadow-sm {{ $selectedCategory === $cat->slug ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200' }}">
                     <i class="fa-solid fa-{{ $cat->icon ?: 'coffee' }} mr-1.5"></i> {{ $cat->name }}
                 </a>
@@ -155,7 +129,7 @@
         @if($search)
             <div class="mb-4 flex items-center justify-between text-xs text-gray-600 bg-emerald-50 p-2.5 rounded-xl border border-emerald-100">
                 <span>Hasil pencarian untuk: <strong class="text-emerald-900">"{{ $search }}"</strong> ({{ $menus->count() }} menu)</span>
-                <a href="{{ route('customer.order', array_filter(['meja' => $tableParam, 'kategori' => $selectedCategory])) }}" class="text-emerald-700 font-semibold hover:underline">Reset</a>
+                <a href="{{ route('customer.order', array_filter(['token' => $tokenParam, 'meja' => $tableParam, 'kategori' => $selectedCategory])) }}" class="text-emerald-700 font-semibold hover:underline">Reset</a>
             </div>
         @endif
 
@@ -167,7 +141,7 @@
                 </div>
                 <h3 class="font-bold text-gray-700 text-base mb-1">Menu Tidak Ditemukan</h3>
                 <p class="text-xs text-gray-500 mb-4">Sajian yang kamu cari belum tersedia atau sedang habis.</p>
-                <a href="{{ route('customer.order', array_filter(['meja' => $tableParam])) }}" class="inline-flex items-center text-xs font-semibold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-xl hover:bg-emerald-100">
+                <a href="{{ route('customer.order', array_filter(['token' => $tokenParam, 'meja' => $tableParam])) }}" class="inline-flex items-center text-xs font-semibold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-xl hover:bg-emerald-100">
                     <i class="fa-solid fa-arrow-left mr-1.5"></i> Lihat Semua Menu
                 </a>
             </div>
@@ -570,115 +544,6 @@
         document.body.style.overflow = 'auto';
     }
 
-    const isGpsRequired = {{ $setting->enable_gps_radius ? 'true' : 'false' }};
-    const isDemoMode = {{ $setting->demo_mode_enabled ? 'true' : 'false' }};
-    let customerGps = {
-        lat: isDemoMode ? {{ $setting->cafe_latitude ?? -7.7588 }} : null,
-        lng: isDemoMode ? {{ $setting->cafe_longitude ?? 110.3855 }} : null,
-        accuracy: isDemoMode ? 10 : null,
-        verified: isDemoMode || !isGpsRequired
-    };
-
-    function getCustomerCoordinates(forceFresh = false) {
-        return new Promise((resolve, reject) => {
-            if (isDemoMode) {
-                customerGps.verified = true;
-                resolve(customerGps);
-                return;
-            }
-
-            if (!navigator.geolocation) {
-                reject(new Error("Browser ponsel Anda tidak mendukung deteksi lokasi GPS."));
-                return;
-            }
-
-            // 1. Coba deteksi GPS dengan cache toleran (cepat, 100-300ms)
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    customerGps.lat = pos.coords.latitude;
-                    customerGps.lng = pos.coords.longitude;
-                    customerGps.accuracy = pos.coords.accuracy;
-                    resolve(customerGps);
-                },
-                (err) => {
-                    // 2. Fallback jika akurasi tinggi indoor gagal, gunakan jaringan seluler/Wi-Fi
-                    navigator.geolocation.getCurrentPosition(
-                        (fallbackPos) => {
-                            customerGps.lat = fallbackPos.coords.latitude;
-                            customerGps.lng = fallbackPos.coords.longitude;
-                            customerGps.accuracy = fallbackPos.coords.accuracy;
-                            resolve(customerGps);
-                        },
-                        (fallbackErr) => {
-                            let msg = "Harap aktifkan GPS ponsel dan izinkan akses lokasi di browser untuk memesan.";
-                            if (err.code === 1) msg = "Izin lokasi ditolak. Harap izinkan akses lokasi pada browser Anda.";
-                            reject(new Error(msg));
-                        },
-                        { enableHighAccuracy: false, timeout: 8000, maximumAge: 180000 }
-                    );
-                },
-                { enableHighAccuracy: true, timeout: 7000, maximumAge: forceFresh ? 0 : 60000 }
-            );
-        });
-    }
-
-    async function checkGpsLocation(forceFresh = false) {
-        if (isDemoMode) {
-            customerGps.verified = true;
-            return;
-        }
-        if (!isGpsRequired) return;
-
-        const badge = document.getElementById('gpsStatusBadge');
-        const text = document.getElementById('gpsStatusText');
-        const dot = document.getElementById('gpsStatusDot');
-
-        if (text) text.innerText = "Mengunci sinyal GPS ponsel Anda...";
-        if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0";
-
-        try {
-            await getCustomerCoordinates(forceFresh);
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const res = await fetch("{{ route('customer.verify_location') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                body: JSON.stringify({
-                    latitude: customerGps.lat,
-                    longitude: customerGps.lng,
-                    accuracy: customerGps.accuracy
-                })
-            });
-
-            const data = await res.json();
-            if (data.within_radius) {
-                customerGps.verified = true;
-                if (badge && text && dot) {
-                    badge.className = "bg-emerald-50 border border-emerald-200 rounded-xl px-3.5 py-2 text-xs text-emerald-900 flex items-center justify-between mb-4 shadow-sm";
-                    text.innerHTML = `<strong>Di Area Kafe</strong> &bull; Terverifikasi (${data.formatted_distance})`;
-                    dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0";
-                }
-            } else {
-                customerGps.verified = false;
-                if (badge && text && dot) {
-                    badge.className = "bg-red-50 border border-red-200 rounded-xl px-3.5 py-2 text-xs text-red-900 flex items-center justify-between mb-4 shadow-sm";
-                    text.innerHTML = `<strong>Di Luar Radius Kafe</strong> &bull; Jarak: ${data.formatted_distance} (Batas: ${data.max_radius_meters + (data.tolerance_meters || 50)}m)`;
-                    dot.className = "w-2.5 h-2.5 rounded-full bg-red-500 shrink-0";
-                }
-            }
-        } catch (err) {
-            customerGps.verified = false;
-            if (badge && text && dot) {
-                badge.className = "bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2 text-xs text-amber-900 flex items-center justify-between mb-4 shadow-sm";
-                text.innerText = "GPS indoor butuh waktu: " + err.message;
-                dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0";
-            }
-        }
-    }
-
     // Submit Order to Server via AJAX POST
     async function submitOrder() {
         if (cart.length === 0) {
@@ -705,36 +570,11 @@
         const btnSubmit = document.getElementById('btnSubmitOrder');
         const originalHtml = btnSubmit.innerHTML;
 
-        // Pemeriksaan Radius GPS jika diwajibkan (dan bukan Mode Demo Sidang)
-        if (isGpsRequired && !isDemoMode && !customerGps.verified) {
-            btnSubmit.disabled = true;
-            btnSubmit.innerHTML = `<i class="fa-solid fa-location-crosshairs fa-spin"></i><span>Memeriksa Radius Lokasi Kafe...</span>`;
-            try {
-                await checkGpsLocation(true);
-                if (!customerGps.verified) {
-                    throw new Error("Pemesanan ditolak: Anda terdeteksi berada di luar area Sekarsa Coffee. Pastikan Anda berada di area kafe.");
-                }
-            } catch (gpsErr) {
-                btnSubmit.disabled = false;
-                btnSubmit.innerHTML = originalHtml;
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Lokasi Tidak Sesuai',
-                    text: gpsErr.message,
-                    confirmButtonColor: '#d97706'
-                });
-                return;
-            }
-        }
-
         const payload = {
             customer_name: customerName,
             customer_phone: customerPhone,
             table_number: tableNumber,
             customer_notes: customerNotes,
-            customer_lat: customerGps.lat,
-            customer_lng: customerGps.lng,
-            customer_accuracy: customerGps.accuracy,
             items: cart.map(item => ({
                 menu_id: item.id,
                 quantity: item.quantity,
@@ -767,6 +607,18 @@
                 // Redirect to confirmation page
                 window.location.href = data.confirmation_url;
             } else {
+                if (data.redirect_url) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Akses Ditolak',
+                        text: data.message,
+                        confirmButtonColor: '#16a34a',
+                        confirmButtonText: 'Scan QR di Meja'
+                    }).then(() => {
+                        window.location.href = data.redirect_url;
+                    });
+                    return;
+                }
                 throw new Error(data.message || 'Gagal mengirim pesanan');
             }
         } catch (error) {
@@ -784,9 +636,6 @@
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {
         loadCart();
-        if (isGpsRequired) {
-            checkGpsLocation();
-        }
         // Polling Real-time Status Ketersediaan Menu (Jika Kasir Mengubah Menu Jadi Habis)
         setInterval(checkRealtimeMenuAvailability, 3000);
     });
