@@ -190,12 +190,20 @@
 
                                 <div class="flex items-center space-x-2">
                                     @if($order->status === 'menunggu')
-                                        <button type="button" onclick="actionProcess({{ $order->id }})" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5">
-                                            <i class="fa-solid fa-play"></i>
-                                            <span>Mulai Proses</span>
-                                        </button>
+                                        @if($order->id === ($firstWaitingOrderId ?? null))
+                                            <button type="button" onclick="actionProcess({{ $order->id }})" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-blue-600/20">
+                                                <i class="fa-solid fa-play"></i>
+                                                <span>Mulai Proses (Prioritas FIFO)</span>
+                                            </button>
+                                        @else
+                                            @php $targetQ = $firstWaitingQueueNumber ?? 'sebelumnya'; @endphp
+                                            <button type="button" onclick="alertFifoWaiting('{{ $targetQ }}')" class="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-400 border border-gray-200 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 cursor-not-allowed">
+                                                <i class="fa-solid fa-lock text-gray-400"></i>
+                                                <span>Menunggu Antrean #{{ $targetQ }}</span>
+                                            </button>
+                                        @endif
                                     @elseif($order->status === 'diproses')
-                                        <button type="button" onclick="actionReady({{ $order->id }})" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5">
+                                        <button type="button" onclick="actionReady({{ $order->id }})" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-emerald-600/20">
                                             <i class="fa-solid fa-bell"></i>
                                             <span>Pesanan Siap Diambil</span>
                                         </button>
@@ -352,7 +360,7 @@
             if (res.ok && data.success) {
                 Swal.fire({
                     icon: 'success',
-                    title: 'Diproses',
+                    title: 'Pesanan Diproses',
                     text: data.message,
                     timer: 2000,
                     showConfirmButton: false,
@@ -363,15 +371,25 @@
             } else {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Perhatian Multi-Kasir',
-                    text: data.message || 'Pesanan sudah diubah oleh kasir lain.',
-                    confirmButtonColor: '#16a34a'
+                    title: 'Urutan FIFO Wajib Dipatuhi',
+                    text: data.message || 'Harap proses pesanan yang masuk terlebih dahulu.',
+                    confirmButtonColor: '#2563eb'
                 });
                 fetchQueueData();
             }
         } catch (e) {
             console.error('Error actionProcess:', e);
         }
+    }
+
+    function alertFifoWaiting(queueNumber) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Urutan FIFO Wajib Dipatuhi',
+            html: `Sesuai aturan algoritma <b>First In First Out (FIFO)</b>, kasir wajib memproses pesanan yang masuk terlebih dahulu.<br><br>Harap proses pesanan dengan <b>Nomor Antrean #${queueNumber}</b> terlebih dahulu sebelum memproses pesanan ini.`,
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Baik, Saya Proses Antrean Terdepan'
+        });
     }
 
     // Action AJAX Ready (Siap Diambil)
@@ -542,15 +560,26 @@
                 `;
             });
 
-            const actionBtn = order.status === 'menunggu'
-                ? `<button type="button" onclick="actionProcess(${order.id})" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5">
+            let actionBtn = '';
+            if (order.status === 'menunggu') {
+                if (order.is_allowed_to_process) {
+                    actionBtn = `<button type="button" onclick="actionProcess(${order.id})" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-blue-600/20">
                         <i class="fa-solid fa-play"></i>
-                        <span>Mulai Proses</span>
-                   </button>`
-                : `<button type="button" onclick="actionReady(${order.id})" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5">
-                        <i class="fa-solid fa-bell"></i>
-                        <span>Pesanan Siap Diambil</span>
-                   </button>`;
+                        <span>Mulai Proses (Prioritas FIFO)</span>
+                    </button>`;
+                } else {
+                    const reqQueue = order.first_waiting_queue_number || 'sebelumnya';
+                    actionBtn = `<button type="button" onclick="alertFifoWaiting('${reqQueue}')" class="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-400 border border-gray-200 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 cursor-not-allowed">
+                        <i class="fa-solid fa-lock text-gray-400"></i>
+                        <span>Menunggu Antrean #${reqQueue}</span>
+                    </button>`;
+                }
+            } else if (order.status === 'diproses') {
+                actionBtn = `<button type="button" onclick="actionReady(${order.id})" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-emerald-600/20">
+                    <i class="fa-solid fa-bell"></i>
+                    <span>Pesanan Siap Diambil</span>
+                </button>`;
+            }
 
             html += `
                 <div class="p-5 hover:bg-slate-50/80 transition ${cardBg}" id="order-card-${order.id}">

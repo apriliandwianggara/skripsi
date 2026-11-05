@@ -52,12 +52,19 @@ class PegawaiDashboardController extends Controller
         $metrics = $this->fifoService->getFifoMetrics();
         $setting = Setting::get();
 
+        // Temukan pesanan berstatus 'menunggu' yang paling awal masuk (Prioritas 1 FIFO)
+        $firstWaitingOrder = $fifoQueue->where('status', 'menunggu')->first();
+        $firstWaitingOrderId = $firstWaitingOrder?->id;
+        $firstWaitingQueueNumber = $firstWaitingOrder?->queue_number;
+
         return view('pegawai.dashboard', compact(
             'fifoQueue',
             'readyOrders',
             'completedToday',
             'metrics',
-            'setting'
+            'setting',
+            'firstWaitingOrderId',
+            'firstWaitingQueueNumber'
         ));
     }
 
@@ -89,6 +96,11 @@ class PegawaiDashboardController extends Controller
         // Fingerprint timestamp untuk mengecek apakah ada perubahan data
         $latestUpdate = Order::max('updated_at') ?? '0';
 
+        // Temukan pesanan 'menunggu' yang pertama masuk (prioritas FIFO pertama)
+        $firstWaitingOrder = $queue->where('status', 'menunggu')->first();
+        $firstWaitingOrderId = $firstWaitingOrder?->id;
+        $firstWaitingQueueNumber = $firstWaitingOrder?->queue_number;
+
         return response()->json([
             'success' => true,
             'version' => strtotime($latestUpdate),
@@ -96,7 +108,7 @@ class PegawaiDashboardController extends Controller
             'ready_count' => $readyOrders->count(),
             'total_today' => $metrics['total_hari_ini'],
             'metrics' => $metrics,
-            'queue' => $queue->map(function ($order, $index) {
+            'queue' => $queue->map(function ($order, $index) use ($firstWaitingOrderId, $firstWaitingQueueNumber) {
                 return [
                     'id' => $order->id,
                     'fifo_rank' => $index + 1,
@@ -108,6 +120,8 @@ class PegawaiDashboardController extends Controller
                     'customer_notes' => $order->customer_notes,
                     'status' => $order->status,
                     'status_label' => $order->status_label,
+                    'is_allowed_to_process' => ($order->status === 'menunggu') && ($order->id === $firstWaitingOrderId),
+                    'first_waiting_queue_number' => $firstWaitingQueueNumber,
                     'received_at' => $order->received_at->format('H:i'),
                     'received_ago' => $order->received_at->diffForHumans(),
                     'total_price' => number_format($order->total_price, 0, ',', '.'),
@@ -164,6 +178,36 @@ class PegawaiDashboardController extends Controller
 
                 if ($request->wantsJson()) {
                     return response()->json(['success' => false, 'message' => $msg], 409);
+                }
+                return back()->with('error', $msg);
+            }
+
+            // =========================================================================
+            // ATURAN KETAT FIFO (First In First Out):
+            // Kasir HANYA BISA memproses pesanan yang masuk terlebih dahulu.
+            // Cek apakah ada pesanan lain berstatus 'menunggu' yang masuk lebih awal.
+            // =========================================================================
+            $earlierWaitingOrder = Order::where('status', 'menunggu')
+                ->where(function ($q) use ($lockedOrder) {
+                    $q->where('received_at', '<', $lockedOrder->received_at)
+                      ->orWhere(function ($sub) use ($lockedOrder) {
+                          $sub->where('received_at', '=', $lockedOrder->received_at)
+                              ->where('id', '<', $lockedOrder->id);
+                      });
+                })
+                ->orderBy('received_at', 'asc')
+                ->orderBy('id', 'asc')
+                ->first();
+
+            if ($earlierWaitingOrder) {
+                $msg = "Sesuai ketentuan FIFO, Anda wajib memproses pesanan Nomor Antrean [#{$earlierWaitingOrder->queue_number}] ({$earlierWaitingOrder->customer_name}) terlebih dahulu sebelum memproses pesanan #{$lockedOrder->queue_number}.";
+
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $msg,
+                        'required_queue_number' => $earlierWaitingOrder->queue_number,
+                    ], 422);
                 }
                 return back()->with('error', $msg);
             }
