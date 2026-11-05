@@ -570,6 +570,8 @@
         const btnSubmit = document.getElementById('btnSubmitOrder');
         const originalHtml = btnSubmit.innerHTML;
 
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "{{ csrf_token() }}";
+
         const payload = {
             _token: csrfToken,
             qr_token: "{{ $tokenParam }}",
