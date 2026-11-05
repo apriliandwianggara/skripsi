@@ -295,11 +295,27 @@ class CustomerOrderController extends Controller
      */
     public function confirmation($token)
     {
-        $order = Order::with('details')->where('tracking_token', $token)->firstOrFail();
-        $setting = Setting::get();
-        $queueInfo = $this->fifoService->calculateQueueInfo($order);
+        try {
+            $order = Order::with('details')->where('tracking_token', $token)->firstOrFail();
+            $setting = Setting::get();
+            $queueInfo = $this->fifoService->getQueueInfo($order);
 
-        return view('customer.confirmation', compact('order', 'setting', 'queueInfo'));
+            return view('customer.confirmation', compact('order', 'setting', 'queueInfo'));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Confirmation page error: ' . $e->getMessage());
+            $order = Order::with('details')->where('tracking_token', $token)->firstOrFail();
+            $setting = Setting::first() ?? new Setting();
+            $queueInfo = [
+                'is_in_queue' => true,
+                'posisi_antrean' => 1,
+                'total_antrean' => 1,
+                'pesanan_di_depan' => 0,
+                'daftar_pesanan_di_depan' => [],
+                'estimasi_waktu_menit' => 4,
+                'estimasi_siap' => null,
+            ];
+            return view('customer.confirmation', compact('order', 'setting', 'queueInfo'));
+        }
     }
 
     /**
@@ -307,14 +323,30 @@ class CustomerOrderController extends Controller
      */
     public function track($token)
     {
-        $order = Order::with(['details', 'statusHistory' => function ($q) {
-            $q->orderBy('created_at', 'asc');
-        }])->where('tracking_token', $token)->firstOrFail();
+        try {
+            $order = Order::with(['details', 'statusHistory' => function ($q) {
+                $q->orderBy('created_at', 'asc');
+            }])->where('tracking_token', $token)->firstOrFail();
 
-        $setting = Setting::get();
-        $queueInfo = $this->fifoService->calculateQueueInfo($order);
+            $setting = Setting::get();
+            $queueInfo = $this->fifoService->getQueueInfo($order);
 
-        return view('customer.track', compact('order', 'setting', 'queueInfo'));
+            return view('customer.track', compact('order', 'setting', 'queueInfo'));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Track page error: ' . $e->getMessage());
+            $order = Order::with('details')->where('tracking_token', $token)->firstOrFail();
+            $setting = Setting::first() ?? new Setting();
+            $queueInfo = [
+                'is_in_queue' => true,
+                'posisi_antrean' => 1,
+                'total_antrean' => 1,
+                'pesanan_di_depan' => 0,
+                'daftar_pesanan_di_depan' => [],
+                'estimasi_waktu_menit' => 4,
+                'estimasi_siap' => null,
+            ];
+            return view('customer.track', compact('order', 'setting', 'queueInfo'));
+        }
     }
 
     /**
@@ -328,7 +360,7 @@ class CustomerOrderController extends Controller
             return response()->json(['success' => false, 'message' => 'Pesanan tidak ditemukan'], 404);
         }
 
-        $queueInfo = $this->fifoService->calculateQueueInfo($order);
+        $queueInfo = $this->fifoService->getQueueInfo($order);
 
         return response()->json([
             'success' => true,

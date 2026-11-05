@@ -110,6 +110,14 @@ class FifoQueueService
     }
 
     /**
+     * Alias method untuk getQueueInfo (kompatibilitas kalkulasi antrean FIFO)
+     */
+    public function calculateQueueInfo(Order $order): array
+    {
+        return $this->getQueueInfo($order);
+    }
+
+    /**
      * Mengambil pesanan berikutnya yang harus dikerjakan oleh barista (prioritas pertama antrean 'menunggu').
      */
     public function getNextOrderToProcess(): ?Order
