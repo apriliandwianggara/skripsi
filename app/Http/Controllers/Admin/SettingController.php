@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Services\QrCodeService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Log;
 
 class SettingController extends Controller
 {
@@ -21,6 +24,8 @@ class SettingController extends Controller
      */
     public function index()
     {
+        $this->ensureSchemaUpToDate();
+
         $setting = Setting::get();
         $permanentUrl = $this->qrService->getPermanentOrderUrl();
         $qrSvg = $this->qrService->generatePermanentSvg();
@@ -34,6 +39,8 @@ class SettingController extends Controller
      */
     public function update(Request $request)
     {
+        $this->ensureSchemaUpToDate();
+
         $data = $request->validate([
             'cafe_name' => 'required|string|max:100',
             'cafe_tagline' => 'nullable|string|max:200',
@@ -96,6 +103,57 @@ class SettingController extends Controller
         $setting->update($data);
 
         return back()->with('success', 'Pengaturan tampilan & sistem berhasil diperbarui.');
+    }
+
+    /**
+     * Otomatis sinkronisasi skema tabel settings di database jika ada kolom yang belum dibuat.
+     */
+    private function ensureSchemaUpToDate(): void
+    {
+        try {
+            if (!Schema::hasColumn('settings', 'hero_title') || !Schema::hasColumn('settings', 'demo_mode_enabled')) {
+                Schema::table('settings', function (Blueprint $table) {
+                    if (!Schema::hasColumn('settings', 'cafe_logo')) {
+                        $table->string('cafe_logo')->nullable()->after('cafe_name');
+                    }
+                    if (!Schema::hasColumn('settings', 'cafe_banner')) {
+                        $table->string('cafe_banner')->nullable()->after('cafe_logo');
+                    }
+                    if (!Schema::hasColumn('settings', 'hero_title')) {
+                        $table->string('hero_title')->nullable()->default('Selamat Datang di Sekarsa Coffee')->after('cafe_tagline');
+                    }
+                    if (!Schema::hasColumn('settings', 'hero_subtitle')) {
+                        $table->text('hero_subtitle')->nullable()->after('hero_title');
+                    }
+                    if (!Schema::hasColumn('settings', 'cafe_opening_hours')) {
+                        $table->string('cafe_opening_hours')->nullable()->default('Setiap Hari: 08:00 - 23:00 WIB')->after('cafe_address');
+                    }
+                    if (!Schema::hasColumn('settings', 'announcement_text')) {
+                        $table->text('announcement_text')->nullable()->after('hero_subtitle');
+                    }
+                    if (!Schema::hasColumn('settings', 'footer_text')) {
+                        $table->string('footer_text')->nullable()->default('© 2026 Sekarsa Coffee & Space. All rights reserved.')->after('cafe_instagram');
+                    }
+                    if (!Schema::hasColumn('settings', 'gps_tolerance_meters')) {
+                        $table->integer('gps_tolerance_meters')->default(50)->after('cafe_radius_meters');
+                    }
+                    if (!Schema::hasColumn('settings', 'demo_mode_enabled')) {
+                        $table->boolean('demo_mode_enabled')->default(false)->after('gps_tolerance_meters');
+                    }
+                    if (!Schema::hasColumn('settings', 'demo_mode_label')) {
+                        $table->string('demo_mode_label')->nullable()->default('Mode Demo Sidang Skripsi')->after('demo_mode_enabled');
+                    }
+                    if (!Schema::hasColumn('settings', 'alarm_sound_enabled')) {
+                        $table->boolean('alarm_sound_enabled')->default(true)->after('whatsapp_notification_template');
+                    }
+                    if (!Schema::hasColumn('settings', 'alarm_repeat_interval')) {
+                        $table->integer('alarm_repeat_interval')->default(3)->after('alarm_sound_enabled');
+                    }
+                });
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Auto migrate schema: ' . $e->getMessage());
+        }
     }
 
     /**
