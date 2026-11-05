@@ -38,6 +38,44 @@
             <div class="inline-block bg-white text-emerald-900 font-extrabold text-2xl px-6 py-2 rounded-xl shadow font-mono">
                 {{ $order->queue_number }}
             </div>
+            <div class="pt-2">
+                <button type="button" onclick="acknowledgeReadyOrder()" class="px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-black rounded-xl text-xs uppercase tracking-wider shadow-lg transition transform active:scale-95 inline-flex items-center space-x-1.5">
+                    <i class="fa-solid fa-volume-xmark"></i>
+                    <span>Matikan Alarm / Saya Ambil</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Pop-up Layar Penuh Darurat Pesanan Siap (Berdenging Keras Tiada Henti) -->
+        <div id="orderReadyModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md transition-all duration-300 hidden">
+            <div class="bg-gradient-to-b from-emerald-900 via-emerald-950 to-gray-950 text-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border-4 border-amber-400 animate-bounce-subtle space-y-5">
+                <div class="relative inline-block">
+                    <div class="w-20 h-20 bg-amber-400 text-emerald-950 rounded-3xl flex items-center justify-center mx-auto text-4xl shadow-xl ring-8 ring-amber-400/30 animate-pulse">
+                        <i class="fa-solid fa-bell animate-wiggle"></i>
+                    </div>
+                    <span class="absolute -top-1 -right-1 flex h-6 w-6">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-6 w-6 bg-red-500 text-white text-[10px] font-black items-center justify-center">!</span>
+                    </span>
+                </div>
+
+                <div class="space-y-1">
+                    <span class="text-xs font-black uppercase tracking-widest text-amber-300">PANGGILAN KASIR</span>
+                    <h2 class="text-2xl font-black font-serif text-white">PESANAN ANDA SIAP!</h2>
+                    <p class="text-xs text-emerald-200">Pesanan telah selesai diracik oleh barista Sekarsa Coffee.</p>
+                </div>
+
+                <div class="bg-white/10 rounded-2xl p-4 border border-white/20 space-y-1">
+                    <span class="text-[10px] text-amber-300 font-bold uppercase tracking-wider block">Nomor Antrean Anda</span>
+                    <span class="text-4xl font-black font-mono text-white tracking-widest block">{{ $order->queue_number }}</span>
+                    <span class="text-xs text-emerald-300 font-medium block">Atas Nama: {{ $order->customer_name }}</span>
+                </div>
+
+                <button type="button" onclick="acknowledgeReadyOrder()" class="w-full py-4 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-emerald-950 rounded-2xl font-black text-sm uppercase tracking-wider shadow-2xl transition transform active:scale-95 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-check-double text-lg"></i>
+                    <span>SAYA AMBIL SEKARANG (MATIKAN ALARM)</span>
+                </button>
+            </div>
         </div>
 
         <!-- Card Kartu Status Utama -->
@@ -238,7 +276,45 @@
 <script>
     const orderToken = "{{ $order->tracking_token }}";
     let currentStatus = "{{ $order->status }}";
-    let hasPlayedChime = (currentStatus === 'siap_diambil');
+    let alarmAcknowledged = false;
+
+    // Minta izin notifikasi browser agar saat tab di-minimize tetap ada notif
+    document.addEventListener('DOMContentLoaded', () => {
+        requestNotificationPermission();
+
+        // Jika saat halaman pertama kali dibuka statusnya sudah siap_diambil
+        if (currentStatus === 'siap_diambil') {
+            triggerOrderReadyAlarm();
+        }
+    });
+
+    function triggerOrderReadyAlarm() {
+        if (alarmAcknowledged) return;
+
+        const modal = document.getElementById('orderReadyModal');
+        if (modal) modal.classList.remove('hidden');
+
+        const banner = document.getElementById('readyPickupBanner');
+        if (banner) banner.classList.remove('hidden');
+
+        startSekarsaContinuousAlarm();
+    }
+
+    function acknowledgeReadyOrder() {
+        alarmAcknowledged = true;
+        stopSekarsaContinuousAlarm();
+
+        const modal = document.getElementById('orderReadyModal');
+        if (modal) modal.classList.add('hidden');
+
+        Swal.fire({
+            title: 'Alarm Dimatikan',
+            text: 'Silakan menuju ke counter barista atau kasir untuk mengambil pesanan Anda. Terima kasih!',
+            icon: 'success',
+            confirmButtonColor: '#16a34a',
+            confirmButtonText: 'Baik, Mengerti'
+        });
+    }
 
     // Polling API endpoint setiap 3 detik
     async function checkOrderStatus() {
@@ -264,26 +340,12 @@
 
                 // Cek jika status berubah ke 'siap_diambil'
                 if (newStatus === 'siap_diambil') {
-                    const banner = document.getElementById('readyPickupBanner');
-                    if (banner) banner.classList.remove('hidden');
-
                     const queuePanel = document.getElementById('fifoQueueInfoPanel');
                     if (queuePanel) queuePanel.classList.add('hidden');
 
-                    // Mainkan bel kafe jika belum pernah berbunyi
-                    if (!hasPlayedChime) {
-                        hasPlayedChime = true;
-                        playSekarsaChime();
-
-                        Swal.fire({
-                            title: 'Pesanan Anda Siap!',
-                            text: 'Silakan ambil pesanan Anda di meja kasir.',
-                            icon: 'success',
-                            confirmButtonColor: '#16a34a',
-                            confirmButtonText: 'Baik, Saya Ambil'
-                        });
-                    }
+                    triggerOrderReadyAlarm();
                 } else if (newStatus === 'selesai') {
+                    acknowledgeReadyOrder();
                     const banner = document.getElementById('readyPickupBanner');
                     if (banner) banner.classList.add('hidden');
                     const queuePanel = document.getElementById('fifoQueueInfoPanel');

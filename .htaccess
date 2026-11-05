@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Don't rewrite maintenance or utility scripts
+    RewriteCond %{REQUEST_URI} ^/(extract\.php|test_db\.php|update_db_remote\.php)
+    RewriteRule ^ - [L]
+
+    # Block direct access to sensitive files
+    RewriteRule ^\.env - [F,L,NC]
+    RewriteRule ^composer\.(json|lock) - [F,L,NC]
+
+    # Rewrite all other requests to public folder
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

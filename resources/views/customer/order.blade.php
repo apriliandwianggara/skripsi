@@ -10,7 +10,7 @@
         <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-11 h-11 rounded-xl bg-white p-0.5 flex items-center justify-center shadow-md overflow-hidden shrink-0 border border-emerald-400/40">
-                    <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
+                    <img src="{{ $setting->logo_url }}" alt="{{ $setting->cafe_name ?? 'Sekarsa Logo' }}" class="w-full h-full object-contain">
                 </div>
                 <div>
                     <h1 class="font-bold text-base tracking-wide font-serif leading-tight">
@@ -49,18 +49,36 @@
     <!-- Main Container -->
     <main class="max-w-3xl mx-auto w-full px-4 pt-4 flex-1">
 
+        @if(!empty($setting->announcement_text))
+        <!-- Running Text / Pengumuman Kafe -->
+        <div class="mb-3 bg-amber-500 text-slate-950 px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 shadow-sm border border-amber-600/30">
+            <i class="fa-solid fa-bullhorn text-amber-900 shrink-0"></i>
+            <marquee behavior="scroll" direction="left" scrollamount="4" class="font-medium">
+                {{ $setting->announcement_text }}
+            </marquee>
+        </div>
+        @endif
+
         <!-- Hero Banner Suasana Kafe Sekarsa -->
-        <div class="mb-4 relative rounded-2xl overflow-hidden shadow-md border border-emerald-900/10 h-32 sm:h-44 group">
-            <img src="{{ asset('images/sekarsa-cafe.jpg') }}" alt="Sekarsa Coffee & Space" class="w-full h-full object-cover object-center filter brightness-90 transition duration-500 group-hover:scale-105">
-            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/30 to-transparent flex flex-col justify-end p-3.5 sm:p-4 text-white">
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white w-max mb-1 shadow-sm">
-                    <i class="fa-solid fa-mug-hot mr-1 text-[9px]"></i> Sekarsa Coffee & Space
+        <div class="mb-4 relative rounded-2xl overflow-hidden shadow-md border border-emerald-900/10 h-36 sm:h-48 group">
+            <img src="{{ $setting->banner_url }}" alt="{{ $setting->cafe_name ?? 'Sekarsa Coffee & Space' }}" class="w-full h-full object-cover object-center filter brightness-90 transition duration-500 group-hover:scale-105">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent flex flex-col justify-end p-3.5 sm:p-5 text-white">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white w-max mb-1 shadow-sm">
+                    <i class="fa-solid fa-mug-hot mr-1 text-[9px]"></i> {{ $setting->cafe_name ?? 'Sekarsa Coffee & Space' }}
                 </span>
-                <h2 class="text-base sm:text-xl font-bold font-serif leading-tight">Warmth, Taste & Harmony in Every Sip</h2>
-                <p class="text-[11px] text-emerald-200 flex items-center mt-0.5">
-                    <i class="fa-solid fa-location-dot mr-1 text-amber-400"></i>
-                    <span>Jl. Kaliurang KM 5.8, Manggung, Caturtunggal, Sleman</span>
+                <h2 class="text-base sm:text-xl font-bold font-serif leading-tight">
+                    {{ $setting->hero_title ?? 'Warmth, Taste & Harmony in Every Sip' }}
+                </h2>
+                <p class="text-[11px] text-emerald-200 flex items-center mt-0.5 line-clamp-1">
+                    <i class="fa-solid fa-location-dot mr-1 text-amber-400 shrink-0"></i>
+                    <span>{{ $setting->hero_subtitle ?? ($setting->cafe_address ?? 'Jl. Kaliurang KM 5.8, Manggung, Caturtunggal, Sleman') }}</span>
                 </p>
+                @if(!empty($setting->cafe_opening_hours))
+                <p class="text-[10px] text-emerald-300/90 flex items-center mt-0.5">
+                    <i class="fa-solid fa-clock mr-1 text-emerald-400 shrink-0"></i>
+                    <span>{{ $setting->cafe_opening_hours }}</span>
+                </p>
+                @endif
             </div>
         </div>
 
@@ -69,9 +87,15 @@
         <div id="gpsStatusBadge" class="bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2 text-xs text-amber-900 flex items-center justify-between mb-4 shadow-sm">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-location-dot text-amber-600 text-sm"></i>
-                <span id="gpsStatusText" class="font-medium text-[11px]">Memeriksa posisi GPS Anda di Sekarsa Coffee...</span>
+                <span id="gpsStatusText" class="font-medium text-[11px]">Memeriksa posisi GPS Anda di {{ $setting->cafe_name ?? 'Sekarsa Coffee' }}...</span>
             </div>
-            <span id="gpsStatusDot" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+            <div class="flex items-center space-x-2">
+                <button type="button" onclick="checkGpsLocation()" title="Deteksi Ulang GPS" class="text-[10px] text-amber-700 hover:text-amber-900 underline font-semibold flex items-center space-x-0.5">
+                    <i class="fa-solid fa-rotate text-[9px]"></i>
+                    <span>Ulangi</span>
+                </button>
+                <span id="gpsStatusDot" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+            </div>
         </div>
         @endif
 
@@ -534,7 +558,7 @@
         document.body.style.overflow = 'auto';
     }
 
-    let customerGps = { lat: null, lng: null, verified: false };
+    let customerGps = { lat: null, lng: null, accuracy: null, verified: false };
     const isGpsRequired = {{ $setting->enable_gps_radius ? 'true' : 'false' }};
 
     function getCustomerCoordinates() {
@@ -547,6 +571,7 @@
                 (pos) => {
                     customerGps.lat = pos.coords.latitude;
                     customerGps.lng = pos.coords.longitude;
+                    customerGps.accuracy = pos.coords.accuracy;
                     resolve(customerGps);
                 },
                 (err) => {
@@ -554,7 +579,7 @@
                     if (err.code === 1) msg = "Izin lokasi ditolak. Harap izinkan akses lokasi pada browser Anda agar sistem dapat memvalidasi Anda berada di kafe.";
                     reject(new Error(msg));
                 },
-                { enableHighAccuracy: true, timeout: 8000 }
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
             );
         });
     }
@@ -564,6 +589,8 @@
         const badge = document.getElementById('gpsStatusBadge');
         const text = document.getElementById('gpsStatusText');
         const dot = document.getElementById('gpsStatusDot');
+
+        if (text) text.innerText = "Mendeteksi posisi GPS ponsel Anda...";
 
         try {
             await getCustomerCoordinates();
@@ -575,7 +602,11 @@
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': csrfToken
                 },
-                body: JSON.stringify({ latitude: customerGps.lat, longitude: customerGps.lng })
+                body: JSON.stringify({
+                    latitude: customerGps.lat,
+                    longitude: customerGps.lng,
+                    accuracy: customerGps.accuracy
+                })
             });
 
             const data = await res.json();
@@ -583,14 +614,14 @@
                 customerGps.verified = true;
                 if (badge && text && dot) {
                     badge.className = "bg-emerald-50 border border-emerald-200 rounded-xl px-3.5 py-2 text-xs text-emerald-900 flex items-center justify-between mb-4 shadow-sm";
-                    text.innerHTML = `<strong>Di Sekarsa Coffee</strong> &bull; Terverifikasi (${data.formatted_distance})`;
+                    text.innerHTML = `<strong>Di Area Kafe</strong> &bull; Terverifikasi (${data.formatted_distance})`;
                     dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0";
                 }
             } else {
                 customerGps.verified = false;
                 if (badge && text && dot) {
                     badge.className = "bg-red-50 border border-red-200 rounded-xl px-3.5 py-2 text-xs text-red-900 flex items-center justify-between mb-4 shadow-sm";
-                    text.innerHTML = `<strong>Di Luar Area Kafe</strong> &bull; Jarak Anda ${data.formatted_distance} (Maks ${data.max_radius_meters}m)`;
+                    text.innerHTML = `<strong>Di Luar Radius Kafe</strong> &bull; Jarak: ${data.formatted_distance} (Batas: ${data.max_radius_meters + (data.tolerance_meters || 50)}m)`;
                     dot.className = "w-2.5 h-2.5 rounded-full bg-red-500 shrink-0";
                 }
             }
@@ -659,6 +690,7 @@
             customer_notes: customerNotes,
             customer_lat: customerGps.lat,
             customer_lng: customerGps.lng,
+            customer_accuracy: customerGps.accuracy,
             items: cart.map(item => ({
                 menu_id: item.id,
                 quantity: item.quantity,

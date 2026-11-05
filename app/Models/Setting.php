@@ -12,10 +12,19 @@ class Setting extends Model
     protected $fillable = [
         'cafe_name',
         'cafe_tagline',
+        'cafe_logo',
+        'cafe_banner',
+        'hero_title',
+        'hero_subtitle',
+        'cafe_opening_hours',
+        'announcement_text',
         'cafe_address',
         'cafe_phone',
         'cafe_instagram',
+        'footer_text',
         'whatsapp_notification_template',
+        'alarm_sound_enabled',
+        'alarm_repeat_interval',
         'estimated_minutes_per_queue',
         'qr_permanent_url',
         'qr_access_key',
@@ -24,16 +33,48 @@ class Setting extends Model
         'cafe_latitude',
         'cafe_longitude',
         'cafe_radius_meters',
+        'gps_tolerance_meters',
     ];
 
     protected $casts = [
         'require_qr_scan' => 'boolean',
         'enable_gps_radius' => 'boolean',
+        'alarm_sound_enabled' => 'boolean',
+        'alarm_repeat_interval' => 'integer',
         'estimated_minutes_per_queue' => 'integer',
         'cafe_radius_meters' => 'integer',
+        'gps_tolerance_meters' => 'integer',
         'cafe_latitude' => 'float',
         'cafe_longitude' => 'float',
     ];
+
+    /**
+     * URL Logo Kafe (Dinamis dari Upload atau Fallback ke Default)
+     */
+    public function getLogoUrlAttribute(): string
+    {
+        if (!empty($this->cafe_logo)) {
+            if (str_starts_with($this->cafe_logo, 'http://') || str_starts_with($this->cafe_logo, 'https://')) {
+                return $this->cafe_logo;
+            }
+            return asset(ltrim($this->cafe_logo, '/'));
+        }
+        return asset('images/sekarsa-logo.jpg');
+    }
+
+    /**
+     * URL Foto Banner Kafe (Dinamis dari Upload atau Fallback ke Default)
+     */
+    public function getBannerUrlAttribute(): string
+    {
+        if (!empty($this->cafe_banner)) {
+            if (str_starts_with($this->cafe_banner, 'http://') || str_starts_with($this->cafe_banner, 'https://')) {
+                return $this->cafe_banner;
+            }
+            return asset(ltrim($this->cafe_banner, '/'));
+        }
+        return asset('images/sekarsa-cafe.jpg');
+    }
 
     /**
      * Hitung jarak Haversine (meter) antara koordinat pelanggan dengan koordinat kafe.
@@ -57,16 +98,25 @@ class Setting extends Model
     }
 
     /**
-     * Cek apakah koordinat pelanggan berada dalam radius kafe.
+     * Cek apakah koordinat pelanggan berada dalam radius kafe (dengan toleransi GPS indoor).
      */
-    public function isWithinCafeRadius(float $latitude, float $longitude): bool
+    public function isWithinCafeRadius(float $latitude, float $longitude, ?float $accuracy = null): bool
     {
         if (!$this->enable_gps_radius) {
             return true;
         }
 
         $distance = $this->calculateDistanceToCafe($latitude, $longitude);
-        return $distance <= (float)$this->cafe_radius_meters;
+        $tolerance = (float)($this->gps_tolerance_meters ?? 50);
+
+        // Jika ponsel melaporkan margin of error akurasi GPS (umumnya 15-50m di dalam ruangan kafe),
+        // kurangkan deviasi tersebut dari jarak hitung agar pelanggan di dalam ruangan tidak tertolak
+        $accuracyDeduction = $accuracy ? min((float)$accuracy, 60.0) : 0;
+        $effectiveDistance = max(0, $distance - $accuracyDeduction);
+
+        $maxAllowed = (float)$this->cafe_radius_meters + $tolerance;
+
+        return $effectiveDistance <= $maxAllowed;
     }
 
     public static function get(): self
@@ -74,13 +124,20 @@ class Setting extends Model
         return self::firstOrCreate([], [
             'cafe_name' => 'Sekarsa Coffee',
             'cafe_tagline' => 'Warmth, Taste & Harmony in Every Sip',
+            'hero_title' => 'Selamat Datang di Sekarsa Coffee',
+            'hero_subtitle' => 'Nikmati racikan kopi istimewa & suasana hangat. Pesan langsung dari meja Anda tanpa perlu antre di kasir.',
+            'cafe_opening_hours' => 'Setiap Hari: 08:00 - 23:00 WIB',
             'cafe_address' => 'Jl. Kaliurang KM 5.8 No. 24, Manggung, Caturtunggal, Sleman, D.I. Yogyakarta 55281',
             'cafe_phone' => '0812-3456-7890',
             'cafe_instagram' => '@sekarsacoffee',
+            'footer_text' => '© 2026 Sekarsa Coffee & Space. All rights reserved.',
             'whatsapp_notification_template' => "Halo Kak {nama_pelanggan}! ☕\n\nPesanan Anda di Sekarsa Coffee dengan Nomor Antrean *{nomor_antrean}* ({nomor_pesanan}) sudah *SIAP DIAMBIL* di counter barista!\n\nSilakan tunjukkan pesan ini atau sebutkan nomor antrean Anda. Selamat menikmati! ✨",
             'estimated_minutes_per_queue' => 4,
-            'qr_permanent_url' => url('/pesan'),
+            'qr_permanent_url' => 'http://sekarsacoffee.gt.tc/scan?',
+            'cafe_radius_meters' => 150,
+            'gps_tolerance_meters' => 50,
+            'alarm_sound_enabled' => true,
+            'alarm_repeat_interval' => 3,
         ]);
     }
 }
-

@@ -154,6 +154,7 @@ class CustomerOrderController extends Controller
         if ($setting->enable_gps_radius && !auth()->check()) {
             $lat = $request->input('customer_lat');
             $lng = $request->input('customer_lng');
+            $accuracy = $request->input('customer_accuracy');
 
             if ($lat === null || $lng === null) {
                 return response()->json([
@@ -162,13 +163,15 @@ class CustomerOrderController extends Controller
                 ], 422);
             }
 
-            if (!$setting->isWithinCafeRadius((float)$lat, (float)$lng)) {
+            $accuracyFloat = is_numeric($accuracy) ? (float)$accuracy : null;
+            if (!$setting->isWithinCafeRadius((float)$lat, (float)$lng, $accuracyFloat)) {
                 $distance = $setting->calculateDistanceToCafe((float)$lat, (float)$lng);
                 $formattedDist = $distance >= 1000 ? round($distance / 1000, 2) . ' km' : round($distance) . ' meter';
+                $maxRadius = (int)$setting->cafe_radius_meters + (int)($setting->gps_tolerance_meters ?? 50);
 
                 return response()->json([
                     'success' => false,
-                    'message' => "Pemesanan ditolak: Anda terdeteksi berada di luar area kafe (Jarak Anda: {$formattedDist}, batas radius: {$setting->cafe_radius_meters} meter). Pemesanan hanya dapat dilakukan di dalam area Sekarsa Coffee."
+                    'message' => "Pemesanan ditolak: Anda terdeteksi berada di luar area kafe (Jarak: {$formattedDist}, batas toleransi: {$maxRadius} meter). Pastikan Anda berada di area Sekarsa Coffee dan GPS berakurasi tinggi aktif."
                 ], 403);
             }
         }
@@ -362,6 +365,7 @@ class CustomerOrderController extends Controller
 
         $lat = $request->input('latitude');
         $lng = $request->input('longitude');
+        $accuracy = $request->input('accuracy');
 
         if ($lat === null || $lng === null) {
             return response()->json([
@@ -371,9 +375,11 @@ class CustomerOrderController extends Controller
             ], 422);
         }
 
+        $accuracyFloat = is_numeric($accuracy) ? (float)$accuracy : null;
         $distance = $setting->calculateDistanceToCafe((float)$lat, (float)$lng);
-        $withinRadius = $distance <= (float)$setting->cafe_radius_meters;
+        $withinRadius = $setting->isWithinCafeRadius((float)$lat, (float)$lng, $accuracyFloat);
         $formattedDist = $distance >= 1000 ? round($distance / 1000, 2) . ' km' : round($distance) . ' meter';
+        $maxAllowed = (int)$setting->cafe_radius_meters + (int)($setting->gps_tolerance_meters ?? 50);
 
         return response()->json([
             'enabled' => true,
@@ -381,9 +387,10 @@ class CustomerOrderController extends Controller
             'distance_meters' => $distance,
             'formatted_distance' => $formattedDist,
             'max_radius_meters' => $setting->cafe_radius_meters,
+            'tolerance_meters' => $setting->gps_tolerance_meters ?? 50,
             'message' => $withinRadius
                 ? "Lokasi terverifikasi di Sekarsa Coffee (Jarak: {$formattedDist})"
-                : "Anda berada di luar area kafe (Jarak: {$formattedDist}, batas radius: {$setting->cafe_radius_meters} m)",
+                : "Anda berada di luar area kafe (Jarak: {$formattedDist}, batas toleransi: {$maxAllowed} m)",
         ]);
     }
 }

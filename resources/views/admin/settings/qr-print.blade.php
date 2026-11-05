@@ -49,14 +49,14 @@
         <!-- Top Header Card with Sekarsa Photo & Logo -->
         <div class="w-full relative overflow-hidden text-white pt-8 pb-6 px-6">
             <!-- Background Foto Kafe Sekarsa -->
-            <img src="{{ asset('images/sekarsa-cafe.jpg') }}" alt="Sekarsa Cafe" class="absolute inset-0 w-full h-full object-cover object-center filter brightness-50">
+            <img src="{{ $setting->banner_url }}" alt="Sekarsa Cafe" class="absolute inset-0 w-full h-full object-cover object-center filter brightness-50">
             <!-- Overlay Gradien Hijau Emerald Sekarsa -->
             <div class="absolute inset-0 bg-gradient-to-b from-emerald-950/90 via-emerald-900/85 to-emerald-950/95"></div>
 
             <div class="relative z-10 flex flex-col items-center">
                 <!-- Logo Sekarsa Coffee -->
                 <div class="w-16 h-16 bg-white p-1 rounded-2xl shadow-xl mx-auto mb-3 border border-white/40 overflow-hidden flex items-center justify-center">
-                    <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
+                    <img src="{{ $setting->logo_url }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
                 </div>
                 <h1 class="font-bold text-2xl font-serif tracking-wider text-white drop-shadow-md">
                     {{ $setting->cafe_name ?? 'SEKARSA COFFEE' }}

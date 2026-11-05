@@ -115,66 +115,131 @@
             @endif
         });
 
-        /**
-         * Nada Dering Pesanan Selesai / Siap Diambil Sekarsa Coffee
-         * Nada melodi ramah (Melodic Chime 4 Nada + Harmoni Bell)
-         * Nada: C5 (523.25Hz) -> E5 (659.25Hz) -> G5 (783.99Hz) -> C6 (1046.50Hz)
-         */
-        function playSekarsaChime() {
+        let sekarsaAlarmInterval = null;
+        let tabTitleInterval = null;
+        const originalDocTitle = document.title;
+
+        // Minta izin notifikasi browser jika didukung
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().catch(() => {});
+            }
+        }
+
+        // Jalankan audio nada alarm kencang (Volume Maksimal)
+        function playLoudAlarmTone() {
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContext) return;
                 const ctx = new AudioContext();
-
                 if (ctx.state === 'suspended') {
                     ctx.resume();
                 }
 
-                const notes = [
-                    { freq: 523.25, time: 0.00, dur: 0.6 },  // C5
-                    { freq: 659.25, time: 0.18, dur: 0.6 },  // E5
-                    { freq: 783.99, time: 0.36, dur: 0.7 },  // G5
-                    { freq: 1046.50, time: 0.54, dur: 1.6 }, // C6 (High Ding panjang)
+                // Melodi alarm nyaring & tegas (C6 - E6 - G6 - C7 berulang)
+                const chimeNotes = [
+                    { freq: 1046.50, time: 0.00, dur: 0.22 }, // C6
+                    { freq: 1318.51, time: 0.18, dur: 0.22 }, // E6
+                    { freq: 1567.98, time: 0.36, dur: 0.25 }, // G6
+                    { freq: 2093.00, time: 0.54, dur: 0.65 }, // C7 (High bell kencang)
                 ];
 
-                notes.forEach(note => {
+                chimeNotes.forEach(n => {
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
-
-                    // Menggunakan triangle + sine untuk nada jernih seperti bel kafe/airport chime
                     osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(note.freq, ctx.currentTime + note.time);
+                    osc.frequency.setValueAtTime(n.freq, ctx.currentTime + n.time);
 
-                    gain.gain.setValueAtTime(0.001, ctx.currentTime + note.time);
-                    gain.gain.exponentialRampToValueAtTime(0.45, ctx.currentTime + note.time + 0.04);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + note.time + note.dur);
+                    // Gain penuh (1.0) untuk suara kencang
+                    gain.gain.setValueAtTime(0.01, ctx.currentTime + n.time);
+                    gain.gain.exponentialRampToValueAtTime(1.0, ctx.currentTime + n.time + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + n.time + n.dur);
 
                     osc.connect(gain);
                     gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + n.time);
+                    osc.stop(ctx.currentTime + n.time + n.dur);
 
-                    osc.start(ctx.currentTime + note.time);
-                    osc.stop(ctx.currentTime + note.time + note.dur);
-
-                    // Tambahan nada pendukung (harmoni hangat)
+                    // Harmoni tambahan
                     const subOsc = ctx.createOscillator();
                     const subGain = ctx.createGain();
                     subOsc.type = 'sine';
-                    subOsc.frequency.setValueAtTime(note.freq * 2, ctx.currentTime + note.time);
-                    subGain.gain.setValueAtTime(0.12, ctx.currentTime + note.time);
-                    subGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + note.time + note.dur * 0.8);
+                    subOsc.frequency.setValueAtTime(n.freq * 1.5, ctx.currentTime + n.time);
+                    subGain.gain.setValueAtTime(0.3, ctx.currentTime + n.time);
+                    subGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + n.time + n.dur * 0.7);
                     subOsc.connect(subGain);
                     subGain.connect(ctx.destination);
-                    subOsc.start(ctx.currentTime + note.time);
-                    subOsc.stop(ctx.currentTime + note.time + note.dur * 0.8);
+                    subOsc.start(ctx.currentTime + n.time);
+                    subOsc.stop(ctx.currentTime + n.time + n.dur * 0.7);
                 });
 
-                // Getar HP jika browser smartphone mendukung Vibration API
+                // Getar HP kuat berulang jika didukung
                 if ('vibrate' in navigator) {
-                    navigator.vibrate([300, 150, 300, 150, 500]);
+                    navigator.vibrate([500, 200, 500, 200, 800]);
                 }
             } catch (e) {
-                console.warn('Audio Chime tidak dapat dimainkan:', e);
+                console.warn('Audio alarm error:', e);
             }
+        }
+
+        // Mulai dering alarm berulang tanpa henti
+        function startSekarsaContinuousAlarm() {
+            playLoudAlarmTone();
+
+            if (!sekarsaAlarmInterval) {
+                sekarsaAlarmInterval = setInterval(() => {
+                    playLoudAlarmTone();
+                }, 2200);
+            }
+
+            if (!tabTitleInterval) {
+                tabTitleInterval = setInterval(() => {
+                    document.title = (document.title.includes('🔔') ? '👉 PESANAN ANDA SIAP!' : '🔔🔔 SEKARSA COFFEE 🔔🔔');
+                }, 700);
+            }
+
+            showBrowserNotification('🔔 PESANAN ANDA SIAP DIAMBIL!', 'Pesanan Anda sudah selesai. Silakan menuju kasir Sekarsa Coffee sekarang!');
+        }
+
+        // Hentikan alarm
+        function stopSekarsaContinuousAlarm() {
+            if (sekarsaAlarmInterval) {
+                clearInterval(sekarsaAlarmInterval);
+                sekarsaAlarmInterval = null;
+            }
+            if (tabTitleInterval) {
+                clearInterval(tabTitleInterval);
+                tabTitleInterval = null;
+                document.title = originalDocTitle;
+            }
+            if ('vibrate' in navigator) {
+                navigator.vibrate(0);
+            }
+        }
+
+        function showBrowserNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                try {
+                    const notif = new Notification(title, {
+                        body: body,
+                        icon: '/images/sekarsa-logo.jpg',
+                        tag: 'sekarsa-order-ready',
+                        renotify: true,
+                        requireInteraction: true
+                    });
+                    notif.onclick = function() {
+                        window.focus();
+                        this.close();
+                    };
+                } catch (e) {
+                    console.warn('Browser notif error:', e);
+                }
+            }
+        }
+
+        // Kompatibilitas mundur fungsi lama
+        function playSekarsaChime() {
+            startSekarsaContinuousAlarm();
         }
     </script>
     @stack('scripts')
