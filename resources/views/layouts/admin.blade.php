@@ -184,7 +184,7 @@
 
             @else
             {{-- ===== PEGAWAI / BARISTA MENU ===== --}}
-            <div class="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-emerald-500">Operasional</div>
+            <div class="px-3 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-emerald-500">Operasional</div>
 
             <a href="{{ route('pegawai.dashboard') }}"
                class="flex items-center justify-between px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('pegawai.dashboard') ? 'nav-active' : 'nav-item' }}">
@@ -195,6 +195,14 @@
                 <span class="bg-amber-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full" id="sidebarQueueBadge">
                     {{ \App\Models\Order::whereIn('status', ['menunggu', 'diproses'])->count() }}
                 </span>
+            </a>
+
+            <div class="px-3 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-emerald-500">Katalog Menu</div>
+
+            <a href="{{ route('admin.menus.index') }}"
+               class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('admin.menus.*') ? 'nav-active' : 'nav-item' }}">
+                <i class="fa-solid fa-utensils w-5 text-center"></i>
+                <span>Kelola Ketersediaan Menu</span>
             </a>
 
             <div class="px-3 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-emerald-500">Riwayat</div>

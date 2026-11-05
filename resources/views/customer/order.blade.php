@@ -112,9 +112,9 @@
         @else
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 @foreach($menus as $menu)
-                    <div class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm hover:shadow-md transition flex flex-row items-center space-x-3 relative">
+                    <div class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm hover:shadow-md transition flex flex-row items-center space-x-3 relative" id="menu-card-{{ $menu->id }}">
                         <!-- Menu Image -->
-                        <div class="w-24 h-24 rounded-xl overflow-hidden bg-emerald-50 shrink-0 relative">
+                        <div class="w-24 h-24 rounded-xl overflow-hidden bg-emerald-50 shrink-0 relative {{ !$menu->is_available ? 'grayscale opacity-75' : '' }}">
                             <img src="{{ $menu->image_url }}"
                                  alt="{{ $menu->name }}"
                                  class="w-full h-full object-cover"
@@ -123,26 +123,44 @@
                             <span class="absolute bottom-1 left-1 bg-black/60 backdrop-blur-sm text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
                                 {{ $menu->category->name ?? 'Menu' }}
                             </span>
+                            @if(!$menu->is_available)
+                                <div class="absolute inset-0 bg-red-950/60 backdrop-blur-[1px] flex items-center justify-center">
+                                    <span class="bg-red-600 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded shadow">Habis</span>
+                                </div>
+                            @endif
                         </div>
 
                         <!-- Menu Details -->
                         <div class="flex-1 min-w-0 pr-1 flex flex-col justify-between self-stretch py-0.5">
                             <div>
-                                <h3 class="font-bold text-gray-900 text-sm leading-snug truncate">{{ $menu->name }}</h3>
+                                <div class="flex items-center space-x-1.5">
+                                    <h3 class="font-bold text-gray-900 text-sm leading-snug truncate {{ !$menu->is_available ? 'line-through text-gray-400' : '' }}">{{ $menu->name }}</h3>
+                                    @if(!$menu->is_available)
+                                        <span class="px-1.5 py-0.2 bg-red-100 text-red-700 text-[10px] font-extrabold rounded">Habis</span>
+                                    @endif
+                                </div>
                                 <p class="text-xs text-gray-500 line-clamp-2 mt-0.5 leading-relaxed">{{ $menu->description ?: 'Racikan spesial khas Sekarsa Coffee.' }}</p>
                             </div>
 
                             <div class="flex items-center justify-between mt-2 pt-1 border-t border-gray-50">
-                                <span class="font-bold text-emerald-800 text-sm">
+                                <span class="font-bold text-emerald-800 text-sm {{ !$menu->is_available ? 'text-gray-400' : '' }}">
                                     Rp {{ number_format($menu->price, 0, ',', '.') }}
                                 </span>
 
-                                <button type="button"
-                                        onclick="addToCart({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{ $menu->price }}, '{{ $menu->image_url }}')"
-                                        class="inline-flex items-center space-x-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shadow-sm">
-                                    <i class="fa-solid fa-plus text-[10px]"></i>
-                                    <span>Pesan</span>
-                                </button>
+                                @if($menu->is_available)
+                                    <button type="button"
+                                            onclick="addToCart({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{ $menu->price }}, '{{ $menu->image_url }}')"
+                                            class="inline-flex items-center space-x-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shadow-sm">
+                                        <i class="fa-solid fa-plus text-[10px]"></i>
+                                        <span>Pesan</span>
+                                    </button>
+                                @else
+                                    <button type="button" disabled
+                                            class="inline-flex items-center space-x-1 bg-gray-100 text-gray-400 px-3 py-1.5 rounded-xl text-xs font-semibold cursor-not-allowed">
+                                        <i class="fa-solid fa-ban text-[10px]"></i>
+                                        <span>Habis</span>
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -567,7 +585,62 @@
     }
 
     // Initialize on page load
-    document.addEventListener('DOMContentLoaded', loadCart);
+    document.addEventListener('DOMContentLoaded', () => {
+        loadCart();
+        // Polling Real-time Status Ketersediaan Menu (Jika Kasir Mengubah Menu Jadi Habis)
+        setInterval(checkRealtimeMenuAvailability, 3000);
+    });
+
+    let lastMenuVersion = 0;
+    async function checkRealtimeMenuAvailability() {
+        try {
+            const res = await fetch("{{ route('customer.menu_status_api') }}");
+            if (!res.ok) return;
+
+            const data = await res.json();
+            if (!data.success) return;
+
+            if (data.version && data.version !== lastMenuVersion && lastMenuVersion !== 0) {
+                // Perubahan ketersediaan menu terjadi di kasir/admin
+                // Update tampilan tombol dan status menu secara langsung tanpa reload
+                data.menus.forEach(m => {
+                    const card = document.getElementById(`menu-card-${m.id}`);
+                    if (!card) return;
+
+                    const btn = card.querySelector('button');
+                    const imgBox = card.querySelector('.shrink-0');
+                    const title = card.querySelector('h3');
+
+                    if (!m.is_available) {
+                        // Ubah menjadi habis
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.className = 'inline-flex items-center space-x-1 bg-gray-100 text-gray-400 px-3 py-1.5 rounded-xl text-xs font-semibold cursor-not-allowed';
+                            btn.innerHTML = '<i class="fa-solid fa-ban text-[10px]"></i><span>Habis</span>';
+                            btn.onclick = null;
+                        }
+                        if (title && !title.classList.contains('line-through')) {
+                            title.classList.add('line-through', 'text-gray-400');
+                        }
+                    } else {
+                        // Ubah menjadi tersedia
+                        if (btn && btn.disabled) {
+                            btn.disabled = false;
+                            btn.className = 'inline-flex items-center space-x-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shadow-sm';
+                            btn.innerHTML = '<i class="fa-solid fa-plus text-[10px]"></i><span>Pesan</span>';
+                            btn.onclick = () => location.reload();
+                        }
+                        if (title) {
+                            title.classList.remove('line-through', 'text-gray-400');
+                        }
+                    }
+                });
+            }
+            lastMenuVersion = data.version;
+        } catch (e) {
+            console.warn('Gagal cek status ketersediaan menu:', e);
+        }
+    }
 </script>
 @endpush
 

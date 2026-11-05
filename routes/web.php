@@ -31,6 +31,7 @@ Route::get('/', function () {
 */
 // 1. Halaman Pemesanan
 Route::get('/pesan', [CustomerOrderController::class, 'index'])->name('customer.order');
+Route::get('/api/menu-status', [CustomerOrderController::class, 'menuStatusApi'])->name('customer.menu_status_api');
 Route::post('/pesan/kirim', [CustomerOrderController::class, 'submitOrder'])->name('customer.submit_order');
 
 // 2. Halaman Konfirmasi Pesanan
@@ -70,7 +71,18 @@ Route::middleware(['auth', 'role:pegawai,admin'])->prefix('pegawai')->name('pega
 
 /*
 |--------------------------------------------------------------------------
-| B. Dashboard Admin & D. Pengaturan Sistem
+| Manajemen Menu & Kategori (Bisa diakses Admin & Kasir/Pegawai)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:admin,pegawai'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('menus', MenuController::class);
+    Route::post('menus/{menu}/toggle', [MenuController::class, 'toggleAvailability'])->name('menus.toggle');
+    Route::resource('categories', CategoryController::class)->except(['create', 'show', 'edit']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| B. Dashboard Khusus Admin/Owner & D. Pengaturan Sistem
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -79,11 +91,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/api/live-stats', [DashboardController::class, 'liveStatsApi'])->name('live_stats');
     Route::get('/laporan', [DashboardController::class, 'reports'])->name('reports');
     Route::get('/laporan/cetak', [DashboardController::class, 'printReport'])->name('reports.print');
-
-    // Manajemen Menu & Kategori
-    Route::resource('menus', MenuController::class);
-    Route::post('menus/{menu}/toggle', [MenuController::class, 'toggleAvailability'])->name('menus.toggle');
-    Route::resource('categories', CategoryController::class)->except(['create', 'show', 'edit']);
 
     // Manajemen Pesanan & Riwayat Transaksi
     Route::get('/pesanan', [OrderManagementController::class, 'index'])->name('orders.index');

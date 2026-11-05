@@ -35,7 +35,8 @@ class CustomerOrderController extends Controller
         $selectedCategory = $request->query('kategori');
         $search = $request->query('q');
 
-        $menuQuery = Menu::with('category')->where('is_available', true);
+        // Menampilkan seluruh menu aktif, menu habis tetap ditampilkan dengan label Habis
+        $menuQuery = Menu::with('category');
 
         if ($selectedCategory) {
             $menuQuery->whereHas('category', function ($q) use ($selectedCategory) {
@@ -217,6 +218,24 @@ class CustomerOrderController extends Controller
             'processed_at' => $order->processed_at ? $order->processed_at->format('H:i') : null,
             'ready_at' => $order->ready_at ? $order->ready_at->format('H:i') : null,
             'completed_at' => $order->completed_at ? $order->completed_at->format('H:i') : null,
+        ]);
+    /**
+     * Endpoint API Status Ketersediaan Menu Real-Time (Jika Menu Habis di Kasir)
+     */
+    public function menuStatusApi()
+    {
+        $menus = Menu::select('id', 'name', 'is_available', 'updated_at')->get();
+        $latestUpdate = Menu::max('updated_at') ?? '0';
+
+        return response()->json([
+            'success' => true,
+            'version' => strtotime($latestUpdate),
+            'menus' => $menus->map(function ($m) {
+                return [
+                    'id' => $m->id,
+                    'is_available' => (bool) $m->is_available,
+                ];
+            }),
         ]);
     }
 }

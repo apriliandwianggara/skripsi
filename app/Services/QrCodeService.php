@@ -4,6 +4,9 @@ namespace App\Services;
 
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
+use chillerlan\QRCode\Common\EccLevel;
+use chillerlan\QRCode\Output\QRMarkupSVG;
+use chillerlan\QRCode\Output\QRGdImagePNG;
 use App\Models\Setting;
 
 /**
@@ -34,8 +37,8 @@ class QrCodeService
         $url = $this->getPermanentOrderUrl();
 
         $options = new QROptions();
-        $options->outputType = QRCode::OUTPUT_MARKUP_SVG;
-        $options->eccLevel = QRCode::ECC_H; // Error correction tinggi (High) agar tetap terbaca meski ada logo/lecet
+        $options->outputInterface = QRMarkupSVG::class;
+        $options->eccLevel = EccLevel::H; // Error correction tinggi (High 30%)
         $options->imageBase64 = false;
         $options->addQuietzone = true;
 
@@ -50,9 +53,9 @@ class QrCodeService
         $url = $this->getPermanentOrderUrl();
 
         $options = new QROptions();
-        $options->outputType = QRCode::OUTPUT_IMAGE_PNG;
-        $options->eccLevel = QRCode::ECC_H;
-        $options->scale = 10; // High resolution
+        $options->outputInterface = QRGdImagePNG::class;
+        $options->eccLevel = EccLevel::H;
+        $options->scale = 10;
         $options->addQuietzone = true;
 
         return (new QRCode($options))->render($url);
@@ -66,11 +69,12 @@ class QrCodeService
         $url = url('/pesan?meja=' . urlencode($tableNumber));
 
         $options = new QROptions();
-        $options->outputType = QRCode::OUTPUT_MARKUP_SVG;
-        $options->eccLevel = QRCode::ECC_H;
+        $options->outputInterface = QRMarkupSVG::class;
+        $options->eccLevel = EccLevel::H;
         $options->imageBase64 = false;
         $options->addQuietzone = true;
 
         return (new QRCode($options))->render($url);
     }
 }
+
