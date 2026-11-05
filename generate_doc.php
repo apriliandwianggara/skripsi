@@ -3,10 +3,13 @@
 require __DIR__ . '/vendor/autoload.php';
 
 use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\Settings;
 use PhpOffice\PhpWord\SimpleType\Jc;
 use PhpOffice\PhpWord\SimpleType\JcTable;
 use PhpOffice\PhpWord\Style\Table as TableStyle;
 use PhpOffice\PhpWord\IOFactory;
+
+Settings::setOutputEscapingEnabled(true);
 
 echo "Memulai pembuatan Dokumen Word Lengkap Skripsi...\n";
 
