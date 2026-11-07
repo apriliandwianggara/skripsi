@@ -92,8 +92,23 @@
                                     {{ $menu->category->name ?? '-' }}
                                 </span>
                             </td>
-                            <td class="p-3.5 font-bold font-mono text-emerald-900 text-sm">
-                                Rp {{ number_format($menu->price, 0, ',', '.') }}
+                            <td class="p-3.5">
+                                @if($menu->variations->isNotEmpty())
+                                    <span class="font-bold font-mono text-emerald-900 text-sm block">
+                                        {{ $menu->formatted_price_range }}
+                                    </span>
+                                    <div class="flex flex-wrap gap-1 mt-1">
+                                        @foreach($menu->variations as $var)
+                                            <span class="inline-flex items-center text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-1.5 py-0.5 rounded font-mono" title="{{ $var->name }}: Rp {{ number_format($var->price, 0, ',', '.') }}">
+                                                {{ $var->name }}: {{ number_format($var->price / 1000, 0) }}k
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <span class="font-bold font-mono text-emerald-900 text-sm">
+                                        Rp {{ number_format($menu->price, 0, ',', '.') }}
+                                    </span>
+                                @endif
                             </td>
                             <td class="p-3.5">
                                 <form action="{{ route('admin.menus.toggle', $menu) }}" method="POST">

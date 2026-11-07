@@ -179,17 +179,37 @@
                             </div>
 
                             <div class="flex items-center justify-between mt-2 pt-1 border-t border-gray-50">
-                                <span class="font-bold text-emerald-800 text-sm {{ !$menu->is_available ? 'text-gray-400' : '' }}">
-                                    Rp {{ number_format($menu->price, 0, ',', '.') }}
-                                </span>
+                                <div>
+                                    @if($menu->variations->isNotEmpty())
+                                        <span class="font-bold text-emerald-800 text-xs sm:text-sm block">
+                                            {{ $menu->formatted_price_range }}
+                                        </span>
+                                        <span class="inline-flex items-center text-[9px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-medium mt-0.5">
+                                            <i class="fa-solid fa-layer-group mr-1 text-[8px]"></i> {{ $menu->variations->count() }} Pilihan
+                                        </span>
+                                    @else
+                                        <span class="font-bold text-emerald-800 text-sm {{ !$menu->is_available ? 'text-gray-400' : '' }}">
+                                            Rp {{ number_format($menu->price, 0, ',', '.') }}
+                                        </span>
+                                    @endif
+                                </div>
 
                                 @if($menu->is_available)
-                                    <button type="button"
-                                            onclick="addToCart({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{ $menu->price }}, '{{ $menu->image_url }}')"
-                                            class="inline-flex items-center space-x-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shadow-sm">
-                                        <i class="fa-solid fa-plus text-[10px]"></i>
-                                        <span>Pesan</span>
-                                    </button>
+                                    @if($menu->variations->isNotEmpty())
+                                        <button type="button"
+                                                onclick="openVariationModal({{ $menu->id }})"
+                                                class="inline-flex items-center space-x-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shadow-sm">
+                                            <span>Pilih</span>
+                                            <i class="fa-solid fa-chevron-down text-[9px]"></i>
+                                        </button>
+                                    @else
+                                        <button type="button"
+                                                onclick="addToCart({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{ $menu->price }}, '{{ $menu->image_url }}')"
+                                                class="inline-flex items-center space-x-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shadow-sm">
+                                            <i class="fa-solid fa-plus text-[10px]"></i>
+                                            <span>Pesan</span>
+                                        </button>
+                                    @endif
                                 @else
                                     <button type="button" disabled
                                             class="inline-flex items-center space-x-1 bg-gray-100 text-gray-400 px-3 py-1.5 rounded-xl text-xs font-semibold cursor-not-allowed">
@@ -232,6 +252,78 @@
                 <span>Lihat Keranjang</span>
                 <i class="fa-solid fa-chevron-right text-xs"></i>
             </button>
+        </div>
+    </div>
+
+    <!-- Modal Pilih Variasi Menu -->
+    <div id="variationModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-slide-up">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-emerald-950 text-white">
+                <div class="flex items-center space-x-2.5">
+                    <i class="fa-solid fa-mug-hot text-amber-400"></i>
+                    <h3 class="font-bold text-sm">Pilih Variasi / Ukuran</h3>
+                </div>
+                <button type="button" onclick="closeVariationModal()" class="text-emerald-200 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 overflow-y-auto flex-1 space-y-4">
+                <div class="flex items-center space-x-3 bg-gray-50 p-2.5 rounded-2xl border border-gray-100">
+                    <img id="varModalImage" src="" class="w-14 h-14 rounded-xl object-cover bg-emerald-100 shrink-0" onerror="this.onerror=null; this.src='/images/menu-placeholder.svg';">
+                    <div class="min-w-0 flex-1">
+                        <h4 id="varModalMenuName" class="font-bold text-sm text-gray-900 truncate">Menu</h4>
+                        <p id="varModalMenuDesc" class="text-[11px] text-gray-500 line-clamp-1 mt-0.5">Deskripsi</p>
+                    </div>
+                </div>
+
+                <!-- Pilihan Variasi Radio Buttons -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
+                        Pilihan Variasi <span class="text-red-500">*</span>
+                    </label>
+                    <div id="varModalOptionsList" class="space-y-2">
+                        <!-- Populated dynamically by JS -->
+                    </div>
+                </div>
+
+                <!-- Jumlah / Stepper -->
+                <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 block">Jumlah Pesanan</label>
+                        <span class="text-[10px] text-gray-400">Atur porsi sajian</span>
+                    </div>
+                    <div class="flex items-center border border-gray-300 rounded-xl bg-white shadow-sm overflow-hidden">
+                        <button type="button" onclick="changeVarModalQty(-1)" class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:scale-95 text-xs">
+                            <i class="fa-solid fa-minus"></i>
+                        </button>
+                        <span id="varModalQtyDisplay" class="w-8 text-center font-bold text-xs text-gray-800">1</span>
+                        <button type="button" onclick="changeVarModalQty(1)" class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:scale-95 text-xs">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Catatan Khusus Item -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Catatan Menu <span class="text-gray-400 font-normal">(Opsional)</span></label>
+                    <input type="text" id="varModalNotes" placeholder="Contoh: Less ice, normal sugar" class="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                </div>
+            </div>
+
+            <!-- Footer / Action -->
+            <div class="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] text-gray-500 block">Total</span>
+                    <span id="varModalTotalPrice" class="font-bold text-sm sm:text-base text-emerald-800 font-mono">Rp 0</span>
+                </div>
+                <button type="button" onclick="confirmAddVariationToCart()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 shadow transition">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Tambah ke Keranjang</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -350,6 +442,29 @@
 
 @push('scripts')
 <script>
+    // Data Menu & Variasi untuk Akses Cepat di Klien
+    const menuData = {
+        @foreach($menus as $m)
+        "{{ $m->id }}": {
+            id: {{ $m->id }},
+            name: "{{ addslashes($m->name) }}",
+            price: {{ (float)$m->price }},
+            imageUrl: "{{ $m->image_url }}",
+            description: "{{ addslashes($m->description ?? '') }}",
+            hasVariations: {{ $m->variations->isNotEmpty() ? 'true' : 'false' }},
+            variations: [
+                @foreach($m->variations as $v)
+                {
+                    id: {{ $v->id }},
+                    name: "{{ addslashes($v->name) }}",
+                    price: {{ (float)$v->price }}
+                },
+                @endforeach
+            ]
+        },
+        @endforeach
+    };
+
     // Cart storage in localStorage
     const CART_STORAGE_KEY = 'sekarsa_coffee_cart';
     let cart = [];
@@ -359,6 +474,12 @@
         try {
             const saved = localStorage.getItem(CART_STORAGE_KEY);
             cart = saved ? JSON.parse(saved) : [];
+            // Normalisasi cartKey untuk kompatibilitas data lama
+            cart.forEach(item => {
+                if (!item.cartKey) {
+                    item.cartKey = item.variation_id ? `${item.id}_${item.variation_id}` : String(item.id);
+                }
+            });
         } catch (e) {
             cart = [];
         }
@@ -371,14 +492,151 @@
         updateCartUI();
     }
 
-    // Add item to cart
+    // State Modal Variasi
+    let currentVariationMenu = null;
+    let currentSelectedVariation = null;
+    let varModalQty = 1;
+
+    // Buka Modal Pilih Variasi
+    function openVariationModal(menuId) {
+        const menu = menuData[menuId];
+        if (!menu) return;
+
+        currentVariationMenu = menu;
+        varModalQty = 1;
+
+        document.getElementById('varModalMenuName').innerText = menu.name;
+        document.getElementById('varModalMenuDesc').innerText = menu.description || 'Pilihan variasi nikmat dari Sekarsa Coffee.';
+        document.getElementById('varModalImage').src = menu.imageUrl;
+        document.getElementById('varModalNotes').value = '';
+        document.getElementById('varModalQtyDisplay').innerText = '1';
+
+        // Render radio button pilihan variasi
+        const listContainer = document.getElementById('varModalOptionsList');
+        listContainer.innerHTML = '';
+
+        if (menu.variations && menu.variations.length > 0) {
+            currentSelectedVariation = menu.variations[0]; // default variasi pertama
+
+            menu.variations.forEach((v, idx) => {
+                const isChecked = idx === 0 ? 'checked' : '';
+                const optionDiv = document.createElement('label');
+                optionDiv.className = `variation-option-card flex items-center justify-between p-3 rounded-xl border transition cursor-pointer ${idx === 0 ? 'border-emerald-500 bg-emerald-50/50 shadow-sm' : 'border-gray-200 bg-white hover:bg-gray-50'}`;
+                optionDiv.innerHTML = `
+                    <div class="flex items-center space-x-2.5">
+                        <input type="radio" name="selected_variation_radio" value="${v.id}" ${isChecked} onchange="onSelectVariation(${v.id})" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300">
+                        <div>
+                            <span class="font-bold text-xs text-gray-800 block">${v.name}</span>
+                            <span class="text-[10px] text-gray-400">Pilihan sajian</span>
+                        </div>
+                    </div>
+                    <span class="font-bold text-xs text-emerald-800 font-mono">${formatRupiah(v.price)}</span>
+                `;
+                listContainer.appendChild(optionDiv);
+            });
+        }
+
+        updateVarModalTotal();
+
+        const modal = document.getElementById('variationModal');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function onSelectVariation(varId) {
+        if (!currentVariationMenu) return;
+        currentSelectedVariation = currentVariationMenu.variations.find(v => v.id === varId);
+
+        // Update border highlight visual
+        document.querySelectorAll('.variation-option-card').forEach(card => {
+            const radio = card.querySelector('input[type="radio"]');
+            if (radio && radio.checked) {
+                card.classList.add('border-emerald-500', 'bg-emerald-50/50', 'shadow-sm');
+                card.classList.remove('border-gray-200', 'bg-white');
+            } else {
+                card.classList.remove('border-emerald-500', 'bg-emerald-50/50', 'shadow-sm');
+                card.classList.add('border-gray-200', 'bg-white');
+            }
+        });
+
+        updateVarModalTotal();
+    }
+
+    function changeVarModalQty(delta) {
+        varModalQty += delta;
+        if (varModalQty < 1) varModalQty = 1;
+        if (varModalQty > 50) varModalQty = 50;
+        document.getElementById('varModalQtyDisplay').innerText = varModalQty;
+        updateVarModalTotal();
+    }
+
+    function updateVarModalTotal() {
+        if (!currentSelectedVariation) return;
+        const total = currentSelectedVariation.price * varModalQty;
+        document.getElementById('varModalTotalPrice').innerText = formatRupiah(total);
+    }
+
+    function closeVariationModal() {
+        const modal = document.getElementById('variationModal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    function confirmAddVariationToCart() {
+        if (!currentVariationMenu || !currentSelectedVariation) {
+            Swal.fire('Peringatan', 'Silakan pilih variasi menu terlebih dahulu.', 'warning');
+            return;
+        }
+
+        const notes = document.getElementById('varModalNotes').value.trim();
+        const cartKey = `${currentVariationMenu.id}_${currentSelectedVariation.id}`;
+
+        const existing = cart.find(item => item.cartKey === cartKey);
+        if (existing) {
+            existing.quantity += varModalQty;
+            if (notes && !existing.notes) existing.notes = notes;
+        } else {
+            cart.push({
+                cartKey: cartKey,
+                id: currentVariationMenu.id,
+                variation_id: currentSelectedVariation.id,
+                variation_name: currentSelectedVariation.name,
+                name: `${currentVariationMenu.name} (${currentSelectedVariation.name})`,
+                price: currentSelectedVariation.price,
+                image: currentVariationMenu.imageUrl,
+                quantity: varModalQty,
+                notes: notes
+            });
+        }
+
+        saveCart();
+        closeVariationModal();
+
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true
+        });
+        Toast.fire({
+            icon: 'success',
+            title: `+${varModalQty} ${currentVariationMenu.name} (${currentSelectedVariation.name}) ditambahkan!`
+        });
+    }
+
+    // Add item to cart (Menu reguler tanpa variasi)
     function addToCart(id, name, price, image) {
-        const existing = cart.find(item => item.id === id);
+        const cartKey = String(id);
+        const existing = cart.find(item => (item.cartKey || String(item.id)) === cartKey);
         if (existing) {
             existing.quantity += 1;
         } else {
             cart.push({
+                cartKey: cartKey,
                 id: id,
+                variation_id: null,
+                variation_name: null,
                 name: name,
                 price: price,
                 image: image,
@@ -403,26 +661,26 @@
     }
 
     // Change item quantity
-    function changeQty(id, delta) {
-        const item = cart.find(i => i.id === id);
+    function changeQty(cartKey, delta) {
+        const item = cart.find(i => (i.cartKey || String(i.id)) === String(cartKey));
         if (!item) return;
 
         item.quantity += delta;
         if (item.quantity <= 0) {
-            cart = cart.filter(i => i.id !== id);
+            cart = cart.filter(i => (i.cartKey || String(i.id)) !== String(cartKey));
         }
         saveCart();
     }
 
     // Remove item from cart
-    function removeItem(id) {
-        cart = cart.filter(i => i.id !== id);
+    function removeItem(cartKey) {
+        cart = cart.filter(i => (i.cartKey || String(i.id)) !== String(cartKey));
         saveCart();
     }
 
     // Update item specific note
-    function updateItemNote(id, note) {
-        const item = cart.find(i => i.id === id);
+    function updateItemNote(cartKey, note) {
+        const item = cart.find(i => (i.cartKey || String(i.id)) === String(cartKey));
         if (item) {
             item.notes = note;
             localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
@@ -488,6 +746,7 @@
 
         let html = '';
         cart.forEach(item => {
+            const itemKey = item.cartKey || String(item.id);
             html += `
                 <div class="bg-gray-50 border border-gray-200/80 rounded-2xl p-3 flex flex-col space-y-2">
                     <div class="flex items-center justify-between">
@@ -502,15 +761,15 @@
                         <!-- Stepper & Delete -->
                         <div class="flex items-center space-x-2 shrink-0">
                             <div class="flex items-center border border-gray-300 rounded-xl bg-white shadow-sm overflow-hidden">
-                                <button onclick="changeQty(${item.id}, -1)" class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:scale-95 text-xs">
+                                <button onclick="changeQty('${itemKey}', -1)" class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:scale-95 text-xs">
                                     <i class="fa-solid fa-minus"></i>
                                 </button>
                                 <span class="w-8 text-center font-bold text-xs text-gray-800">${item.quantity}</span>
-                                <button onclick="changeQty(${item.id}, 1)" class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:scale-95 text-xs">
+                                <button onclick="changeQty('${itemKey}', 1)" class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:scale-95 text-xs">
                                     <i class="fa-solid fa-plus"></i>
                                 </button>
                             </div>
-                            <button onclick="removeItem(${item.id})" class="text-red-400 hover:text-red-600 p-1 text-xs">
+                            <button onclick="removeItem('${itemKey}')" class="text-red-400 hover:text-red-600 p-1 text-xs">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </div>
@@ -521,7 +780,7 @@
                         <input type="text"
                                placeholder="Catatan menu (opsional: less ice/sugar)"
                                value="${item.notes || ''}"
-                               onchange="updateItemNote(${item.id}, this.value)"
+                               onchange="updateItemNote('${itemKey}', this.value)"
                                class="w-full text-[11px] bg-white px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-emerald-500">
                     </div>
                 </div>
@@ -581,6 +840,7 @@
             customer_notes: customerNotes,
             items: cart.map(item => ({
                 menu_id: item.id,
+                variation_id: item.variation_id || null,
                 quantity: item.quantity,
                 notes: item.notes || null
             }))

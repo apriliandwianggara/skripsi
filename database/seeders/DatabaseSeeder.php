@@ -226,6 +226,16 @@ class DatabaseSeeder extends Seeder
             $createdMenus[$m['slug']] = Menu::create($m);
         }
 
+        // Variasi Menu Contoh (S: 20k, M: 23k, L: 25k) untuk Americano
+        if (isset($createdMenus['americano-sekarsa'])) {
+            $createdMenus['americano-sekarsa']->variations()->createMany([
+                ['name' => 'S', 'price' => 20000, 'order' => 1],
+                ['name' => 'M', 'price' => 23000, 'order' => 2],
+                ['name' => 'L', 'price' => 25000, 'order' => 3],
+            ]);
+            $createdMenus['americano-sekarsa']->update(['price' => 20000]);
+        }
+
         // 5. Data Demonstrasi Algoritma FIFO (Persis Contoh Skripsi Pengguna)
         // Pelanggan A | Waktu: 10.00 | Nomor antrean: 001 | Status: diproses
         // Pelanggan B | Waktu: 10.02 | Nomor antrean: 002 | Status: menunggu

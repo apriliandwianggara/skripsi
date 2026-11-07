@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Menu extends Model
 {
@@ -29,6 +30,42 @@ class Menu extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function variations(): HasMany
+    {
+        return $this->hasMany(MenuVariation::class)->orderBy('order')->orderBy('price');
+    }
+
+    public function getHasVariationsAttribute(): bool
+    {
+        return $this->variations->isNotEmpty();
+    }
+
+    public function getMinPriceAttribute(): float
+    {
+        return $this->has_variations ? (float)$this->variations->min('price') : (float)$this->price;
+    }
+
+    public function getMaxPriceAttribute(): float
+    {
+        return $this->has_variations ? (float)$this->variations->max('price') : (float)$this->price;
+    }
+
+    public function getFormattedPriceRangeAttribute(): string
+    {
+        if (!$this->has_variations) {
+            return 'Rp ' . number_format($this->price, 0, ',', '.');
+        }
+
+        $min = $this->min_price;
+        $max = $this->max_price;
+
+        if ($min === $max) {
+            return 'Rp ' . number_format($min, 0, ',', '.');
+        }
+
+        return 'Rp ' . number_format($min, 0, ',', '.') . ' - Rp ' . number_format($max, 0, ',', '.');
     }
 
     /**

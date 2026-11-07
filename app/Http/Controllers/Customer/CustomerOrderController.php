@@ -116,7 +116,7 @@ class CustomerOrderController extends Controller
         $search = $request->query('q');
 
         // Menampilkan seluruh menu aktif, menu habis tetap ditampilkan dengan label Habis
-        $menuQuery = Menu::with('category');
+        $menuQuery = Menu::with(['category', 'variations']);
 
         if ($selectedCategory) {
             $menuQuery->whereHas('category', function ($q) use ($selectedCategory) {
@@ -199,6 +199,7 @@ class CustomerOrderController extends Controller
             'customer_notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.menu_id' => 'required|exists:menus,id',
+            'items.*.variation_id' => 'nullable|exists:menu_variations,id',
             'items.*.quantity' => 'required|integer|min:1|max:50',
             'items.*.notes' => 'nullable|string|max:255',
         ]);
@@ -212,19 +213,37 @@ class CustomerOrderController extends Controller
             $itemsData = [];
 
             foreach ($request->items as $item) {
-                $menu = Menu::findOrFail($item['menu_id']);
+                $menu = Menu::with('variations')->findOrFail($item['menu_id']);
                 
                 if (!$menu->is_available) {
                     throw new \Exception("Maaf, sajian '{$menu->name}' saat ini sedang habis.");
                 }
 
-                $subtotal = $menu->price * $item['quantity'];
+                $itemPrice = (float)$menu->price;
+                $menuName = $menu->name;
+                $variationName = null;
+                $variationId = null;
+
+                // Cek jika item menyertakan variasi
+                if (!empty($item['variation_id'])) {
+                    $variation = $menu->variations->firstWhere('id', $item['variation_id']);
+                    if ($variation) {
+                        $itemPrice = (float)$variation->price;
+                        $variationName = $variation->name;
+                        $variationId = $variation->id;
+                        $menuName = "{$menu->name} ({$variation->name})";
+                    }
+                }
+
+                $subtotal = $itemPrice * $item['quantity'];
                 $totalPrice += $subtotal;
 
                 $itemsData[] = [
                     'menu_id' => $menu->id,
-                    'menu_name' => $menu->name,
-                    'price' => $menu->price,
+                    'menu_variation_id' => $variationId,
+                    'menu_name' => $menuName,
+                    'variation_name' => $variationName,
+                    'price' => $itemPrice,
                     'quantity' => $item['quantity'],
                     'subtotal' => $subtotal,
                     'notes' => $item['notes'] ?? null,
