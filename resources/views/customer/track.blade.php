@@ -414,13 +414,15 @@
                         </div>
                     `;
 
-                    playSekarsaChime();
+                    // Notifikasi senyap (tanpa bunyi alarm). Alarm suara hanya berbunyi saat pesanan siap diambil.
                     Swal.fire({
                         icon: 'success',
-                        title: 'Pembayaran Telah Diverifikasi Kasir!',
-                        html: `Pembayaran Anda sebesar <b>Rp ${data.total_price}</b> telah dikonfirmasi kasir.<br>Pesanan Anda kini masuk ke dalam antrean pengerjaan barista.`,
-                        confirmButtonColor: '#16a34a',
-                        confirmButtonText: 'Baik, Saya Tunggu'
+                        title: 'Pembayaran Telah Dikonfirmasi',
+                        text: `Pembayaran sebesar Rp ${data.total_price} telah diterima. Pesanan Anda kini masuk ke dalam antrean pengerjaan barista.`,
+                        timer: 2500,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
                     });
                 } else if (!isPaid && data.is_waiting_verification) {
                     payBanner.className = 'rounded-3xl p-4 transition-all duration-300 bg-purple-600 text-white shadow-lg';
