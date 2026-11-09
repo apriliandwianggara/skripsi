@@ -344,18 +344,27 @@ class CustomerOrderController extends Controller
 
         $danaNumber = $setting->qris_dana_number ?? '087811139210';
         $merchantName = $setting->qris_merchant_name ?? 'Sekarsa Coffee';
+        $nmid = 'ID1026635802105';
+        $danaMerchantName = 'M Aprilian Dwi Anggara, S (Sekarsa Coffee)';
 
-        // Generate QRIS Dinamis Standar Nasional dengan nominal terkunci
+        // 1. Generate QRIS Dinamis Standar Nasional dengan nominal terkunci otomatis
         $qrisPayload = $this->qrisService->generateQrisPayload(
             $order->total_price,
             $order->order_number,
             $danaNumber,
             $merchantName
         );
-
         $qrisDataUri = $this->qrisService->generateQrisDataUri($qrisPayload);
 
-        return view('customer.payment', compact('order', 'setting', 'qrisPayload', 'qrisDataUri', 'danaNumber', 'merchantName'));
+        // 2. Generate QRIS Statis Resmi Toko (Sebagai cadangan jika m-banking tertentu ingin input nominal manual)
+        $staticPayload = $this->qrisService->getStaticQrisPayload();
+        $staticQrisDataUri = $this->qrisService->generateQrisDataUri($staticPayload);
+
+        return view('customer.payment', compact(
+            'order', 'setting', 'qrisPayload', 'qrisDataUri',
+            'staticPayload', 'staticQrisDataUri',
+            'danaNumber', 'merchantName', 'nmid', 'danaMerchantName'
+        ));
     }
 
     /**

@@ -74,46 +74,91 @@
                 </div>
 
                 <div class="mt-2.5 pt-2 border-t border-gray-100 text-center">
-                    <h3 class="font-bold text-sm text-gray-900 uppercase tracking-wide">{{ $merchantName }}</h3>
-                    <p class="text-[11px] text-gray-500 font-mono">DANA Merchant: {{ $danaNumber }}</p>
+                    <h3 class="font-bold text-sm text-gray-900 tracking-wide">{{ $danaMerchantName ?? 'M Aprilian Dwi Anggara, S (Sekarsa Coffee)' }}</h3>
+                    <div class="flex items-center justify-center space-x-2 text-[11px] text-gray-500 font-mono mt-0.5">
+                        <span class="font-bold text-emerald-800">NMID: {{ $nmid ?? 'ID1026635802105' }}</span>
+                        <span>&bull;</span>
+                        <span>A01</span>
+                    </div>
+                </div>
+
+                <!-- Tab Pemilih Mode QRIS -->
+                <div class="mt-3 flex p-1 bg-gray-100 rounded-2xl text-xs font-semibold">
+                    <button type="button" id="tabDynamicQris" onclick="switchQrisView('dynamic')" class="flex-1 py-1.5 px-2 rounded-xl bg-white text-emerald-800 font-bold shadow-sm transition flex items-center justify-center space-x-1">
+                        <i class="fa-solid fa-bolt text-emerald-600"></i>
+                        <span>Nominal Otomatis</span>
+                    </button>
+                    <button type="button" id="tabStaticQris" onclick="switchQrisView('static')" class="flex-1 py-1.5 px-2 rounded-xl text-gray-600 hover:text-gray-900 transition flex items-center justify-center space-x-1">
+                        <i class="fa-solid fa-qrcode text-gray-500"></i>
+                        <span>QRIS Standar Toko</span>
+                    </button>
                 </div>
             </div>
 
             <!-- Area Tampilan Kode QR -->
             <div class="p-6 flex flex-col items-center justify-center bg-white space-y-4">
-                <div class="relative p-3 bg-white rounded-2xl border-2 border-dashed border-emerald-500/40 shadow-inner flex items-center justify-center">
-                    <img src="{{ $qrisDataUri }}" alt="Kode QRIS Dinamis Rp {{ number_format($order->total_price, 0, ',', '.') }}" class="w-56 h-56 sm:w-64 sm:h-64 object-contain">
-                    
-                    <!-- Watermark Logo Sekarsa Kecil di Tengah QR -->
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div class="w-12 h-12 bg-white rounded-xl shadow-md p-1 border border-emerald-600/30 flex items-center justify-center">
-                            <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Logo" class="w-full h-full object-contain">
+                <!-- Tampilan QR Dynamic (Default) -->
+                <div id="qrisDynamicBox" class="flex flex-col items-center space-y-3 w-full">
+                    <div class="relative p-3 bg-white rounded-2xl border-2 border-dashed border-emerald-500/40 shadow-inner flex items-center justify-center">
+                        <img src="{{ $qrisDataUri }}" alt="Kode QRIS Dinamis Rp {{ number_format($order->total_price, 0, ',', '.') }}" class="w-56 h-56 sm:w-64 sm:h-64 object-contain">
+                        
+                        <!-- Watermark Logo Sekarsa Kecil di Tengah QR -->
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div class="w-12 h-12 bg-white rounded-xl shadow-md p-1 border border-emerald-600/30 flex items-center justify-center">
+                                <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Logo" class="w-full h-full object-contain">
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- Petunjuk Nominal Terkunci -->
+                    <div class="w-full bg-emerald-50 border border-emerald-200/80 rounded-2xl p-3 text-center space-y-1">
+                        <span class="text-xs font-bold text-emerald-900 flex items-center justify-center space-x-1.5">
+                            <i class="fa-solid fa-lock text-emerald-600"></i>
+                            <span>Nominal Otomatis: Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
+                        </span>
+                        <p class="text-[11px] text-emerald-700/80">
+                            Scan QRIS ini dengan BCA, Mandiri, BRI, BNI, DANA, GoPay, OVO, ShopeePay. Nominal Rp {{ number_format($order->total_price, 0, ',', '.') }} otomatis terkunci.
+                        </p>
                     </div>
                 </div>
 
-                <!-- Petunjuk Nominal Terkunci -->
-                <div class="w-full bg-emerald-50 border border-emerald-200/80 rounded-2xl p-3 text-center space-y-1">
-                    <span class="text-xs font-bold text-emerald-900 flex items-center justify-center space-x-1.5">
-                        <i class="fa-solid fa-lock text-emerald-600"></i>
-                        <span>Nominal Terkunci Otomatis: Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
-                    </span>
-                    <p class="text-[11px] text-emerald-700/80">
-                        Scan QRIS di atas dengan aplikasi apa pun. Nominal Rp {{ number_format($order->total_price, 0, ',', '.') }} akan otomatis terisi tanpa perlu mengetik manual.
-                    </p>
+                <!-- Tampilan QR Static (Alternatif) -->
+                <div id="qrisStaticBox" class="hidden flex flex-col items-center space-y-3 w-full">
+                    <div class="relative p-3 bg-white rounded-2xl border-2 border-dashed border-blue-500/40 shadow-inner flex items-center justify-center">
+                        <img src="{{ $staticQrisDataUri }}" alt="Kode QRIS Standar NMID {{ $nmid ?? 'ID1026635802105' }}" class="w-56 h-56 sm:w-64 sm:h-64 object-contain">
+                        
+                        <!-- Watermark Logo Sekarsa Kecil di Tengah QR -->
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div class="w-12 h-12 bg-white rounded-xl shadow-md p-1 border border-emerald-600/30 flex items-center justify-center">
+                                <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Logo" class="w-full h-full object-contain">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Petunjuk QRIS Statis -->
+                    <div class="w-full bg-blue-50 border border-blue-200/80 rounded-2xl p-3 text-center space-y-1">
+                        <span class="text-xs font-bold text-blue-900 flex items-center justify-center space-x-1.5">
+                            <i class="fa-solid fa-keyboard text-blue-600"></i>
+                            <span>Input Manual: Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
+                        </span>
+                        <p class="text-[11px] text-blue-700/80">
+                            Gunakan mode ini jika m-Banking Anda meminta mengetikkan nominal pembayaran secara manual.
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Logo E-Wallet & Bank yang Didukung -->
                 <div class="text-center w-full pt-1">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">Mendukung Semua E-Wallet & Mobile Banking</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">Terverifikasi Bank Indonesia (Semua Bank & E-Wallet)</span>
                     <div class="flex flex-wrap items-center justify-center gap-1.5 text-[10px] text-gray-600 font-semibold">
-                        <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md border border-blue-200 font-bold">DANA</span>
+                        <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md border border-blue-200 font-bold">DANA Bisnis</span>
+                        <span class="px-2 py-0.5 bg-blue-50 text-blue-800 rounded-md border border-blue-200 font-bold">BCA Mobile</span>
+                        <span class="px-2 py-0.5 bg-yellow-50 text-yellow-800 rounded-md border border-yellow-200 font-bold">Livin' Mandiri</span>
+                        <span class="px-2 py-0.5 bg-blue-50 text-blue-900 rounded-md border border-blue-200 font-bold">BRImo</span>
+                        <span class="px-2 py-0.5 bg-orange-50 text-orange-800 rounded-md border border-orange-200 font-bold">BNI Mobile</span>
                         <span class="px-2 py-0.5 bg-green-50 text-green-700 rounded-md border border-green-200">GoPay</span>
                         <span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-md border border-purple-200">OVO</span>
                         <span class="px-2 py-0.5 bg-orange-50 text-orange-700 rounded-md border border-orange-200">ShopeePay</span>
-                        <span class="px-2 py-0.5 bg-blue-50 text-blue-800 rounded-md border border-blue-200">BCA</span>
-                        <span class="px-2 py-0.5 bg-yellow-50 text-yellow-800 rounded-md border border-yellow-200">Mandiri</span>
-                        <span class="px-2 py-0.5 bg-blue-50 text-blue-900 rounded-md border border-blue-200">BRI</span>
                     </div>
                 </div>
             </div>
@@ -235,6 +280,27 @@
     const totalAmount = {{ (int)$order->total_price }};
     const danaNumber = "{{ $danaNumber }}";
     let isAlreadyPaid = {{ $order->isPaid() ? 'true' : 'false' }};
+
+    function switchQrisView(type) {
+        const dynBox = document.getElementById('qrisDynamicBox');
+        const staBox = document.getElementById('qrisStaticBox');
+        const dynTab = document.getElementById('tabDynamicQris');
+        const staTab = document.getElementById('tabStaticQris');
+
+        if (type === 'static') {
+            dynBox.classList.add('hidden');
+            staBox.classList.remove('hidden');
+
+            dynTab.className = 'flex-1 py-1.5 px-2 rounded-xl text-gray-600 hover:text-gray-900 transition flex items-center justify-center space-x-1';
+            staTab.className = 'flex-1 py-1.5 px-2 rounded-xl bg-white text-blue-800 font-bold shadow-sm transition flex items-center justify-center space-x-1';
+        } else {
+            staBox.classList.add('hidden');
+            dynBox.classList.remove('hidden');
+
+            staTab.className = 'flex-1 py-1.5 px-2 rounded-xl text-gray-600 hover:text-gray-900 transition flex items-center justify-center space-x-1';
+            dynTab.className = 'flex-1 py-1.5 px-2 rounded-xl bg-white text-emerald-800 font-bold shadow-sm transition flex items-center justify-center space-x-1';
+        }
+    }
 
     function copyNominal() {
         navigator.clipboard.writeText(totalAmount.toString()).then(() => {

@@ -11,7 +11,13 @@ use chillerlan\QRCode\QROptions;
 
 class QrisService
 {
-    /** 
+    /**
+     * QRIS Resmi Nasional DANA Bisnis Sekarsa Coffee (NMID: ID1026635802105)
+     * Terdaftar resmi di Bank Indonesia & ASPI, mendukung semua Bank & E-Wallet.
+     */
+    public const DEFAULT_OFFICIAL_QRIS = '00020101021126570011ID.DANA.WWW011893600915303685267402090368526740303UMI51440014ID.CO.QRIS.WWW0215ID10266358021050303UMI5204899953033605802ID5925M Aprilian Dwi Anggara, S6006Kampar6105284716304BC32';
+
+    /**
      * Hitung Checksum CRC16 CCITT (0xFFFF, Poly 0x1021) sesuai standar EMVCo QRIS.
      */
     public static function calculateCrc16(string $data): string
@@ -32,6 +38,20 @@ class QrisService
     }
 
     /**
+     * Dapatkan string QRIS Statis Toko Resmi.
+     */
+    public function getStaticQrisPayload(): string
+    {
+        try {
+            $setting = Setting::first();
+        } catch (\Throwable $e) {
+            $setting = null;
+        }
+
+        return $setting?->qris_static_payload ?: self::DEFAULT_OFFICIAL_QRIS;
+    }
+
+    /**
      * Buat format Tag-Length-Value (TLV) standar EMVCo.
      */
     public static function formatTlv(string $tag, string $value): string
@@ -41,15 +61,20 @@ class QrisService
     }
 
     /**
-     * Buat payload QRIS Dinamis dengan nominal otomatis mengarah ke DANA.
+     * Buat payload QRIS Dinamis dengan nominal otomatis mengarah ke DANA Bisnis.
      */
     public function generateQrisPayload(float|int $amount, string $orderNumber, ?string $danaNumber = null, ?string $merchantName = null): string
     {
-        $setting = Setting::first();
+        try {
+            $setting = Setting::first();
+        } catch (\Throwable $e) {
+            $setting = null;
+        }
 
-        // Jika merchant telah menginput string QRIS resmi toko di pengaturan, ubah ke dinamis dengan nominal eksak
-        if (!empty($setting?->qris_static_payload)) {
-            $converted = $this->convertStaticToDynamic($setting->qris_static_payload, $amount, $orderNumber);
+        // Prioritaskan konversi QRIS Resmi DANA Bisnis (NMID: ID1026635802105) menjadi dinamis
+        $staticPayload = $setting?->qris_static_payload ?: self::DEFAULT_OFFICIAL_QRIS;
+        if (!empty($staticPayload)) {
+            $converted = $this->convertStaticToDynamic($staticPayload, $amount, $orderNumber);
             if ($converted) {
                 return $converted;
             }
