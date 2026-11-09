@@ -186,30 +186,25 @@
                     </button>
                 </div>
 
-                <!-- Tombol Konfirmasi Pembayaran -->
+                <!-- Tombol Konfirmasi Pembayaran & Multi-Device -->
                 <div class="pt-2 space-y-2">
-                    @if($order->isWaitingVerification())
-                        <div class="w-full py-3.5 bg-purple-600 text-white font-bold rounded-2xl text-sm text-center shadow-lg shadow-purple-600/30 flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-clock-rotate-left fa-spin"></i>
-                            <span>Sedang Diverifikasi Kasir</span>
-                        </div>
-                        <p class="text-[11px] text-gray-600 text-center leading-relaxed">
-                            Konfirmasi Anda telah diterima. Kasir sedang mencocokkan mutasi dana di DANA <strong>{{ $danaNumber }}</strong>. Antrean Anda segera diproses setelah diverifikasi.
-                        </p>
-                    @else
-                        <button type="button" onclick="confirmPaymentAction()" id="btnConfirmPay" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-circle-check"></i>
-                            <span>Saya Sudah Bayar (Kirim ke Kasir)</span>
-                        </button>
-                    @endif
+                    <button type="button" onclick="confirmPaymentAction()" id="btnConfirmPay" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Saya Sudah Bayar (Konfirmasi Selesai)</span>
+                    </button>
 
                     <div class="flex items-center space-x-2">
-                        <a href="{{ route('customer.track', $order->tracking_token) }}" class="flex-1 py-2.5 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-semibold rounded-xl text-xs transition text-center flex items-center justify-center space-x-1.5">
+                        <button type="button" onclick="openShareModal()" class="flex-1 py-2.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-bold rounded-xl text-xs transition flex items-center justify-center space-x-1.5 shadow-sm">
+                            <i class="fa-solid fa-mobile-screen-button"></i>
+                            <span>Bayar di HP Lain / Kirim</span>
+                        </button>
+
+                        <a href="{{ route('customer.track', $order->tracking_token) }}" class="py-2.5 px-3 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-semibold rounded-xl text-xs transition text-center flex items-center justify-center space-x-1.5" title="Pantau Antrean">
                             <i class="fa-solid fa-satellite-dish text-emerald-600"></i>
-                            <span>Pantau Antrean Langsung</span>
+                            <span class="hidden sm:inline">Antrean</span>
                         </a>
 
-                        <button type="button" onclick="openUploadModal()" class="py-2.5 px-3 bg-white hover:bg-gray-100 border border-gray-200 text-gray-600 font-semibold rounded-xl text-xs transition" title="Unggah Bukti Transfer (Opsional)">
+                        <button type="button" onclick="openUploadModal()" class="py-2.5 px-3 bg-white hover:bg-gray-100 border border-gray-200 text-gray-600 font-semibold rounded-xl text-xs transition" title="Unggah Bukti Struk (Opsional)">
                             <i class="fa-solid fa-paperclip"></i>
                         </button>
                     </div>
@@ -235,6 +230,48 @@
             <i class="fa-solid fa-rotate fa-spin text-emerald-600 mr-1"></i> Mendeteksi pembayaran secara real-time...
         </p>
 
+    </div>
+</div>
+
+<!-- Modal Bayar di HP Lain / Multi-Device -->
+<div id="sharePaymentModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-center">
+        <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-mobile-screen text-blue-600"></i>
+                <h3 class="font-bold text-sm text-gray-900">Bayar Melalui HP Lain</h3>
+            </div>
+            <button onclick="closeShareModal()" class="text-gray-400 hover:text-gray-600 p-1">
+                <i class="fa-solid fa-xmark text-base"></i>
+            </button>
+        </div>
+
+        <p class="text-xs text-gray-500 leading-relaxed">
+            Arahkan kamera pada <strong>HP 2</strong> ke QR Code di bawah untuk langsung membuka halaman tagihan pesanan ini:
+        </p>
+
+        <div class="p-3 bg-slate-50 rounded-2xl border border-gray-200 inline-block shadow-inner mx-auto">
+            <img src="{{ $paymentShareQrUri }}" alt="QR Tautan Pembayaran" class="w-48 h-48 mx-auto object-contain">
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200/80 rounded-2xl p-2.5 text-[11px] text-blue-900 text-left flex items-start space-x-2">
+            <i class="fa-solid fa-circle-nodes text-blue-600 text-sm mt-0.5 shrink-0"></i>
+            <div>
+                <strong>Sinkronisasi Otomatis:</strong> Saat HP 2 menyelesaikan pembayaran, layar HP ini akan langsung otomatis berganti menjadi <b>Lunas</b> secara real-time.
+            </div>
+        </div>
+
+        <div class="pt-1 flex flex-col space-y-2">
+            <a href="https://api.whatsapp.com/send?text={{ urlencode('Halo! Ini tautan tagihan Sekarsa Coffee sebesar Rp ' . number_format($order->total_price, 0, ',', '.') . ' untuk antrean #' . $order->queue_number . ' (' . $order->order_number . '). Silakan bayar lewat link ini: ' . $paymentShareUrl) }}" target="_blank" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition flex items-center justify-center space-x-1.5 shadow-md">
+                <i class="fa-brands fa-whatsapp text-sm"></i>
+                <span>Kirim Link via WhatsApp</span>
+            </a>
+
+            <button type="button" onclick="copyPaymentLink()" class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-xs transition flex items-center justify-center space-x-1.5">
+                <i class="fa-regular fa-copy"></i>
+                <span>Salin Tautan Tagihan</span>
+            </button>
+        </div>
     </div>
 </div>
 
@@ -330,6 +367,29 @@
         });
     }
 
+    function openShareModal() {
+        document.getElementById('sharePaymentModal').classList.remove('hidden');
+    }
+
+    function closeShareModal() {
+        document.getElementById('sharePaymentModal').classList.add('hidden');
+    }
+
+    function copyPaymentLink() {
+        const link = "{{ $paymentShareUrl ?? url()->current() }}";
+        navigator.clipboard.writeText(link).then(() => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Tautan Disalin!',
+                text: 'Tautan tagihan berhasil disalin. Buka atau kirimkan ke HP 2 untuk membayar.',
+                timer: 1800,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
+        });
+    }
+
     function openUploadModal() {
         document.getElementById('uploadProofModal').classList.remove('hidden');
     }
@@ -344,8 +404,8 @@
         const originalHtml = btn.innerHTML;
 
         const result = await Swal.fire({
-            title: 'Konfirmasi Pembayaran QRIS',
-            html: `Pastikan Anda telah berhasil menyelesaikan transfer/scan sebesar <b>Rp ${totalAmount.toLocaleString('id-ID')}</b> ke DANA Sekarsa Coffee (<b>${danaNumber}</b>).<br><br><span class="text-xs text-gray-500">Setelah dikirim, kasir akan memverifikasi mutasi dana masuk sebelum pesanan Anda diproses oleh barista.</span>`,
+            title: 'Konfirmasi Selesai Bayar',
+            html: `Pastikan Anda telah menyelesaikan pembayaran sebesar <b>Rp ${totalAmount.toLocaleString('id-ID')}</b> via m-Banking / QRIS DANA.<br><br><span class="text-xs text-gray-500">Klik "Ya, Sudah Bayar" untuk memproses pesanan ke antrean barista.</span>`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#16a34a',
@@ -357,7 +417,7 @@
         if (!result.isConfirmed) return;
 
         btn.disabled = true;
-        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i><span>Mengirim ke Kasir...</span>`;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i><span>Memverifikasi Pembayaran...</span>`;
 
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "{{ csrf_token() }}";
@@ -373,10 +433,11 @@
 
             const data = await res.json();
             if (res.ok && data.success) {
+                isAlreadyPaid = true;
                 Swal.fire({
                     icon: 'success',
-                    title: 'Konfirmasi Diterima!',
-                    text: data.message || 'Kasir sedang memverifikasi dana Anda. Anda dialihkan ke halaman antrean.',
+                    title: 'Pembayaran Berhasil!',
+                    text: data.message || 'Pembayaran berhasil! Pesanan Anda segera disiapkan barista.',
                     timer: 2000,
                     showConfirmButton: false
                 }).then(() => {
@@ -400,7 +461,7 @@
         const originalHtml = btn.innerHTML;
 
         btn.disabled = true;
-        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i><span>Mengunggah...</span>`;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i><span>Mengunggah...</span>`;
 
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "{{ csrf_token() }}";
@@ -415,11 +476,12 @@
 
             const data = await res.json();
             if (res.ok && data.success) {
+                isAlreadyPaid = true;
                 closeUploadModal();
                 Swal.fire({
                     icon: 'success',
-                    title: 'Bukti Terkirim!',
-                    text: 'Terima kasih, bukti pembayaran telah diterima.',
+                    title: 'Bukti Diterima & Lunas!',
+                    text: 'Terima kasih, pembayaran pesanan Anda berhasil diselesaikan.',
                     timer: 2000,
                     showConfirmButton: false
                 }).then(() => {
@@ -435,7 +497,7 @@
         }
     }
 
-    // Auto Polling Cek Status Pembayaran (Jika kasir konfirmasi atau sistem lunas otomatis)
+    // Auto Polling Cek Status Pembayaran Real-Time (Sync Antar-HP 1 & HP 2)
     async function pollPaymentStatus() {
         if (isAlreadyPaid) return;
 
@@ -448,18 +510,20 @@
                 isAlreadyPaid = true;
                 Swal.fire({
                     icon: 'success',
-                    title: 'Pembayaran Diterima!',
-                    html: `Pembayaran sebesar <b>Rp ${data.total_price}</b> telah berhasil dikonfirmasi.<br>Pesanan Anda kini masuk ke antrean pengerjaan.`,
-                    timer: 2500,
+                    title: 'Pembayaran Dikonfirmasi!',
+                    html: `Pembayaran sebesar <b>Rp ${data.total_price}</b> telah berhasil dikonfirmasi.<br>Pesanan Anda kini otomatis masuk antrean pembuatan barista.`,
+                    timer: 2200,
                     showConfirmButton: false
                 }).then(() => {
                     window.location.href = `/pesanan/${orderToken}`;
                 });
             }
         } catch (e) {
-            console.warn('Gagal sinkron status bayar:', e);
+            // silent catch
         }
     }
+
+    setInterval(pollPaymentStatus, 2000);
 
     setInterval(pollPaymentStatus, 2500);
 </script>

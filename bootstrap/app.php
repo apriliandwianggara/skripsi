@@ -11,10 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Kecualikan endpoint pemesanan pelanggan & API publik dari CSRF
-        // agar pemesanan dari kamera HP / embedded browser QR tidak terblokir Token Mismatch
+        // Kecualikan endpoint pemesanan pelanggan, konfirmasi bayar & API publik dari CSRF
+        // agar pemesanan dan pembayaran dari berbagai HP / QR scan tidak terblokir Token Mismatch / 419 Expired
         $middleware->validateCsrfTokens(except: [
             'pesan/kirim',
+            'pesanan/*/konfirmasi-bayar',
             'api/*',
         ]);
 

@@ -360,15 +360,20 @@ class CustomerOrderController extends Controller
         $staticPayload = $this->qrisService->getStaticQrisPayload();
         $staticQrisDataUri = $this->qrisService->generateQrisDataUri($staticPayload);
 
+        // 3. Link & QR Berbagi Tagihan untuk Pembayaran via HP Lain (Multi-Device Sync)
+        $paymentShareUrl = route('customer.payment', $order->tracking_token);
+        $paymentShareQrUri = $this->qrisService->generateQrisDataUri($paymentShareUrl);
+
         return view('customer.payment', compact(
             'order', 'setting', 'qrisPayload', 'qrisDataUri',
             'staticPayload', 'staticQrisDataUri',
+            'paymentShareUrl', 'paymentShareQrUri',
             'danaNumber', 'merchantName', 'nmid', 'danaMerchantName'
         ));
     }
 
     /**
-     * Konfirmasi Pembayaran QRIS oleh Pelanggan
+     * Konfirmasi Pembayaran QRIS oleh Pelanggan (Instan & Mendukung Multi-Perangkat)
      */
     public function confirmPayment(Request $request, $token)
     {
@@ -377,6 +382,7 @@ class CustomerOrderController extends Controller
         if ($order->isPaid()) {
             return response()->json([
                 'success' => true,
+                'is_paid' => true,
                 'message' => 'Pesanan sudah berstatus lunas.',
                 'redirect_url' => route('customer.track', $order->tracking_token),
             ]);
@@ -390,9 +396,9 @@ class CustomerOrderController extends Controller
             $proofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
         }
 
-        // Jangan langsung jadikan 'lunas' agar pelanggan tidak bisa curang
-        // Status diubah menjadi 'menunggu_verifikasi' dan wajib diverifikasi kasir
-        $order->payment_status = 'menunggu_verifikasi';
+        // Otomatis jadikan 'lunas' agar pelanggan langsung terkonfirmasi seperti sistem profesional
+        $order->payment_status = 'lunas';
+        $order->paid_at = now();
         if ($proofPath) {
             $order->payment_proof = $proofPath;
         }
@@ -401,19 +407,20 @@ class CustomerOrderController extends Controller
         }
         $order->save();
 
-        // Catat riwayat klaim pembayaran
+        // Catat riwayat pelunasan pembayaran
         OrderStatusHistory::create([
             'order_id' => $order->id,
             'previous_status' => $order->status,
             'new_status' => $order->status,
-            'changed_by' => 'Pelanggan (Konfirmasi Bayar QRIS)',
-            'notes' => "Pelanggan menyatakan telah membayar QRIS Rp " . number_format($order->total_price, 0, ',', '.') . " ke DANA 087811139210. Menunggu verifikasi mutasi oleh kasir.",
+            'changed_by' => 'Pelanggan (Scan QRIS DANA Bisnis)',
+            'notes' => "Pembayaran QRIS sebesar Rp " . number_format($order->total_price, 0, ',', '.') . " berhasil dikonfirmasi lunas via m-Banking/QRIS.",
             'created_at' => now(),
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Konfirmasi pembayaran berhasil dikirim! Mohon tunggu kasir memverifikasi dana masuk.',
+            'is_paid' => true,
+            'message' => 'Pembayaran Anda berhasil dikonfirmasi! Pesanan Anda segera disiapkan barista.',
             'redirect_url' => route('customer.track', $order->tracking_token),
         ]);
     }

@@ -76,15 +76,14 @@ class OrderPaymentTest extends TestCase
         // Pelanggan konfirmasi bayar
         $confirmResponse = $this->postJson(route('customer.confirm_payment', $token));
         $confirmResponse->assertStatus(200);
-        $confirmResponse->assertJson(['success' => true]);
+        $confirmResponse->assertJson(['success' => true, 'is_paid' => true]);
 
         $order = Order::first();
-        // Setelah klaim konfirmasi pelanggan, status menjadi 'menunggu_verifikasi' agar tidak ada kecurangan
-        $this->assertFalse($order->isPaid());
-        $this->assertTrue($order->isWaitingVerification());
-        $this->assertEquals('menunggu_verifikasi', $order->payment_status);
+        // Konfirmasi pembayaran langsung lunas secara otomatis profesional
+        $this->assertTrue($order->isPaid());
+        $this->assertEquals('lunas', $order->payment_status);
 
-        // Barista tidak diizinkan memproses sebelum kasir memverifikasi pembayaran
+        // Barista langsung diizinkan memproses karena sudah lunas
         $barista = User::create([
             'name' => 'Barista 1',
             'username' => 'barista_1',
@@ -93,24 +92,8 @@ class OrderPaymentTest extends TestCase
             'role' => 'pegawai',
             'is_active' => true,
         ]);
-        $unpaidProcess = $this->actingAs($barista)->postJson(route('pegawai.order.process', $order));
-        $unpaidProcess->assertStatus(422);
-
-        // Kasir memverifikasi dana masuk di DANA 087811139210
-        $cashier = User::create([
-            'name' => 'Kasir QRIS',
-            'username' => 'kasir_qris',
-            'email' => 'kasirqris@sekarsa.com',
-            'password' => bcrypt('password'),
-            'role' => 'pegawai',
-            'is_active' => true,
-        ]);
-        $cashierConfirm = $this->actingAs($cashier)->postJson(route('pegawai.order.confirm_payment', $order));
-        $cashierConfirm->assertStatus(200);
-
-        $order->refresh();
-        $this->assertTrue($order->isPaid());
-        $this->assertEquals('lunas', $order->payment_status);
+        $processResponse = $this->actingAs($barista)->postJson(route('pegawai.order.process', $order));
+        $processResponse->assertStatus(200);
     }
 
     public function test_customer_can_order_with_cash_and_cashier_confirms_payment()
