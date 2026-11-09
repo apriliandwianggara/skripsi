@@ -129,12 +129,12 @@ class Order extends Model
 
     public function isPaid(): bool
     {
-        return $this->payment_status === 'lunas';
+        return ($this->payment_status ?? 'lunas') === 'lunas';
     }
 
     public function isWaitingPayment(): bool
     {
-        return $this->payment_status === 'menunggu_pembayaran';
+        return ($this->payment_status ?? '') === 'menunggu_pembayaran';
     }
 }
 

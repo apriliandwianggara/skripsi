@@ -387,3 +387,4 @@
     setInterval(pollPaymentStatus, 2500);
 </script>
 @endpush
+

@@ -11,7 +11,7 @@ use chillerlan\QRCode\QROptions;
 
 class QrisService
 {
-    /**
+    /** 
      * Hitung Checksum CRC16 CCITT (0xFFFF, Poly 0x1021) sesuai standar EMVCo QRIS.
      */
     public static function calculateCrc16(string $data): string
@@ -132,3 +132,4 @@ class QrisService
         return preg_replace('/<\?xml.*?\?>/i', '', $svg);
     }
 }
+

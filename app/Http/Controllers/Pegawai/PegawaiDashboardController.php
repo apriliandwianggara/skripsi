@@ -52,8 +52,28 @@ class PegawaiDashboardController extends Controller
         $metrics = $this->fifoService->getFifoMetrics();
         $setting = Setting::get();
 
-        // Jumlah pesanan yang masih menunggu pembayaran kasir / QRIS
-        $waitingPaymentsCount = Order::where('payment_status', 'menunggu_pembayaran')->where('status', '!=', 'dibatalkan')->count();
+        // Jumlah pesanan yang masih menunggu pembayaran kasir / QRIS (dengan auto-heal jika kolom belum ada di remote)
+        $waitingPaymentsCount = 0;
+        try {
+            $waitingPaymentsCount = 0;
+        try {
+            $waitingPaymentsCount = Order::where('payment_status', 'menunggu_pembayaran')->where('status', '!=', 'dibatalkan')->count();
+        } catch (\Throwable $e) {
+            $waitingPaymentsCount = 0;
+        }
+        } catch (\Throwable $e) {
+            $this->ensurePaymentColumnsExist();
+            try {
+                $waitingPaymentsCount = 0;
+        try {
+            $waitingPaymentsCount = Order::where('payment_status', 'menunggu_pembayaran')->where('status', '!=', 'dibatalkan')->count();
+        } catch (\Throwable $e) {
+            $waitingPaymentsCount = 0;
+        }
+            } catch (\Throwable $ex) {
+                $waitingPaymentsCount = 0;
+            }
+        }
 
         // Temukan pesanan berstatus 'menunggu' yang paling awal masuk (Prioritas 1 FIFO)
         $firstWaitingOrder = $fifoQueue->where('status', 'menunggu')->first();
@@ -105,7 +125,12 @@ class PegawaiDashboardController extends Controller
         $firstWaitingOrderId = $firstWaitingOrder?->id;
         $firstWaitingQueueNumber = $firstWaitingOrder?->queue_number;
 
-        $waitingPaymentsCount = Order::where('payment_status', 'menunggu_pembayaran')->where('status', '!=', 'dibatalkan')->count();
+        $waitingPaymentsCount = 0;
+        try {
+            $waitingPaymentsCount = Order::where('payment_status', 'menunggu_pembayaran')->where('status', '!=', 'dibatalkan')->count();
+        } catch (\Throwable $e) {
+            $waitingPaymentsCount = 0;
+        }
 
         return response()->json([
             'success' => true,
@@ -418,6 +443,28 @@ class PegawaiDashboardController extends Controller
 
         $url = 'https://api.whatsapp.com/send?phone=' . $phone . '&text=' . rawurlencode($message);
         return redirect()->away($url);
+    }
+
+    /**
+     * Pastikan kolom pembayaran ada di database remote (Self-Healing InfinityFree)
+     */
+    private function ensurePaymentColumnsExist(): void
+    {
+        $sqls = [
+            "ALTER TABLE `orders` ADD `payment_method` VARCHAR(20) DEFAULT 'qris' AFTER `total_price`",
+            "ALTER TABLE `orders` ADD `payment_status` VARCHAR(30) DEFAULT 'menunggu_pembayaran' AFTER `payment_method`",
+            "ALTER TABLE `orders` ADD `paid_at` DATETIME NULL AFTER `payment_status`",
+            "ALTER TABLE `orders` ADD `payment_proof` VARCHAR(255) NULL AFTER `paid_at`",
+            "ALTER TABLE `orders` ADD `payment_note` TEXT NULL AFTER `payment_proof`",
+        ];
+
+        foreach ($sqls as $sql) {
+            try {
+                \Illuminate\Support\Facades\DB::statement($sql);
+            } catch (\Throwable $e) {
+                // Abaikan jika kolom sudah ada
+            }
+        }
     }
 }
 
