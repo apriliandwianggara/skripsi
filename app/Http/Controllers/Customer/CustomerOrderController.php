@@ -396,9 +396,10 @@ class CustomerOrderController extends Controller
             $proofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
         }
 
-        // Otomatis jadikan 'lunas' agar pelanggan langsung terkonfirmasi seperti sistem profesional
-        $order->payment_status = 'lunas';
-        $order->paid_at = now();
+        // SISTEM ANTI-KECURANGAN KETAT (OPSI 2):
+        // Status pembayaran diubah menjadi 'menunggu_verifikasi'.
+        // Pelanggan TIDAK BISA langsung membuat pesanan menjadi lunas sendiri tanpa verifikasi kasir.
+        $order->payment_status = 'menunggu_verifikasi';
         if ($proofPath) {
             $order->payment_proof = $proofPath;
         }
@@ -407,20 +408,21 @@ class CustomerOrderController extends Controller
         }
         $order->save();
 
-        // Catat riwayat pelunasan pembayaran
+        // Catat riwayat klaim pembayaran
         OrderStatusHistory::create([
             'order_id' => $order->id,
             'previous_status' => $order->status,
             'new_status' => $order->status,
-            'changed_by' => 'Pelanggan (Scan QRIS DANA Bisnis)',
-            'notes' => "Pembayaran QRIS sebesar Rp " . number_format($order->total_price, 0, ',', '.') . " berhasil dikonfirmasi lunas via m-Banking/QRIS.",
+            'changed_by' => 'Pelanggan (Konfirmasi Bayar QRIS)',
+            'notes' => "Pelanggan menyatakan telah membayar QRIS Rp " . number_format($order->total_price, 0, ',', '.') . " ke DANA Bisnis. Menunggu verifikasi mutasi oleh kasir.",
             'created_at' => now(),
         ]);
 
         return response()->json([
             'success' => true,
-            'is_paid' => true,
-            'message' => 'Pembayaran Anda berhasil dikonfirmasi! Pesanan Anda segera disiapkan barista.',
+            'is_paid' => false,
+            'is_waiting_verification' => true,
+            'message' => 'Konfirmasi pembayaran telah terkirim! Kasir akan memverifikasi mutasi masuk DANA Bisnis sebelum pesanan diracik barista.',
             'redirect_url' => route('customer.track', $order->tracking_token),
         ]);
     }

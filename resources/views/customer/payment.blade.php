@@ -188,10 +188,20 @@
 
                 <!-- Tombol Konfirmasi Pembayaran & Multi-Device -->
                 <div class="pt-2 space-y-2">
-                    <button type="button" onclick="confirmPaymentAction()" id="btnConfirmPay" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-circle-check"></i>
-                        <span>Saya Sudah Bayar (Konfirmasi Selesai)</span>
-                    </button>
+                    @if($order->isWaitingVerification())
+                        <div class="w-full py-3.5 bg-purple-600 text-white font-bold rounded-2xl text-sm text-center shadow-lg shadow-purple-600/30 flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-clock-rotate-left fa-spin"></i>
+                            <span>Sedang Diverifikasi Kasir</span>
+                        </div>
+                        <p class="text-[11px] text-purple-800 bg-purple-50 p-2.5 rounded-xl text-center leading-relaxed border border-purple-200">
+                            Konfirmasi pembayaran Anda telah masuk ke kasir. Kasir sedang memverifikasi mutasi DANA Bisnis. Layar ini otomatis terupdate menjadi <strong>LUNAS</strong> begitu kasir memverifikasi.
+                        </p>
+                    @else
+                        <button type="button" onclick="confirmPaymentAction()" id="btnConfirmPay" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Saya Sudah Bayar (Konfirmasi ke Kasir)</span>
+                        </button>
+                    @endif
 
                     <div class="flex items-center space-x-2">
                         <button type="button" onclick="openShareModal()" class="flex-1 py-2.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-bold rounded-xl text-xs transition flex items-center justify-center space-x-1.5 shadow-sm">
@@ -404,8 +414,8 @@
         const originalHtml = btn.innerHTML;
 
         const result = await Swal.fire({
-            title: 'Konfirmasi Selesai Bayar',
-            html: `Pastikan Anda telah menyelesaikan pembayaran sebesar <b>Rp ${totalAmount.toLocaleString('id-ID')}</b> via m-Banking / QRIS DANA.<br><br><span class="text-xs text-gray-500">Klik "Ya, Sudah Bayar" untuk memproses pesanan ke antrean barista.</span>`,
+            title: 'Konfirmasi Pembayaran QRIS',
+            html: `Pastikan Anda telah berhasil menyelesaikan transfer sebesar <b>Rp ${totalAmount.toLocaleString('id-ID')}</b> via m-Banking/QRIS DANA Bisnis.<br><br><span class="text-xs text-amber-700 font-semibold bg-amber-50 p-2.5 rounded-xl block text-left border border-amber-200"><i class="fa-solid fa-shield-halved mr-1 text-amber-600"></i>Kasir akan memeriksa mutasi masuk di akun DANA Bisnis kafe sebelum pesanan diracik barista.</span>`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#16a34a',
@@ -417,7 +427,7 @@
         if (!result.isConfirmed) return;
 
         btn.disabled = true;
-        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i><span>Memverifikasi Pembayaran...</span>`;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i><span>Mengirim ke Kasir...</span>`;
 
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "{{ csrf_token() }}";
@@ -433,12 +443,11 @@
 
             const data = await res.json();
             if (res.ok && data.success) {
-                isAlreadyPaid = true;
                 Swal.fire({
                     icon: 'success',
-                    title: 'Pembayaran Berhasil!',
-                    text: data.message || 'Pembayaran berhasil! Pesanan Anda segera disiapkan barista.',
-                    timer: 2000,
+                    title: 'Konfirmasi Terkirim!',
+                    text: data.message || 'Kasir sedang memeriksa mutasi DANA Bisnis. Anda dialihkan ke halaman antrean.',
+                    timer: 2500,
                     showConfirmButton: false
                 }).then(() => {
                     window.location.href = data.redirect_url;
