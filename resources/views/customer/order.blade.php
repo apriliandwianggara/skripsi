@@ -407,6 +407,48 @@
                                   class="w-full text-sm px-3.5 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
                     </div>
 
+                    <!-- Pilihan Metode Pembayaran Sesuai Alur Baru -->
+                    <div class="space-y-2 pt-1">
+                        <label class="block text-xs font-bold text-gray-800">
+                            Pilih Metode Pembayaran <span class="text-red-500">*</span>
+                        </label>
+                        <div class="grid grid-cols-1 gap-2.5">
+                            <!-- Opsi 1: QRIS / DANA Otomatis Sesuai Nominal -->
+                            <label id="paymentOptionQris" class="payment-method-card flex items-start p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 transition cursor-pointer shadow-sm">
+                                <input type="radio" name="payment_method_radio" value="qris" checked onchange="onSelectPaymentMethod('qris')" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 mt-0.5 mr-3">
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold text-xs text-gray-900 flex items-center space-x-1.5">
+                                            <i class="fa-solid fa-qrcode text-emerald-700"></i>
+                                            <span>QRIS / DANA (Otomatis Sesuai Nominal)</span>
+                                        </span>
+                                        <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-600 text-white tracking-wider">Instan</span>
+                                    </div>
+                                    <p class="text-[11px] text-emerald-800/90 mt-1 leading-relaxed">
+                                        Scan QRIS langsung masuk nominal pesanan. Mengarah ke DANA <b>087811139210</b> (Sekarsa Coffee).
+                                    </p>
+                                </div>
+                            </label>
+
+                            <!-- Opsi 2: Bayar Tunai di Kasir (Cash) -->
+                            <label id="paymentOptionCash" class="payment-method-card flex items-start p-3 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 transition cursor-pointer">
+                                <input type="radio" name="payment_method_radio" value="cash" onchange="onSelectPaymentMethod('cash')" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 mt-0.5 mr-3">
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold text-xs text-gray-900 flex items-center space-x-1.5">
+                                            <i class="fa-solid fa-money-bill-wave text-amber-600"></i>
+                                            <span>Bayar Tunai di Kasir (Cash)</span>
+                                        </span>
+                                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Kasir</span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-500 mt-1 leading-relaxed">
+                                        Datang ke meja kasir sebutkan nama Anda untuk membayar tunai. Status di HP langsung terupdate otomatis.
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
                     <!-- Ringkasan Algoritma FIFO -->
                     <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900 space-y-1">
                         <div class="font-bold flex items-center space-x-1.5 text-emerald-800">
@@ -430,8 +472,8 @@
                 <button id="btnSubmitOrder"
                         onclick="submitOrder()"
                         class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-3.5 rounded-xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-paper-plane"></i>
-                    <span>Kirim Pesanan Sekarang</span>
+                    <i id="btnSubmitIcon" class="fa-solid fa-qrcode"></i>
+                    <span id="btnSubmitText">Bayar Sekarang (QRIS)</span>
                 </button>
             </div>
         </div>
@@ -803,6 +845,26 @@
         document.body.style.overflow = 'auto';
     }
 
+    // Toggle Tampilan Pilihan Metode Pembayaran
+    function onSelectPaymentMethod(method) {
+        const qrisCard = document.getElementById('paymentOptionQris');
+        const cashCard = document.getElementById('paymentOptionCash');
+        const submitIcon = document.getElementById('btnSubmitIcon');
+        const submitText = document.getElementById('btnSubmitText');
+
+        if (method === 'qris') {
+            qrisCard.className = 'payment-method-card flex items-start p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 transition cursor-pointer shadow-sm';
+            cashCard.className = 'payment-method-card flex items-start p-3 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 transition cursor-pointer';
+            if (submitIcon) submitIcon.className = 'fa-solid fa-qrcode';
+            if (submitText) submitText.innerText = 'Bayar Sekarang (QRIS)';
+        } else {
+            cashCard.className = 'payment-method-card flex items-start p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 transition cursor-pointer shadow-sm';
+            qrisCard.className = 'payment-method-card flex items-start p-3 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 transition cursor-pointer';
+            if (submitIcon) submitIcon.className = 'fa-solid fa-money-bill-wave';
+            if (submitText) submitText.innerText = 'Pesan & Bayar di Kasir';
+        }
+    }
+
     // Submit Order to Server via AJAX POST
     async function submitOrder() {
         if (cart.length === 0) {
@@ -814,6 +876,7 @@
         const customerPhone = document.getElementById('inputCustomerPhone').value.trim();
         const tableNumber = document.getElementById('inputTableNumber').value.trim();
         const customerNotes = document.getElementById('inputCustomerNotes').value.trim();
+        const paymentMethod = document.querySelector('input[name="payment_method_radio"]:checked')?.value || 'qris';
 
         if (!customerName) {
             Swal.fire({
@@ -838,6 +901,7 @@
             customer_phone: customerPhone,
             table_number: tableNumber,
             customer_notes: customerNotes,
+            payment_method: paymentMethod,
             items: cart.map(item => ({
                 menu_id: item.id,
                 variation_id: item.variation_id || null,
@@ -868,8 +932,10 @@
                 localStorage.removeItem(CART_STORAGE_KEY);
                 cart = [];
 
-                // Redirect to confirmation page
-                window.location.replace(data.confirmation_url);
+                // Jika memilih QRIS: langsung ke halaman pembayaran QRIS dengan nominal otomatis
+                // Jika memilih Cash: langsung ke pelacakan status
+                const destinationUrl = data.redirect_url || (paymentMethod === 'qris' ? data.payment_url : data.tracking_url);
+                window.location.replace(destinationUrl);
             } else {
                 if (data.redirect_url) {
                     Swal.fire({

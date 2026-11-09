@@ -10,6 +10,7 @@ use App\Models\OrderDetail;
 use App\Models\OrderStatusHistory;
 use App\Models\Setting;
 use App\Services\FifoQueueService;
+use App\Services\QrisService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,10 +19,12 @@ use Illuminate\Support\Str;
 class CustomerOrderController extends Controller
 {
     protected FifoQueueService $fifoService;
+    protected QrisService $qrisService;
 
-    public function __construct(FifoQueueService $fifoService)
+    public function __construct(FifoQueueService $fifoService, QrisService $qrisService)
     {
         $this->fifoService = $fifoService;
+        $this->qrisService = $qrisService;
     }
 
     /**
@@ -197,6 +200,7 @@ class CustomerOrderController extends Controller
             'customer_phone' => 'nullable|string|max:20',
             'table_number' => 'nullable|string|max:20',
             'customer_notes' => 'nullable|string|max:500',
+            'payment_method' => 'nullable|string|in:qris,cash',
             'items' => 'required|array|min:1',
             'items.*.menu_id' => 'required|exists:menus,id',
             'items.*.variation_id' => 'nullable|exists:menu_variations,id',
@@ -254,6 +258,7 @@ class CustomerOrderController extends Controller
             $queueNumber = $this->fifoService->generateQueueNumber();
             $orderNumber = $this->fifoService->generateOrderNumber($queueNumber);
             $trackingToken = Str::random(40);
+            $paymentMethod = $request->input('payment_method', 'qris');
 
             $order = Order::create([
                 'order_number' => $orderNumber,
@@ -263,6 +268,8 @@ class CustomerOrderController extends Controller
                 'table_number' => $request->table_number ? trim($request->table_number) : null,
                 'customer_notes' => $request->customer_notes,
                 'total_price' => $totalPrice,
+                'payment_method' => $paymentMethod,
+                'payment_status' => 'menunggu_pembayaran',
                 'status' => 'menunggu', // Status awal: Menunggu antrean
                 'received_at' => $receivedAt,
                 'tracking_token' => $trackingToken,
@@ -273,12 +280,13 @@ class CustomerOrderController extends Controller
             }
 
             // Catat riwayat status awal di order_status_history
+            $paymentMethodLabel = $paymentMethod === 'qris' ? 'QRIS (DANA)' : 'Tunai di Kasir';
             OrderStatusHistory::create([
                 'order_id' => $order->id,
                 'previous_status' => null,
                 'new_status' => 'menunggu',
                 'changed_by' => 'Sistem Pemesanan Digital',
-                'notes' => "Pesanan diterima server. Masuk ke antrean FIFO dengan Nomor Antrean [{$queueNumber}].",
+                'notes' => "Pesanan diterima server. Metode pembayaran: {$paymentMethodLabel}. Masuk ke antrean FIFO dengan Nomor Antrean [{$queueNumber}].",
                 'created_at' => $receivedAt,
             ]);
 
@@ -293,12 +301,23 @@ class CustomerOrderController extends Controller
             session()->forget(['qr_scanned', 'qr_token', 'qr_scanned_at', 'table_number']);
             cookie()->queue(cookie()->forget('sekarsa_qr_verified'));
 
+            $paymentUrl = route('customer.payment', $order->tracking_token);
+            $confirmationUrl = route('customer.confirmation', $order->tracking_token);
+            $trackingUrl = route('customer.track', $order->tracking_token);
+
+            // Alur yang diminta user: Jika QRIS, langsung arahkan ke pembayaran QRIS
+            $targetUrl = ($paymentMethod === 'qris') ? $paymentUrl : $trackingUrl;
+
             return response()->json([
                 'success' => true,
                 'order_number' => $order->order_number,
                 'queue_number' => $order->queue_number,
-                'confirmation_url' => route('customer.confirmation', $order->tracking_token),
-                'tracking_url' => route('customer.track', $order->tracking_token),
+                'payment_method' => $paymentMethod,
+                'payment_status' => $order->payment_status,
+                'payment_url' => $paymentUrl,
+                'confirmation_url' => $confirmationUrl,
+                'tracking_url' => $trackingUrl,
+                'redirect_url' => $targetUrl,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -307,6 +326,86 @@ class CustomerOrderController extends Controller
                 'message' => $e->getMessage(),
             ], 422);
         }
+    }
+
+    /**
+     * Halaman Pembayaran QRIS Otomatis Sesuai Nominal Pesanan
+     */
+    public function payment($token)
+    {
+        $order = Order::with('details')->where('tracking_token', $token)->firstOrFail();
+        $setting = Setting::get();
+
+        // Jika pesanan sudah lunas, langsung arahkan ke pemantauan antrean
+        if ($order->isPaid()) {
+            return redirect()->route('customer.track', $order->tracking_token)
+                ->with('info', 'Pembayaran pesanan Anda telah lunas.');
+        }
+
+        $danaNumber = $setting->qris_dana_number ?? '087811139210';
+        $merchantName = $setting->qris_merchant_name ?? 'Sekarsa Coffee';
+
+        // Generate QRIS Dinamis Standar Nasional dengan nominal terkunci
+        $qrisPayload = $this->qrisService->generateQrisPayload(
+            $order->total_price,
+            $order->order_number,
+            $danaNumber,
+            $merchantName
+        );
+
+        $qrisDataUri = $this->qrisService->generateQrisDataUri($qrisPayload);
+
+        return view('customer.payment', compact('order', 'setting', 'qrisPayload', 'qrisDataUri', 'danaNumber', 'merchantName'));
+    }
+
+    /**
+     * Konfirmasi Pembayaran QRIS oleh Pelanggan
+     */
+    public function confirmPayment(Request $request, $token)
+    {
+        $order = Order::where('tracking_token', $token)->firstOrFail();
+
+        if ($order->isPaid()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pesanan sudah berstatus lunas.',
+                'redirect_url' => route('customer.track', $order->tracking_token),
+            ]);
+        }
+
+        $proofPath = null;
+        if ($request->hasFile('payment_proof')) {
+            $request->validate([
+                'payment_proof' => 'image|mimes:jpeg,png,jpg,webp|max:3072',
+            ]);
+            $proofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
+        }
+
+        $order->payment_status = 'lunas';
+        $order->paid_at = now();
+        if ($proofPath) {
+            $order->payment_proof = $proofPath;
+        }
+        if ($request->filled('payment_note')) {
+            $order->payment_note = $request->payment_note;
+        }
+        $order->save();
+
+        // Catat riwayat pelunasan
+        OrderStatusHistory::create([
+            'order_id' => $order->id,
+            'previous_status' => $order->status,
+            'new_status' => $order->status,
+            'changed_by' => 'Pelanggan (Scan QRIS DANA)',
+            'notes' => "Pembayaran QRIS sebesar Rp " . number_format($order->total_price, 0, ',', '.') . " berhasil dikonfirmasi ke DANA 087811139210.",
+            'created_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pembayaran Anda berhasil dikonfirmasi! Pesanan sedang disiapkan.',
+            'redirect_url' => route('customer.track', $order->tracking_token),
+        ]);
     }
 
     /**
@@ -385,8 +484,17 @@ class CustomerOrderController extends Controller
             'success' => true,
             'status' => $order->status,
             'status_label' => $order->status_label,
+            'payment_method' => $order->payment_method,
+            'payment_method_label' => $order->payment_method_label,
+            'payment_status' => $order->payment_status,
+            'payment_status_label' => $order->payment_status_label,
+            'is_paid' => $order->isPaid(),
+            'is_waiting_payment' => $order->isWaitingPayment(),
+            'paid_at' => $order->paid_at ? $order->paid_at->format('H:i') : null,
             'queue_number' => $order->queue_number,
             'order_number' => $order->order_number,
+            'customer_name' => $order->customer_name,
+            'total_price' => number_format($order->total_price, 0, ',', '.'),
             'pesanan_di_depan' => $queueInfo['pesanan_di_depan'],
             'estimasi_waktu_menit' => $queueInfo['estimasi_waktu_menit'],
             'history' => $order->statusHistory()->orderBy('created_at', 'asc')->get()->map(function ($h) {

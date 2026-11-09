@@ -53,6 +53,19 @@
                         <span class="text-gray-400 block">Waktu Diterima Server (FIFO)</span>
                         <span class="text-gray-800 font-mono">{{ $order->received_at->format('H:i:s d/m/Y') }}</span>
                     </div>
+                    <div>
+                        <span class="text-gray-400 block">Metode Pembayaran</span>
+                        <span class="font-bold text-gray-800">{{ $order->payment_method_label }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 block">Status Pembayaran</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold {{ $order->isPaid() ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                            {{ $order->payment_status_label }}
+                            @if($order->paid_at)
+                                <span class="ml-1 text-[9px] font-normal font-mono">({{ $order->paid_at->format('H:i') }})</span>
+                            @endif
+                        </span>
+                    </div>
                 </div>
 
                 @if($order->customer_notes)

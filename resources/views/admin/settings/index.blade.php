@@ -208,6 +208,34 @@
 
 
 
+                    <!-- Pengaturan Pembayaran QRIS & DANA -->
+                    <div class="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200/80 space-y-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-qrcode text-emerald-700"></i>
+                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-900">
+                                Pengaturan Pembayaran QRIS & DANA
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                                    Nomor Akun DANA Penerima
+                                </label>
+                                <input type="text" name="qris_dana_number" value="{{ old('qris_dana_number', $setting->qris_dana_number ?? '087811139210') }}" 
+                                       class="w-full text-xs p-2.5 bg-white border border-gray-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <span class="text-[10px] text-gray-400 mt-1 block">Nomor DANA pemilik untuk menerima pembayaran otomatis QRIS.</span>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                                    Nama Merchant QRIS
+                                </label>
+                                <input type="text" name="qris_merchant_name" value="{{ old('qris_merchant_name', $setting->qris_merchant_name ?? 'Sekarsa Coffee') }}" 
+                                       class="w-full text-xs p-2.5 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <span class="text-[10px] text-gray-400 mt-1 block">Nama bisnis yang tertera pada QRIS.</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <label class="block text-xs font-bold uppercase text-gray-700 mb-1">
                             URL Tujuan Kode QR Pemesanan (Permanen) <span class="text-red-500">*</span>

@@ -52,6 +52,9 @@ class PegawaiDashboardController extends Controller
         $metrics = $this->fifoService->getFifoMetrics();
         $setting = Setting::get();
 
+        // Jumlah pesanan yang masih menunggu pembayaran kasir / QRIS
+        $waitingPaymentsCount = Order::where('payment_status', 'menunggu_pembayaran')->where('status', '!=', 'dibatalkan')->count();
+
         // Temukan pesanan berstatus 'menunggu' yang paling awal masuk (Prioritas 1 FIFO)
         $firstWaitingOrder = $fifoQueue->where('status', 'menunggu')->first();
         $firstWaitingOrderId = $firstWaitingOrder?->id;
@@ -64,7 +67,8 @@ class PegawaiDashboardController extends Controller
             'metrics',
             'setting',
             'firstWaitingOrderId',
-            'firstWaitingQueueNumber'
+            'firstWaitingQueueNumber',
+            'waitingPaymentsCount'
         ));
     }
 
@@ -101,11 +105,14 @@ class PegawaiDashboardController extends Controller
         $firstWaitingOrderId = $firstWaitingOrder?->id;
         $firstWaitingQueueNumber = $firstWaitingOrder?->queue_number;
 
+        $waitingPaymentsCount = Order::where('payment_status', 'menunggu_pembayaran')->where('status', '!=', 'dibatalkan')->count();
+
         return response()->json([
             'success' => true,
             'version' => strtotime($latestUpdate),
             'queue_count' => $queue->count(),
             'ready_count' => $readyOrders->count(),
+            'waiting_payments_count' => $waitingPaymentsCount,
             'total_today' => $metrics['total_hari_ini'],
             'metrics' => $metrics,
             'queue' => $queue->map(function ($order, $index) use ($firstWaitingOrderId, $firstWaitingQueueNumber) {
@@ -120,6 +127,12 @@ class PegawaiDashboardController extends Controller
                     'customer_notes' => $order->customer_notes,
                     'status' => $order->status,
                     'status_label' => $order->status_label,
+                    'payment_method' => $order->payment_method,
+                    'payment_method_label' => $order->payment_method_label,
+                    'payment_status' => $order->payment_status,
+                    'payment_status_label' => $order->payment_status_label,
+                    'is_paid' => $order->isPaid(),
+                    'is_waiting_payment' => $order->isWaitingPayment(),
                     'is_allowed_to_process' => ($order->status === 'menunggu') && ($order->id === $firstWaitingOrderId),
                     'first_waiting_queue_number' => $firstWaitingQueueNumber,
                     'received_at' => $order->received_at->format('H:i'),
@@ -159,6 +172,54 @@ class PegawaiDashboardController extends Controller
                 ];
             }),
         ]);
+    }
+
+    /**
+     * Konfirmasi Pembayaran Kasir (Tunai / QRIS)
+     */
+    public function confirmCashierPayment(Order $order, Request $request)
+    {
+        $user = Auth::user();
+
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($order, $user, $request) {
+            $locked = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->isPaid()) {
+                $msg = "Pesanan #{$locked->queue_number} atas nama {$locked->customer_name} sudah berstatus lunas sebelumnya.";
+                return response()->json([
+                    'success' => true,
+                    'message' => $msg,
+                ]);
+            }
+
+            $locked->payment_status = 'lunas';
+            $locked->paid_at = now();
+            $locked->save();
+
+            $nominalFmt = 'Rp ' . number_format($locked->total_price, 0, ',', '.');
+            $methodName = $locked->payment_method === 'cash' ? 'Tunai' : 'QRIS';
+
+            OrderStatusHistory::create([
+                'order_id' => $locked->id,
+                'previous_status' => $locked->status,
+                'new_status' => $locked->status,
+                'changed_by' => $user->name . ' (Kasir)',
+                'notes' => "Kasir telah menerima pembayaran {$methodName} sebesar {$nominalFmt} dari pelanggan atas nama {$locked->customer_name}.",
+                'created_at' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Pembayaran {$methodName} sebesar {$nominalFmt} atas nama {$locked->customer_name} berhasil dikonfirmasi lunas!",
+                'order' => [
+                    'id' => $locked->id,
+                    'queue_number' => $locked->queue_number,
+                    'customer_name' => $locked->customer_name,
+                    'payment_status' => $locked->payment_status,
+                    'payment_status_label' => $locked->payment_status_label,
+                ]
+            ]);
+        });
     }
 
     /**

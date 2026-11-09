@@ -39,10 +39,14 @@ Route::get('/api/menu-status', [CustomerOrderController::class, 'menuStatusApi']
 Route::post('/api/verify-location', [CustomerOrderController::class, 'verifyLocationApi'])->name('customer.verify_location');
 Route::post('/pesan/kirim', [CustomerOrderController::class, 'submitOrder'])->name('customer.submit_order');
 
-// 2. Halaman Konfirmasi Pesanan
+// 2. Halaman Pembayaran QRIS & Konfirmasi Pembayaran
+Route::get('/pesanan/{token}/bayar', [CustomerOrderController::class, 'payment'])->name('customer.payment');
+Route::post('/pesanan/{token}/konfirmasi-bayar', [CustomerOrderController::class, 'confirmPayment'])->name('customer.confirm_payment');
+
+// 3. Halaman Konfirmasi Pesanan
 Route::get('/pesanan/{token}/konfirmasi', [CustomerOrderController::class, 'confirmation'])->name('customer.confirmation');
 
-// 3. Halaman Pelacakan Pesanan & 4. Notifikasi Suara Pengambilan
+// 4. Halaman Pelacakan Pesanan & Notifikasi Suara Pengambilan
 Route::get('/pesanan/{token}', [CustomerOrderController::class, 'track'])->name('customer.track');
 Route::get('/api/pesanan/{token}/status', [CustomerOrderController::class, 'trackStatusApi'])->name('customer.status_api');
 
@@ -65,6 +69,7 @@ Route::middleware(['auth', 'role:pegawai,admin'])->prefix('pegawai')->name('pega
     Route::get('/api/antrean', [PegawaiDashboardController::class, 'queueApi'])->name('queue_api');
     
     // Alur Status Pesanan FIFO
+    Route::post('/pesanan/{order}/konfirmasi-pembayaran', [PegawaiDashboardController::class, 'confirmCashierPayment'])->name('order.confirm_payment');
     Route::post('/pesanan/{order}/proses', [PegawaiDashboardController::class, 'processOrder'])->name('order.process');
     Route::post('/pesanan/{order}/siap', [PegawaiDashboardController::class, 'readyOrder'])->name('order.ready');
     Route::post('/pesanan/{order}/selesai', [PegawaiDashboardController::class, 'completeOrder'])->name('order.complete');

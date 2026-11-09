@@ -36,12 +36,18 @@ class Setting extends Model
         'gps_tolerance_meters',
         'demo_mode_enabled',
         'demo_mode_label',
+        'qris_dana_number',
+        'qris_merchant_name',
+        'enable_qris_payment',
+        'enable_cash_payment',
     ];
 
     protected $casts = [
         'require_qr_scan' => 'boolean',
         'enable_gps_radius' => 'boolean',
         'demo_mode_enabled' => 'boolean',
+        'enable_qris_payment' => 'boolean',
+        'enable_cash_payment' => 'boolean',
         'alarm_sound_enabled' => 'boolean',
         'alarm_repeat_interval' => 'integer',
         'estimated_minutes_per_queue' => 'integer',

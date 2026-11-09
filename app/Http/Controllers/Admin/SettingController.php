@@ -69,6 +69,8 @@ class SettingController extends Controller
             'qr_permanent_url' => 'required|url',
             'qr_access_key' => 'nullable|string|max:64',
             'alarm_repeat_interval' => 'nullable|integer|min:1|max:15',
+            'qris_dana_number' => 'nullable|string|max:30',
+            'qris_merchant_name' => 'nullable|string|max:100',
             'logo_file' => 'nullable|image|mimes:jpg,jpeg,png,webp,svg|max:3072',
             'banner_file' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
@@ -139,6 +141,15 @@ class SettingController extends Controller
             "ALTER TABLE `settings` ADD `gps_tolerance_meters` INT DEFAULT 50",
             "ALTER TABLE `settings` ADD `demo_mode_enabled` TINYINT(1) DEFAULT 0",
             "ALTER TABLE `settings` ADD `demo_mode_label` VARCHAR(100) NULL DEFAULT 'Mode Demo Sidang Skripsi'",
+            "ALTER TABLE `settings` ADD `qris_dana_number` VARCHAR(30) NULL DEFAULT '087811139210'",
+            "ALTER TABLE `settings` ADD `qris_merchant_name` VARCHAR(100) NULL DEFAULT 'Sekarsa Coffee'",
+            "ALTER TABLE `settings` ADD `enable_qris_payment` TINYINT(1) DEFAULT 1",
+            "ALTER TABLE `settings` ADD `enable_cash_payment` TINYINT(1) DEFAULT 1",
+            "ALTER TABLE `orders` ADD `payment_method` VARCHAR(20) DEFAULT 'qris' AFTER `total_price`",
+            "ALTER TABLE `orders` ADD `payment_status` VARCHAR(30) DEFAULT 'menunggu_pembayaran' AFTER `payment_method`",
+            "ALTER TABLE `orders` ADD `paid_at` DATETIME NULL AFTER `payment_status`",
+            "ALTER TABLE `orders` ADD `payment_proof` VARCHAR(255) NULL AFTER `paid_at`",
+            "ALTER TABLE `orders` ADD `payment_note` TEXT NULL AFTER `payment_proof`",
         ];
 
         foreach ($sqls as $sql) {

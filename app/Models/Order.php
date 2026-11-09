@@ -20,6 +20,11 @@ class Order extends Model
         'table_number',
         'customer_notes',
         'total_price',
+        'payment_method',
+        'payment_status',
+        'paid_at',
+        'payment_proof',
+        'payment_note',
         'status',
         'received_at',
         'processed_at',
@@ -31,6 +36,7 @@ class Order extends Model
 
     protected $casts = [
         'total_price' => 'decimal:2',
+        'paid_at' => 'datetime',
         'received_at' => 'datetime',
         'processed_at' => 'datetime',
         'ready_at' => 'datetime',
@@ -100,6 +106,35 @@ class Order extends Model
             'dibatalkan' => 'Dibatalkan',
             default => ucfirst($this->status),
         };
+    }
+
+    public function getPaymentMethodLabelAttribute(): string
+    {
+        return match ($this->payment_method) {
+            'qris' => 'QRIS (DANA)',
+            'cash' => 'Tunai di Kasir',
+            default => strtoupper($this->payment_method ?? 'QRIS'),
+        };
+    }
+
+    public function getPaymentStatusLabelAttribute(): string
+    {
+        return match ($this->payment_status) {
+            'lunas' => 'Lunas',
+            'menunggu_pembayaran' => 'Menunggu Pembayaran',
+            'batal' => 'Dibatalkan',
+            default => ucfirst($this->payment_status ?? 'Menunggu'),
+        };
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->payment_status === 'lunas';
+    }
+
+    public function isWaitingPayment(): bool
+    {
+        return $this->payment_status === 'menunggu_pembayaran';
     }
 }
 

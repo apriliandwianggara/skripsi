@@ -92,6 +92,12 @@
                             <span id="confStatusText">{{ $order->status_label }}</span>
                         </span>
                     </div>
+                    <div class="flex justify-between text-gray-600 pt-0.5">
+                        <span>Pembayaran:</span>
+                        <span id="confPaymentBadge" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold {{ $order->isPaid() ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                            <span id="confPaymentText">{{ $order->payment_method_label }} &bull; {{ $order->payment_status_label }}</span>
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Daftar Menu yang Dipesan -->
@@ -133,6 +139,14 @@
 
                 <!-- Action Button ke Pelacakan Live -->
                 <div class="pt-2 space-y-2">
+                    @if($order->isWaitingPayment() && $order->payment_method === 'qris')
+                        <a href="{{ route('customer.payment', $order->tracking_token) }}"
+                           class="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold py-3.5 rounded-2xl text-sm transition shadow-lg shadow-amber-500/30 flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-qrcode"></i>
+                            <span>Bayar Sekarang via QRIS (Rp {{ number_format($order->total_price, 0, ',', '.') }})</span>
+                        </a>
+                    @endif
+
                     <a href="{{ route('customer.track', $order->tracking_token) }}"
                        class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-3.5 rounded-2xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-satellite-dish animate-pulse"></i>

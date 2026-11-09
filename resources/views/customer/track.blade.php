@@ -78,6 +78,60 @@
             </div>
         </div>
 
+        <!-- Banner Status Pembayaran Live -->
+        <div id="paymentStatusBanner" class="rounded-3xl p-4 transition-all duration-300 {{ $order->isWaitingPayment() ? ($order->payment_method === 'cash' ? 'bg-amber-500 text-white shadow-lg' : 'bg-blue-600 text-white shadow-lg') : 'bg-emerald-50 border border-emerald-200 text-emerald-900' }}">
+            @if($order->isWaitingPayment())
+                @if($order->payment_method === 'cash')
+                    <div class="flex items-start space-x-3">
+                        <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-xl shrink-0">
+                            <i class="fa-solid fa-money-bill-wave"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-black text-xs uppercase tracking-wider">Menunggu Pembayaran Tunai Kasir</span>
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-white text-amber-800">CASH</span>
+                            </div>
+                            <p class="text-xs text-amber-100 leading-relaxed">
+                                Silakan menuju ke meja kasir dan sebutkan nama <strong class="text-white underline font-bold">{{ $order->customer_name }}</strong> untuk membayar tunai sebesar <strong class="text-white font-mono font-bold">Rp {{ number_format($order->total_price, 0, ',', '.') }}</strong>.
+                            </p>
+                            <p class="text-[11px] text-amber-200 pt-0.5 flex items-center space-x-1.5">
+                                <i class="fa-solid fa-rotate fa-spin"></i>
+                                <span>Layar ini otomatis terupdate saat kasir mengonfirmasi pembayaran Anda.</span>
+                            </p>
+                        </div>
+                    </div>
+                @else
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-xl shrink-0">
+                                <i class="fa-solid fa-qrcode"></i>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-black text-xs uppercase tracking-wider">Menunggu Pembayaran QRIS</span>
+                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-white text-blue-800">QRIS</span>
+                                </div>
+                                <p class="text-xs text-blue-100">
+                                    Tagihan <strong class="text-white font-mono">Rp {{ number_format($order->total_price, 0, ',', '.') }}</strong> belum terkonfirmasi.
+                                </p>
+                            </div>
+                        </div>
+                        <a href="{{ route('customer.payment', $order->tracking_token) }}" class="px-3.5 py-2 bg-white hover:bg-gray-100 text-blue-700 font-bold rounded-xl text-xs shrink-0 shadow-md transition active:scale-95">
+                            Bayar QRIS
+                        </a>
+                    </div>
+                @endif
+            @else
+                <div class="flex items-center justify-between text-xs">
+                    <div class="flex items-center space-x-2 font-bold text-emerald-900">
+                        <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                        <span>Pembayaran Lunas ({{ $order->payment_method_label }} - Rp {{ number_format($order->total_price, 0, ',', '.') }})</span>
+                    </div>
+                    <span class="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-2.5 py-0.5 rounded-full">LUNAS</span>
+                </div>
+            @endif
+        </div>
+
         <!-- Card Kartu Status Utama -->
         <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
             <!-- Header Kartu -->
@@ -276,6 +330,7 @@
 <script>
     const orderToken = "{{ $order->tracking_token }}";
     let currentStatus = "{{ $order->status }}";
+    let isPaid = {{ $order->isPaid() ? 'true' : 'false' }};
     let alarmAcknowledged = false;
 
     // Minta izin notifikasi browser agar saat tab di-minimize tetap ada notif
@@ -324,6 +379,33 @@
 
             const data = await res.json();
             if (!data.success) return;
+
+            // Update Payment Status Live (Saat kasir klik terima pembayaran atau QRIS lunas)
+            if (!isPaid && data.is_paid) {
+                isPaid = true;
+                const payBanner = document.getElementById('paymentStatusBanner');
+                if (payBanner) {
+                    payBanner.className = 'rounded-3xl p-4 transition-all duration-300 bg-emerald-50 border border-emerald-200 text-emerald-900 shadow-sm';
+                    payBanner.innerHTML = `
+                        <div class="flex items-center justify-between text-xs">
+                            <div class="flex items-center space-x-2 font-bold text-emerald-900">
+                                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                                <span>Pembayaran Lunas (${data.payment_method_label} - Rp ${data.total_price})</span>
+                            </div>
+                            <span class="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-2.5 py-0.5 rounded-full">LUNAS</span>
+                        </div>
+                    `;
+                }
+
+                playSekarsaChime();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Pembayaran Berhasil Diterima!',
+                    html: `Uang Anda sebesar <b>Rp ${data.total_price}</b> telah diterima.<br>Pesanan Anda kini masuk ke dalam antrean pengerjaan barista.`,
+                    confirmButtonColor: '#16a34a',
+                    confirmButtonText: 'Baik, Saya Tunggu'
+                });
+            }
 
             // Update status UI
             const newStatus = data.status;

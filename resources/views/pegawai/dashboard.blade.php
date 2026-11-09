@@ -51,44 +51,54 @@
     </div>
 
     <!-- Quick Stat Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex items-center space-x-3">
-            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+        <div class="bg-white rounded-2xl p-3.5 border border-gray-200 shadow-sm flex items-center space-x-3">
+            <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg shrink-0">
                 <i class="fa-solid fa-hourglass-start"></i>
             </div>
             <div>
-                <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Menunggu</p>
-                <p class="text-2xl font-extrabold text-amber-600 font-mono" id="statMenunggu">{{ $metrics['total_menunggu'] }}</p>
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Menunggu</p>
+                <p class="text-xl font-extrabold text-amber-600 font-mono" id="statMenunggu">{{ $metrics['total_menunggu'] }}</p>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex items-center space-x-3">
-            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
+        <div class="bg-white rounded-2xl p-3.5 border border-gray-200 shadow-sm flex items-center space-x-3">
+            <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg shrink-0">
                 <i class="fa-solid fa-fire-burner"></i>
             </div>
             <div>
-                <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Sedang Diproses</p>
-                <p class="text-2xl font-extrabold text-blue-600 font-mono" id="statDiproses">{{ $metrics['total_diproses'] }}</p>
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Diproses</p>
+                <p class="text-xl font-extrabold text-blue-600 font-mono" id="statDiproses">{{ $metrics['total_diproses'] }}</p>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex items-center space-x-3">
-            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+        <div class="bg-white rounded-2xl p-3.5 border border-gray-200 shadow-sm flex items-center space-x-3">
+            <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0">
                 <i class="fa-solid fa-bell"></i>
             </div>
             <div>
-                <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Siap Diambil</p>
-                <p class="text-2xl font-extrabold text-emerald-600 font-mono" id="statSiapDiambil">{{ $readyOrders->count() }}</p>
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Siap Ambil</p>
+                <p class="text-xl font-extrabold text-emerald-600 font-mono" id="statSiapDiambil">{{ $readyOrders->count() }}</p>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex items-center space-x-3">
-            <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl shrink-0">
+        <div class="bg-white rounded-2xl p-3.5 border border-gray-200 shadow-sm flex items-center space-x-3">
+            <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg shrink-0">
                 <i class="fa-solid fa-circle-check"></i>
             </div>
             <div>
-                <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Selesai Hari Ini</p>
-                <p class="text-2xl font-extrabold text-purple-700 font-mono" id="statSelesai">{{ $metrics['total_selesai'] }}</p>
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Selesai</p>
+                <p class="text-xl font-extrabold text-purple-700 font-mono" id="statSelesai">{{ $metrics['total_selesai'] }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-3.5 border border-amber-200 shadow-sm flex items-center space-x-3 bg-amber-50/30">
+            <div class="w-11 h-11 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg shrink-0">
+                <i class="fa-solid fa-cash-register"></i>
+            </div>
+            <div>
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-amber-700">Perlu Bayar</p>
+                <p class="text-xl font-extrabold text-amber-800 font-mono" id="statMenungguBayar">{{ $waitingPaymentsCount }}</p>
             </div>
         </div>
     </div>
@@ -147,13 +157,25 @@
                                 </div>
 
                                 <!-- Status Badge & Elapsed Time -->
-                                <div class="flex sm:flex-col items-center sm:items-end justify-between text-right">
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold
-                                        {{ $order->status === 'menunggu' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-blue-100 text-blue-800 border border-blue-200' }}">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-current mr-1.5"></span>
-                                        {{ $order->status_label }}
-                                    </span>
-                                    <span class="text-[11px] text-gray-400 mt-1">
+                                <div class="flex sm:flex-col items-center sm:items-end justify-between text-right space-y-1">
+                                    <div class="flex items-center space-x-1.5">
+                                        @if($order->isPaid())
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                <i class="fa-solid fa-check text-[9px] mr-1"></i> LUNAS ({{ $order->payment_method_label }})
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold {{ $order->payment_method === 'cash' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-blue-100 text-blue-900 border border-blue-300' }} animate-pulse">
+                                                <i class="fa-solid fa-clock mr-1"></i> Belum Bayar ({{ $order->payment_method_label }})
+                                            </span>
+                                        @endif
+
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold
+                                            {{ $order->status === 'menunggu' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-blue-100 text-blue-800 border border-blue-200' }}">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-current mr-1.5"></span>
+                                            {{ $order->status_label }}
+                                        </span>
+                                    </div>
+                                    <span class="text-[11px] text-gray-400">
                                         <i class="fa-regular fa-clock mr-1"></i> Masuk: {{ $order->received_at->format('H:i') }} ({{ $order->received_at->diffForHumans() }})
                                     </span>
                                 </div>
@@ -189,6 +211,13 @@
                                 </div>
 
                                 <div class="flex items-center space-x-2">
+                                    @if($order->isWaitingPayment())
+                                        <button type="button" onclick="actionConfirmCashierPayment({{ $order->id }}, '{{ $order->queue_number }}', '{{ addslashes($order->customer_name) }}', '{{ number_format($order->total_price, 0, ',', '.') }}', '{{ $order->payment_method }}')" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-amber-500/20">
+                                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                                            <span>Terima {{ $order->payment_method === 'cash' ? 'Uang Tunai' : 'Bayar' }}</span>
+                                        </button>
+                                    @endif
+
                                     @if($order->status === 'menunggu')
                                         @if($order->id === ($firstWaitingOrderId ?? null))
                                             <button type="button" onclick="actionProcess({{ $order->id }})" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-blue-600/20">
@@ -343,6 +372,53 @@
 <script>
     let currentVersion = 0;
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    // Action Konfirmasi Pembayaran Kasir (Tunai / QRIS)
+    async function actionConfirmCashierPayment(orderId, queueNumber, customerName, totalPrice, paymentMethod) {
+        const methodTitle = paymentMethod === 'cash' ? 'Uang Tunai' : 'QRIS';
+        const result = await Swal.fire({
+            title: `Terima Pembayaran ${methodTitle}?`,
+            html: `Konfirmasi penerimaan pembayaran dari pelanggan:<br><br><b>${customerName}</b> (Antrean #${queueNumber})<br>Total Tagihan: <b class="text-emerald-700 text-lg">Rp ${totalPrice}</b>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Terima & Lunas',
+            cancelButtonText: 'Batal'
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            const res = await fetch(`/pegawai/pesanan/${orderId}/konfirmasi-pembayaran`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Pembayaran Lunas!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+                fetchQueueData();
+            } else {
+                Swal.fire('Gagal', data.message || 'Gagal memproses pembayaran.', 'error');
+            }
+        } catch (e) {
+            console.error('Error actionConfirmCashierPayment:', e);
+            Swal.fire('Error', 'Terjadi kesalahan jaringan.', 'error');
+        }
+    }
 
     // Action AJAX Process (Mulai Proses) Anti-Tabrakan
     async function actionProcess(orderId) {
@@ -500,6 +576,8 @@
             document.getElementById('statDiproses').innerText = data.metrics.total_diproses;
             document.getElementById('statSiapDiambil').innerText = data.ready_count;
             document.getElementById('statSelesai').innerText = data.metrics.total_selesai;
+            const bayarEl = document.getElementById('statMenungguBayar');
+            if (bayarEl) bayarEl.innerText = data.waiting_payments_count;
             document.getElementById('queueTotalBadge').innerText = data.queue_count;
             document.getElementById('readyTotalBadge').innerText = data.ready_count;
 
@@ -602,12 +680,17 @@
                                 </p>
                             </div>
                         </div>
-                        <div class="flex sm:flex-col items-center sm:items-end justify-between text-right">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${statusBadge}">
-                                <span class="w-1.5 h-1.5 rounded-full bg-current mr-1.5"></span>
-                                ${order.status_label}
-                            </span>
-                            <span class="text-[11px] text-gray-400 mt-1">
+                        <div class="flex sm:flex-col items-center sm:items-end justify-between text-right space-y-1">
+                            <div class="flex items-center space-x-1.5">
+                                ${order.is_paid 
+                                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200"><i class="fa-solid fa-check text-[9px] mr-1"></i> LUNAS (${order.payment_method_label})</span>`
+                                    : `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold ${order.payment_method === 'cash' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-blue-100 text-blue-900 border border-blue-300'} animate-pulse"><i class="fa-solid fa-clock mr-1"></i> Belum Bayar (${order.payment_method_label})</span>`}
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${statusBadge}">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-current mr-1.5"></span>
+                                    ${order.status_label}
+                                </span>
+                            </div>
+                            <span class="text-[11px] text-gray-400">
                                 <i class="fa-regular fa-clock mr-1"></i> Masuk: ${order.received_at} (${order.received_ago})
                             </span>
                         </div>
@@ -624,6 +707,12 @@
                             Total: <strong class="text-emerald-900 font-bold text-sm">Rp ${order.total_price}</strong>
                         </div>
                         <div class="flex items-center space-x-2">
+                            ${order.is_waiting_payment ? `
+                                <button type="button" onclick="actionConfirmCashierPayment(${order.id}, '${order.queue_number}', '${order.customer_name}', '${order.total_price}', '${order.payment_method}')" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-amber-500/20">
+                                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                                    <span>Terima ${order.payment_method === 'cash' ? 'Uang Tunai' : 'Bayar'}</span>
+                                </button>
+                            ` : ''}
                             ${actionBtn}
                             <button type="button" onclick="openCancelModal(${order.id}, '${order.queue_number}')" class="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-semibold transition" title="Batalkan Pesanan">
                                 <i class="fa-solid fa-ban"></i>

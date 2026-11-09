@@ -87,6 +87,9 @@
                             <td class="p-3.5">{{ $ord->details->sum('quantity') }} porsi</td>
                             <td class="p-3.5 font-bold font-mono text-emerald-900 text-sm">
                                 Rp {{ number_format($ord->total_price, 0, ',', '.') }}
+                                <span class="text-[10px] block font-sans font-normal {{ $ord->isPaid() ? 'text-emerald-700 font-semibold' : 'text-amber-600' }}">
+                                    {{ $ord->payment_method_label }} &bull; {{ $ord->payment_status_label }}
+                                </span>
                             </td>
                             <td class="p-3.5">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold

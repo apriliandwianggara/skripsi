@@ -27,3 +27,4 @@ class MenuVariation extends Model
         return $this->belongsTo(Menu::class);
     }
 }
+
