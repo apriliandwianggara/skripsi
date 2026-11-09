@@ -127,7 +127,7 @@ class PegawaiDashboardController extends Controller
 
         $waitingPaymentsCount = 0;
         try {
-            $waitingPaymentsCount = Order::where('payment_status', 'menunggu_pembayaran')->where('status', '!=', 'dibatalkan')->count();
+            $waitingPaymentsCount = Order::whereIn('payment_status', ['menunggu_pembayaran', 'menunggu_verifikasi'])->where('status', '!=', 'dibatalkan')->count();
         } catch (\Throwable $e) {
             $waitingPaymentsCount = 0;
         }
@@ -158,7 +158,9 @@ class PegawaiDashboardController extends Controller
                     'payment_status_label' => $order->payment_status_label,
                     'is_paid' => $order->isPaid(),
                     'is_waiting_payment' => $order->isWaitingPayment(),
-                    'is_allowed_to_process' => ($order->status === 'menunggu') && ($order->id === $firstWaitingOrderId),
+                    'is_waiting_verification' => $order->isWaitingVerification(),
+                    'payment_proof_url' => $order->payment_proof ? asset('storage/' . $order->payment_proof) : null,
+                    'is_allowed_to_process' => ($order->status === 'menunggu') && ($order->id === $firstWaitingOrderId) && $order->isPaid(),
                     'first_waiting_queue_number' => $firstWaitingQueueNumber,
                     'received_at' => $order->received_at->format('H:i'),
                     'received_ago' => $order->received_at->diffForHumans(),
@@ -264,6 +266,25 @@ class PegawaiDashboardController extends Controller
 
                 if ($request->wantsJson()) {
                     return response()->json(['success' => false, 'message' => $msg], 409);
+                }
+                return back()->with('error', $msg);
+            }
+
+            // =========================================================================
+            // VALIDASI STATUS PEMBAYARAN (ANTI-KECURANGAN):
+            // Barista TIDAK BISA memproses pesanan jika belum lunas / belum diverifikasi kasir.
+            // =========================================================================
+            if (!$lockedOrder->isPaid()) {
+                $statusDesc = $lockedOrder->isWaitingVerification() 
+                    ? 'sedang menunggu verifikasi mutasi QRIS kasir' 
+                    : 'belum melakukan pembayaran';
+                $msg = "Pesanan #{$lockedOrder->queue_number} atas nama {$lockedOrder->customer_name} belum lunas ({$statusDesc}). Kasir wajib memverifikasi pembayaran terlebih dahulu!";
+
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $msg,
+                    ], 422);
                 }
                 return back()->with('error', $msg);
             }

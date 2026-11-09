@@ -381,8 +381,9 @@ class CustomerOrderController extends Controller
             $proofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
         }
 
-        $order->payment_status = 'lunas';
-        $order->paid_at = now();
+        // Jangan langsung jadikan 'lunas' agar pelanggan tidak bisa curang
+        // Status diubah menjadi 'menunggu_verifikasi' dan wajib diverifikasi kasir
+        $order->payment_status = 'menunggu_verifikasi';
         if ($proofPath) {
             $order->payment_proof = $proofPath;
         }
@@ -391,19 +392,19 @@ class CustomerOrderController extends Controller
         }
         $order->save();
 
-        // Catat riwayat pelunasan
+        // Catat riwayat klaim pembayaran
         OrderStatusHistory::create([
             'order_id' => $order->id,
             'previous_status' => $order->status,
             'new_status' => $order->status,
-            'changed_by' => 'Pelanggan (Scan QRIS DANA)',
-            'notes' => "Pembayaran QRIS sebesar Rp " . number_format($order->total_price, 0, ',', '.') . " berhasil dikonfirmasi ke DANA 087811139210.",
+            'changed_by' => 'Pelanggan (Konfirmasi Bayar QRIS)',
+            'notes' => "Pelanggan menyatakan telah membayar QRIS Rp " . number_format($order->total_price, 0, ',', '.') . " ke DANA 087811139210. Menunggu verifikasi mutasi oleh kasir.",
             'created_at' => now(),
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Pembayaran Anda berhasil dikonfirmasi! Pesanan sedang disiapkan.',
+            'message' => 'Konfirmasi pembayaran berhasil dikirim! Mohon tunggu kasir memverifikasi dana masuk.',
             'redirect_url' => route('customer.track', $order->tracking_token),
         ]);
     }
@@ -490,6 +491,7 @@ class CustomerOrderController extends Controller
             'payment_status_label' => $order->payment_status_label,
             'is_paid' => $order->isPaid(),
             'is_waiting_payment' => $order->isWaitingPayment(),
+            'is_waiting_verification' => $order->isWaitingVerification(),
             'paid_at' => $order->paid_at ? $order->paid_at->format('H:i') : null,
             'queue_number' => $order->queue_number,
             'order_number' => $order->order_number,

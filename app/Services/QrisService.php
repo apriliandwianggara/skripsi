@@ -46,6 +46,15 @@ class QrisService
     public function generateQrisPayload(float|int $amount, string $orderNumber, ?string $danaNumber = null, ?string $merchantName = null): string
     {
         $setting = Setting::first();
+
+        // Jika merchant telah menginput string QRIS resmi toko di pengaturan, ubah ke dinamis dengan nominal eksak
+        if (!empty($setting?->qris_static_payload)) {
+            $converted = $this->convertStaticToDynamic($setting->qris_static_payload, $amount, $orderNumber);
+            if ($converted) {
+                return $converted;
+            }
+        }
+
         $dana = $danaNumber ?: ($setting->qris_dana_number ?? '087811139210');
         $merchant = strtoupper($merchantName ?: ($setting->qris_merchant_name ?? 'SEKARSA COFFEE'));
 
@@ -55,18 +64,19 @@ class QrisService
             $cleanDana = '0' . substr($cleanDana, 2);
         }
 
-        // Sub-tag 26: Merchant Account Information (DANA / National QRIS)
-        // 00: GUI ID.DANA.WWW, 01: DANA ID/NMID, 02: Criteria
-        $tag26Sub00 = self::formatTlv('00', 'ID.DANA.WWW');
+        // Sub-tag 26: National Merchant Information (Standar BI / ASPI QRIS Nasional)
+        // Wajib memiliki Globally Unique Identifier (00): ID.CO.QRIS.WWW agar dikenali oleh semua Bank & E-Wallet
+        $tag26Sub00 = self::formatTlv('00', 'ID.CO.QRIS.WWW');
         $tag26Sub01 = self::formatTlv('01', '93600911' . $cleanDana);
-        $tag26Sub02 = self::formatTlv('02', '01');
+        $tag26Sub02 = self::formatTlv('02', 'UMI'); // Usaha Mikro
         $tag26Value = $tag26Sub00 . $tag26Sub01 . $tag26Sub02;
         $tag26 = self::formatTlv('26', $tag26Value);
 
-        // Sub-tag 51: DANA Specific Account Information
+        // Sub-tag 51: DANA Acquirer Specific Information
         $tag51Sub00 = self::formatTlv('00', 'ID.DANA.WWW');
-        $tag51Sub01 = self::formatTlv('01', $cleanDana);
-        $tag51Value = $tag51Sub00 . $tag51Sub01;
+        $tag51Sub01 = self::formatTlv('01', '93600911' . $cleanDana);
+        $tag51Sub02 = self::formatTlv('02', 'UMI');
+        $tag51Value = $tag51Sub00 . $tag51Sub01 . $tag51Sub02;
         $tag51 = self::formatTlv('51', $tag51Value);
 
         // Sub-tag 62: Additional Data Field (Nomor Order dan No Meja / Referensi)
@@ -81,7 +91,7 @@ class QrisService
         // Susun struktur QRIS Dinamis EMVCo:
         $raw = self::formatTlv('00', '01')                        // Payload Format Indicator
             . self::formatTlv('01', '12')                        // Point of Initiation (12 = Dinamis dengan nominal terkunci)
-            . $tag26                                             // Merchant Info
+            . $tag26                                             // Merchant Info (ID.CO.QRIS.WWW)
             . $tag51                                             // DANA Info
             . self::formatTlv('52', '5812')                      // Merchant Category Code (Resto/Cafe)
             . self::formatTlv('53', '360')                       // Transaction Currency (360 = IDR Rupiah)
@@ -96,6 +106,48 @@ class QrisService
         // Hitung CRC16 dan gabungkan
         $crc = self::calculateCrc16($raw);
         return $raw . $crc;
+    }
+
+    /**
+     * Konversi string QRIS statis toko menjadi QRIS dinamis dengan nominal eksak.
+     */
+    public function convertStaticToDynamic(string $staticQris, float|int $amount, ?string $orderNumber = null): ?string
+    {
+        $raw = trim($staticQris);
+        if (empty($raw) || strlen($raw) < 30) {
+            return null;
+        }
+
+        // 1. Buang checksum lama (Tag 63)
+        $crcPos = strrpos($raw, '6304');
+        if ($crcPos !== false) {
+            $raw = substr($raw, 0, $crcPos);
+        }
+
+        // 2. Ubah Tag 01 dari '010211' (Statis) menjadi '010212' (Dinamis)
+        $raw = preg_replace('/^000201010211/', '000201010212', $raw);
+
+        // 3. Tambahkan atau ganti Tag 54 (Transaction Amount)
+        $intAmount = (int)round($amount);
+        $tag54 = self::formatTlv('54', (string)$intAmount);
+
+        // Cari letak Tag 58 (Country Code '5802ID') untuk menyisipkan Tag 54
+        if (preg_match('/54\d{2}\d+/', $raw)) {
+            $raw = preg_replace('/54\d{2}\d+/', $tag54, $raw);
+        } else {
+            $pos58 = strpos($raw, '5802ID');
+            if ($pos58 !== false) {
+                $raw = substr($raw, 0, $pos58) . $tag54 . substr($raw, $pos58);
+            } else {
+                $raw .= $tag54;
+            }
+        }
+
+        // 4. Hitung ulang CRC16
+        $rawWithCrcTag = $raw . '6304';
+        $newCrc = self::calculateCrc16($rawWithCrcTag);
+
+        return $rawWithCrcTag . $newCrc;
     }
 
     /**

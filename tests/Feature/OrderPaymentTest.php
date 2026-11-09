@@ -79,6 +79,36 @@ class OrderPaymentTest extends TestCase
         $confirmResponse->assertJson(['success' => true]);
 
         $order = Order::first();
+        // Setelah klaim konfirmasi pelanggan, status menjadi 'menunggu_verifikasi' agar tidak ada kecurangan
+        $this->assertFalse($order->isPaid());
+        $this->assertTrue($order->isWaitingVerification());
+        $this->assertEquals('menunggu_verifikasi', $order->payment_status);
+
+        // Barista tidak diizinkan memproses sebelum kasir memverifikasi pembayaran
+        $barista = User::create([
+            'name' => 'Barista 1',
+            'username' => 'barista_1',
+            'email' => 'barista1@sekarsa.com',
+            'password' => bcrypt('password'),
+            'role' => 'pegawai',
+            'is_active' => true,
+        ]);
+        $unpaidProcess = $this->actingAs($barista)->postJson(route('pegawai.order.process', $order));
+        $unpaidProcess->assertStatus(422);
+
+        // Kasir memverifikasi dana masuk di DANA 087811139210
+        $cashier = User::create([
+            'name' => 'Kasir QRIS',
+            'username' => 'kasir_qris',
+            'email' => 'kasirqris@sekarsa.com',
+            'password' => bcrypt('password'),
+            'role' => 'pegawai',
+            'is_active' => true,
+        ]);
+        $cashierConfirm = $this->actingAs($cashier)->postJson(route('pegawai.order.confirm_payment', $order));
+        $cashierConfirm->assertStatus(200);
+
+        $order->refresh();
         $this->assertTrue($order->isPaid());
         $this->assertEquals('lunas', $order->payment_status);
     }

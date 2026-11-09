@@ -163,6 +163,10 @@
                                             <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                                                 <i class="fa-solid fa-check text-[9px] mr-1"></i> LUNAS ({{ $order->payment_method_label }})
                                             </span>
+                                        @elseif($order->isWaitingVerification())
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-300 animate-pulse">
+                                                <i class="fa-solid fa-clock-rotate-left mr-1"></i> Verifikasi Kasir (QRIS)
+                                            </span>
                                         @else
                                             <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold {{ $order->payment_method === 'cash' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-blue-100 text-blue-900 border border-blue-300' }} animate-pulse">
                                                 <i class="fa-solid fa-clock mr-1"></i> Belum Bayar ({{ $order->payment_method_label }})
@@ -212,14 +216,31 @@
 
                                 <div class="flex items-center space-x-2">
                                     @if($order->isWaitingPayment())
-                                        <button type="button" onclick="actionConfirmCashierPayment({{ $order->id }}, '{{ $order->queue_number }}', '{{ addslashes($order->customer_name) }}', '{{ number_format($order->total_price, 0, ',', '.') }}', '{{ $order->payment_method }}')" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-amber-500/20">
-                                            <i class="fa-solid fa-hand-holding-dollar"></i>
-                                            <span>Terima {{ $order->payment_method === 'cash' ? 'Uang Tunai' : 'Bayar' }}</span>
-                                        </button>
+                                        @if($order->isWaitingVerification())
+                                            <button type="button" onclick="actionConfirmCashierPayment({{ $order->id }}, '{{ $order->queue_number }}', '{{ addslashes($order->customer_name) }}', '{{ number_format($order->total_price, 0, ',', '.') }}', '{{ $order->payment_method }}', true, '{{ $order->payment_proof ? asset('storage/' . $order->payment_proof) : '' }}')" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-purple-600/20 animate-pulse">
+                                                <i class="fa-solid fa-check-double"></i>
+                                                <span>Verifikasi QRIS (Cek DANA)</span>
+                                            </button>
+                                        @else
+                                            <button type="button" onclick="actionConfirmCashierPayment({{ $order->id }}, '{{ $order->queue_number }}', '{{ addslashes($order->customer_name) }}', '{{ number_format($order->total_price, 0, ',', '.') }}', '{{ $order->payment_method }}', false, '')" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-amber-500/20">
+                                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                                                <span>Terima {{ $order->payment_method === 'cash' ? 'Uang Tunai' : 'Bayar' }}</span>
+                                            </button>
+                                        @endif
+                                        @if($order->payment_proof)
+                                            <a href="{{ asset('storage/' . $order->payment_proof) }}" target="_blank" class="px-2.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition" title="Lihat Bukti Transfer">
+                                                <i class="fa-solid fa-image"></i>
+                                            </a>
+                                        @endif
                                     @endif
 
                                     @if($order->status === 'menunggu')
-                                        @if($order->id === ($firstWaitingOrderId ?? null))
+                                        @if(!$order->isPaid())
+                                            <button type="button" onclick="alertUnpaid('{{ $order->queue_number }}')" class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5" title="Pesanan belum diverifikasi lunas">
+                                                <i class="fa-solid fa-lock text-amber-600"></i>
+                                                <span>Menunggu Kasir</span>
+                                            </button>
+                                        @elseif($order->id === ($firstWaitingOrderId ?? null))
                                             <button type="button" onclick="actionProcess({{ $order->id }})" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-blue-600/20">
                                                 <i class="fa-solid fa-play"></i>
                                                 <span>Mulai Proses (Prioritas FIFO)</span>
@@ -373,17 +394,40 @@
     let currentVersion = 0;
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+    // Peringatan Pesanan Belum Lunas untuk Barista
+    function alertUnpaid(queueNumber) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Pembayaran Belum Diverifikasi',
+            html: `Pesanan <b>Antrean #${queueNumber}</b> belum dibayar / belum diverifikasi kasir!<br><br>Kasir wajib memverifikasi uang tunai atau mutasi masuk di aplikasi DANA <b>087811139210</b> terlebih dahulu sebelum pesanan dapat diproses oleh barista.`,
+            confirmButtonColor: '#d97706',
+            confirmButtonText: 'Baik, Mengerti'
+        });
+    }
+
     // Action Konfirmasi Pembayaran Kasir (Tunai / QRIS)
-    async function actionConfirmCashierPayment(orderId, queueNumber, customerName, totalPrice, paymentMethod) {
+    async function actionConfirmCashierPayment(orderId, queueNumber, customerName, totalPrice, paymentMethod, isWaitingVerification = false, proofUrl = '') {
         const methodTitle = paymentMethod === 'cash' ? 'Uang Tunai' : 'QRIS';
+        let promptHtml = `Konfirmasi penerimaan pembayaran dari pelanggan:<br><br><b>${customerName}</b> (Antrean #${queueNumber})<br>Total Tagihan: <b class="text-emerald-700 text-lg">Rp ${totalPrice}</b>`;
+
+        if (paymentMethod === 'qris') {
+            promptHtml += `<br><br><div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 text-left">
+                <strong><i class="fa-solid fa-triangle-exclamation mr-1"></i>Penting untuk Kasir:</strong><br>
+                Pastikan Anda telah mengecek mutasi masuk di aplikasi DANA <b>087811139210</b> sebesar <b>Rp ${totalPrice}</b> atas nama <b>${customerName}</b>.
+            </div>`;
+            if (proofUrl) {
+                promptHtml += `<div class="mt-2 text-center"><a href="${proofUrl}" target="_blank" class="text-xs text-blue-600 underline font-semibold"><i class="fa-solid fa-image mr-1"></i>Lihat Bukti Transfer Pelanggan</a></div>`;
+            }
+        }
+
         const result = await Swal.fire({
-            title: `Terima Pembayaran ${methodTitle}?`,
-            html: `Konfirmasi penerimaan pembayaran dari pelanggan:<br><br><b>${customerName}</b> (Antrean #${queueNumber})<br>Total Tagihan: <b class="text-emerald-700 text-lg">Rp ${totalPrice}</b>`,
+            title: `Verifikasi Pembayaran ${methodTitle}?`,
+            html: promptHtml,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#16a34a',
             cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Ya, Terima & Lunas',
+            confirmButtonText: 'Ya, Uang Sudah Masuk (Lunas)',
             cancelButtonText: 'Batal'
         });
 
@@ -403,7 +447,7 @@
             if (res.ok && data.success) {
                 Swal.fire({
                     icon: 'success',
-                    title: 'Pembayaran Lunas!',
+                    title: 'Pembayaran Dikonfirmasi!',
                     text: data.message,
                     timer: 2000,
                     showConfirmButton: false,
@@ -640,7 +684,12 @@
 
             let actionBtn = '';
             if (order.status === 'menunggu') {
-                if (order.is_allowed_to_process) {
+                if (!order.is_paid) {
+                    actionBtn = `<button type="button" onclick="alertUnpaid('${order.queue_number}')" class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5" title="Pesanan belum diverifikasi lunas">
+                        <i class="fa-solid fa-lock text-amber-600"></i>
+                        <span>Menunggu Kasir</span>
+                    </button>`;
+                } else if (order.is_allowed_to_process) {
                     actionBtn = `<button type="button" onclick="actionProcess(${order.id})" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-blue-600/20">
                         <i class="fa-solid fa-play"></i>
                         <span>Mulai Proses (Prioritas FIFO)</span>
@@ -684,7 +733,10 @@
                             <div class="flex items-center space-x-1.5">
                                 ${order.is_paid 
                                     ? `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200"><i class="fa-solid fa-check text-[9px] mr-1"></i> LUNAS (${order.payment_method_label})</span>`
-                                    : `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold ${order.payment_method === 'cash' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-blue-100 text-blue-900 border border-blue-300'} animate-pulse"><i class="fa-solid fa-clock mr-1"></i> Belum Bayar (${order.payment_method_label})</span>`}
+                                    : (order.is_waiting_verification
+                                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-300 animate-pulse"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Verifikasi Kasir (QRIS)</span>`
+                                        : `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold ${order.payment_method === 'cash' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-blue-100 text-blue-900 border border-blue-300'} animate-pulse"><i class="fa-solid fa-clock mr-1"></i> Belum Bayar (${order.payment_method_label})</span>`
+                                    )}
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${statusBadge}">
                                     <span class="w-1.5 h-1.5 rounded-full bg-current mr-1.5"></span>
                                     ${order.status_label}
@@ -708,10 +760,22 @@
                         </div>
                         <div class="flex items-center space-x-2">
                             ${order.is_waiting_payment ? `
-                                <button type="button" onclick="actionConfirmCashierPayment(${order.id}, '${order.queue_number}', '${order.customer_name}', '${order.total_price}', '${order.payment_method}')" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-amber-500/20">
-                                    <i class="fa-solid fa-hand-holding-dollar"></i>
-                                    <span>Terima ${order.payment_method === 'cash' ? 'Uang Tunai' : 'Bayar'}</span>
-                                </button>
+                                ${order.is_waiting_verification ? `
+                                    <button type="button" onclick="actionConfirmCashierPayment(${order.id}, '${order.queue_number}', '${order.customer_name}', '${order.total_price}', '${order.payment_method}', true, '${order.payment_proof_url || ''}')" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-purple-600/20 animate-pulse">
+                                        <i class="fa-solid fa-check-double"></i>
+                                        <span>Verifikasi QRIS (Cek DANA)</span>
+                                    </button>
+                                ` : `
+                                    <button type="button" onclick="actionConfirmCashierPayment(${order.id}, '${order.queue_number}', '${order.customer_name}', '${order.total_price}', '${order.payment_method}', false, '')" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-amber-500/20">
+                                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                                        <span>Terima ${order.payment_method === 'cash' ? 'Uang Tunai' : 'Bayar'}</span>
+                                    </button>
+                                `}
+                                ${order.payment_proof_url ? `
+                                    <a href="${order.payment_proof_url}" target="_blank" class="px-2.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition" title="Lihat Bukti Transfer">
+                                        <i class="fa-solid fa-image"></i>
+                                    </a>
+                                ` : ''}
                             ` : ''}
                             ${actionBtn}
                             <button type="button" onclick="openCancelModal(${order.id}, '${order.queue_number}')" class="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-semibold transition" title="Batalkan Pesanan">

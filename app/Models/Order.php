@@ -121,6 +121,7 @@ class Order extends Model
     {
         return match ($this->payment_status) {
             'lunas' => 'Lunas',
+            'menunggu_verifikasi' => 'Menunggu Verifikasi Kasir',
             'menunggu_pembayaran' => 'Menunggu Pembayaran',
             'batal' => 'Dibatalkan',
             default => ucfirst($this->payment_status ?? 'Menunggu'),
@@ -132,9 +133,14 @@ class Order extends Model
         return ($this->payment_status ?? 'lunas') === 'lunas';
     }
 
+    public function isWaitingVerification(): bool
+    {
+        return ($this->payment_status ?? '') === 'menunggu_verifikasi';
+    }
+
     public function isWaitingPayment(): bool
     {
-        return ($this->payment_status ?? '') === 'menunggu_pembayaran';
+        return in_array($this->payment_status ?? '', ['menunggu_pembayaran', 'menunggu_verifikasi']);
     }
 }
 

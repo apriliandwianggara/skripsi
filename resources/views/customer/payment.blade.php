@@ -143,10 +143,20 @@
 
                 <!-- Tombol Konfirmasi Pembayaran -->
                 <div class="pt-2 space-y-2">
-                    <button type="button" onclick="confirmPaymentAction()" id="btnConfirmPay" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-circle-check"></i>
-                        <span>Saya Sudah Bayar (Konfirmasi)</span>
-                    </button>
+                    @if($order->isWaitingVerification())
+                        <div class="w-full py-3.5 bg-purple-600 text-white font-bold rounded-2xl text-sm text-center shadow-lg shadow-purple-600/30 flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-clock-rotate-left fa-spin"></i>
+                            <span>Sedang Diverifikasi Kasir</span>
+                        </div>
+                        <p class="text-[11px] text-gray-600 text-center leading-relaxed">
+                            Konfirmasi Anda telah diterima. Kasir sedang mencocokkan mutasi dana di DANA <strong>{{ $danaNumber }}</strong>. Antrean Anda segera diproses setelah diverifikasi.
+                        </p>
+                    @else
+                        <button type="button" onclick="confirmPaymentAction()" id="btnConfirmPay" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Saya Sudah Bayar (Kirim ke Kasir)</span>
+                        </button>
+                    @endif
 
                     <div class="flex items-center space-x-2">
                         <a href="{{ route('customer.track', $order->tracking_token) }}" class="flex-1 py-2.5 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-semibold rounded-xl text-xs transition text-center flex items-center justify-center space-x-1.5">
@@ -264,11 +274,12 @@
 
     async function confirmPaymentAction() {
         const btn = document.getElementById('btnConfirmPay');
+        if (!btn) return;
         const originalHtml = btn.innerHTML;
 
         const result = await Swal.fire({
-            title: 'Konfirmasi Pembayaran',
-            text: 'Pastikan Anda telah menyelesaikan pembayaran sebesar Rp ' + totalAmount.toLocaleString('id-ID') + ' via QRIS / DANA.',
+            title: 'Konfirmasi Pembayaran QRIS',
+            html: `Pastikan Anda telah berhasil menyelesaikan transfer/scan sebesar <b>Rp ${totalAmount.toLocaleString('id-ID')}</b> ke DANA Sekarsa Coffee (<b>${danaNumber}</b>).<br><br><span class="text-xs text-gray-500">Setelah dikirim, kasir akan memverifikasi mutasi dana masuk sebelum pesanan Anda diproses oleh barista.</span>`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#16a34a',
@@ -280,7 +291,7 @@
         if (!result.isConfirmed) return;
 
         btn.disabled = true;
-        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i><span>Memverifikasi...</span>`;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i><span>Mengirim ke Kasir...</span>`;
 
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "{{ csrf_token() }}";
@@ -298,8 +309,8 @@
             if (res.ok && data.success) {
                 Swal.fire({
                     icon: 'success',
-                    title: 'Pembayaran Dikonfirmasi!',
-                    text: data.message || 'Pembayaran berhasil, Anda diarahkan ke pelacakan antrean.',
+                    title: 'Konfirmasi Diterima!',
+                    text: data.message || 'Kasir sedang memverifikasi dana Anda. Anda dialihkan ke halaman antrean.',
                     timer: 2000,
                     showConfirmButton: false
                 }).then(() => {
