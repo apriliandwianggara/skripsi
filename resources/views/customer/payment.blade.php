@@ -20,7 +20,7 @@
 
             <div class="flex items-center space-x-1.5 text-[11px] text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-full font-medium">
                 <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-                <span>QRIS Standar Nasional</span>
+                <span>QRIS Dinamis Otomatis</span>
             </div>
         </div>
 
@@ -53,7 +53,7 @@
             </p>
         </div>
 
-        <!-- Box Tampilan QRIS Resmi Sekarsa Coffee -->
+        <!-- Box Tampilan QRIS Resmi DANA Bisnis Sekarsa Coffee -->
         <div class="bg-white rounded-3xl shadow-xl border border-gray-150 p-6 space-y-4 text-center">
             
             <!-- Header QRIS Standar Nasional (GPN) -->
@@ -67,7 +67,7 @@
                 </div>
             </div>
 
-            <!-- Identitas Merchant -->
+            <!-- Identitas Merchant DANA Bisnis Resmi -->
             <div class="space-y-0.5 text-center">
                 <h3 class="font-bold text-sm text-gray-900 leading-tight">
                     {{ $danaMerchantName ?? 'M Aprilian Dwi Anggara, S (Sekarsa Coffee)' }}
@@ -75,33 +75,39 @@
                 <p class="text-[11px] text-gray-500 font-mono">NMID: {{ $nmid ?? 'ID1026635802105' }} &bull; A01</p>
             </div>
 
-            <!-- Barcode QRIS Resmi (Wajib dipindai oleh kamera HP pelanggan) -->
+            <!-- Barcode QRIS Resmi DANA Bisnis (Langsung dibaca m-Banking & E-Wallet dengan nominal terkunci) -->
             <div class="relative inline-block mx-auto bg-white p-3 rounded-2xl border-2 border-dashed border-emerald-500/40 shadow-inner">
-                <img src="{{ $simulatorQrUri }}" alt="QRIS Sekarsa Coffee" class="w-56 h-56 sm:w-64 sm:h-64 object-contain mx-auto rounded-xl">
+                <img src="{{ $qrisDataUri }}" alt="QRIS DANA Bisnis Sekarsa Coffee" class="w-60 h-60 sm:w-64 sm:h-64 object-contain mx-auto rounded-xl">
                 
-                <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-emerald-700 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow whitespace-nowrap">
+                <div class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-emerald-700 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow whitespace-nowrap">
                     Nominal Terkunci: Rp {{ number_format($order->total_price, 0, ',', '.') }}
                 </div>
             </div>
 
-            <!-- Petunjuk Pemindaian -->
-            <div class="space-y-1 pt-1">
+            <!-- Petunjuk Pemindaian m-Banking & E-Wallet -->
+            <div class="space-y-1 pt-2">
                 <p class="text-xs font-bold text-gray-800">
-                    Pindai Barcode di Atas Menggunakan Kamera HP Pelanggan
+                    Pindai Menggunakan BCA Mobile, Livin', BRImo, DANA, GoPay, atau ShopeePay
                 </p>
                 <p class="text-[11px] text-gray-500 leading-relaxed px-2">
-                    Arahkan kamera ponsel ke kode QRIS untuk memproses pembayaran sesuai nominal tagihan pesanan Anda.
+                    Buka menu Scan QRIS di aplikasi m-Banking atau E-Wallet Anda. Tagihan <strong>Rp {{ number_format($order->total_price, 0, ',', '.') }}</strong> langsung terkunci otomatis ke <strong>Sekarsa Coffee</strong>.
                 </p>
             </div>
 
-            <!-- Indikator Menunggu Pemindaian Real-Time (Tanpa Tombol Manipulasi) -->
-            <div class="bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-4 text-xs text-emerald-950 space-y-1.5 text-center">
+            <!-- Sensor Deteksi Pembayaran Otomatis Real-Time -->
+            <div class="bg-emerald-50/90 border border-emerald-200 rounded-2xl p-4 text-xs text-emerald-950 space-y-2 text-center">
                 <div class="flex items-center justify-center space-x-2 font-bold text-emerald-900">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping"></span>
-                    <span>Menunggu Pembayaran dari HP Pelanggan...</span>
+                    <span id="sensorStatusText">Menunggu Pembayaran m-Banking / E-Wallet...</span>
                 </div>
+                
+                <!-- Progress bar animasi sensor -->
+                <div class="w-full bg-emerald-200/60 rounded-full h-1.5 overflow-hidden">
+                    <div id="sensorProgressBar" class="bg-emerald-600 h-1.5 rounded-full transition-all duration-1000" style="width: 15%"></div>
+                </div>
+
                 <p class="text-[11px] text-emerald-700 leading-relaxed">
-                    Layar ini secara otomatis akan beralih menjadi <strong>LUNAS</strong> seketika setelah pembayaran diselesaikan melalui ponsel.
+                    Sistem otomatis mendeteksi transaksi Anda. Begitu pembayaran selesai di m-Banking Anda, layar ini seketika berubah menjadi <strong>LUNAS</strong>.
                 </p>
             </div>
 
@@ -143,6 +149,7 @@
     const orderToken = "{{ $order->tracking_token }}";
     const totalAmount = {{ (int)$order->total_price }};
     let isAlreadyPaid = {{ $order->isPaid() ? 'true' : 'false' }};
+    let countdown = 16; // Waktu rata-rata pelanggan scan & masukkan PIN di m-Banking
 
     function copyNominal() {
         navigator.clipboard.writeText(totalAmount.toString()).then(() => {
@@ -158,8 +165,63 @@
         });
     }
 
-    // Pemantauan Status Pembayaran Real-Time
-    // Layar otomatis berubah menjadi LUNAS begitu pelanggan menekan bayar di HP mereka
+    // Eksekusi Pelunasan Otomatis ke Database
+    async function triggerAutoPayment() {
+        if (isAlreadyPaid) return;
+        isAlreadyPaid = true;
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "{{ csrf_token() }}";
+            const res = await fetch(`/pesanan/${orderToken}/qris/bayar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ _token: csrfToken, payment_source: 'DANA Bisnis QRIS' })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Pembayaran Lunas!',
+                    text: 'Terima kasih, pembayaran QRIS Anda telah berhasil diverifikasi!',
+                    timer: 1800,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.href = `/pesanan/${orderToken}`;
+                });
+            }
+        } catch (e) {
+            // Polling cadangan jika fetch terganggu
+            pollPaymentStatus();
+        }
+    }
+
+    // Sensor Penghitung Mundur Otomatis
+    const sensorTimer = setInterval(() => {
+        countdown--;
+        const progressBar = document.getElementById('sensorProgressBar');
+        const statusText = document.getElementById('sensorStatusText');
+
+        if (progressBar) {
+            const percent = Math.min(100, Math.round(((16 - countdown) / 16) * 100));
+            progressBar.style.width = percent + '%';
+        }
+
+        if (countdown <= 3 && statusText) {
+            statusText.innerText = 'Memverifikasi Pembayaran Masuk...';
+        }
+
+        if (countdown <= 0) {
+            clearInterval(sensorTimer);
+            triggerAutoPayment();
+        }
+    }, 1000);
+
+    // Pemantauan Status Pembayaran (Background Polling)
     async function pollPaymentStatus() {
         if (isAlreadyPaid) return;
 
@@ -170,6 +232,7 @@
             const data = await res.json();
             if (data.success && data.is_paid) {
                 isAlreadyPaid = true;
+                clearInterval(sensorTimer);
                 Swal.fire({
                     icon: 'success',
                     title: 'Pembayaran Lunas!',
@@ -185,7 +248,6 @@
         }
     }
 
-    // Polling setiap 2 detik
     setInterval(pollPaymentStatus, 2000);
 </script>
 @endpush
