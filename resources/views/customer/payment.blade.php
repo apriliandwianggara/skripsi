@@ -53,48 +53,81 @@
             </p>
         </div>
 
-        <!-- Card Pembayaran QRIS -->
-        <div class="bg-white rounded-3xl shadow-lg border border-gray-100 p-5 space-y-4">
-            <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+        <!-- Box Tampilan QRIS Resmi Sekarsa Coffee -->
+        <div class="bg-white rounded-3xl shadow-xl border border-gray-150 p-6 space-y-5 text-center relative">
+            
+            <!-- Header Frame QRIS Standar Nasional -->
+            <div class="flex items-center justify-between border-b border-gray-150 pb-3">
                 <div class="flex items-center space-x-2">
-                    <span class="font-black text-lg tracking-tighter text-red-600 font-sans">QRIS</span>
-                    <span class="text-xs text-gray-400 font-bold">&bull;</span>
-                    <span class="text-xs font-semibold text-gray-600">Semua m-Banking & E-Wallet</span>
+                    <span class="font-black text-2xl tracking-tighter text-red-600 font-sans">QRIS</span>
+                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Standar Pembayaran Nasional</span>
                 </div>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Resmi
-                </span>
+                <div class="flex items-center space-x-1">
+                    <span class="px-2 py-0.5 bg-red-600 text-white font-extrabold text-[10px] rounded">GPN</span>
+                </div>
             </div>
 
-            <div class="space-y-1">
-                <h3 class="font-bold text-sm text-gray-900">Pindai QRIS untuk Menyelesaikan Pembayaran</h3>
-                <p class="text-xs text-gray-500 leading-relaxed">
-                    Mendukung pembayaran dari BCA Mobile, Livin' Mandiri, BRImo, BNI Mobile, DANA, GoPay, dan ShopeePay.
+            <!-- Identitas Merchant -->
+            <div class="space-y-0.5 text-center">
+                <h3 class="font-bold text-sm text-gray-900 leading-tight">
+                    {{ $danaMerchantName ?? 'M Aprilian Dwi Anggara, S (Sekarsa Coffee)' }}
+                </h3>
+                <p class="text-[11px] text-gray-500 font-mono">NMID: {{ $nmid ?? 'ID1026635802105' }} &bull; A01</p>
+            </div>
+
+            <!-- Gambar Barcode QRIS yang dapat di-scan langsung oleh kamera HP -->
+            <div class="relative inline-block mx-auto bg-white p-3 rounded-2xl border-2 border-dashed border-emerald-500/40 shadow-inner">
+                <img src="{{ $simulatorQrUri }}" alt="QRIS Sekarsa Coffee" class="w-56 h-56 sm:w-64 sm:h-64 object-contain mx-auto rounded-xl">
+                
+                <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-emerald-700 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow">
+                    QRIS Dinamis
+                </div>
+            </div>
+
+            <!-- Petunjuk Pemindaian -->
+            <div class="bg-emerald-50/70 border border-emerald-150 rounded-2xl p-3.5 text-xs text-emerald-950 space-y-1">
+                <div class="flex items-center justify-center space-x-1.5 font-bold text-emerald-800">
+                    <i class="fa-solid fa-camera"></i>
+                    <span>Arahkan Kamera HP ke Kode QR di Atas</span>
+                </div>
+                <p class="text-[11px] text-gray-600 leading-relaxed">
+                    Pindai menggunakan kamera bawaan ponsel atau pemindai QR untuk menyelesaikan pembayaran secara langsung.
                 </p>
             </div>
 
-            <!-- Tombol Utama: Buka QRIS -->
-            <button type="button" onclick="payWithMidtrans()" id="btnPayMidtrans" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold rounded-2xl text-sm transition shadow-lg shadow-emerald-600/25 flex items-center justify-center space-x-2">
-                <i class="fa-solid fa-qrcode text-lg"></i>
-                <span>Tampilkan Barcode QRIS</span>
-            </button>
+            <!-- Tombol Alternatif Pembayaran -->
+            <div class="space-y-2 pt-1">
+                <!-- Jika memesan di ponsel yang sama sehingga tidak bisa scan layar sendiri -->
+                <a href="{{ $simulatorUrl }}" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold rounded-2xl text-xs transition shadow-md shadow-emerald-600/20 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-mobile-screen-button text-sm"></i>
+                    <span>Buka Pembayaran di Ponsel Ini</span>
+                </a>
 
-            <!-- Logo Bank & E-Wallet -->
-            <div class="pt-2 border-t border-gray-100 text-center">
-                <div class="flex flex-wrap items-center justify-center gap-1.5 text-[10px] text-gray-500 font-medium">
-                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">BCA</span>
-                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">Mandiri</span>
-                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">BRI</span>
-                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">BNI</span>
+                <!-- Opsi Cadangan: Midtrans Gateway -->
+                <button type="button" onclick="payWithMidtrans()" id="btnPayMidtrans" class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 font-bold rounded-2xl text-xs transition flex items-center justify-center space-x-1.5">
+                    <i class="fa-solid fa-credit-card text-xs text-gray-500"></i>
+                    <span>Gunakan Pop-up Midtrans</span>
+                </button>
+            </div>
+
+            <!-- Logo Bank & E-Wallet Terdaftar -->
+            <div class="pt-3 border-t border-gray-100">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Menerima Pembayaran:</p>
+                <div class="flex flex-wrap items-center justify-center gap-1.5 text-[10px] text-gray-600 font-medium">
+                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">BCA Mobile</span>
+                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">Livin' Mandiri</span>
+                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">BRImo</span>
+                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">BNI Mobile</span>
                     <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">DANA</span>
                     <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">GoPay</span>
                     <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">ShopeePay</span>
                 </div>
             </div>
+
         </div>
 
-        <!-- Rincian Pesanan Singkat -->
-        <div class="bg-white rounded-2xl border border-gray-100 p-4 space-y-2 text-xs">
+        <!-- Rincian Sajian Singkat -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-4 space-y-2 text-xs shadow-sm">
             <h4 class="font-bold text-gray-700 uppercase tracking-wider text-[10px]">Rincian Sajian:</h4>
             <div class="divide-y divide-gray-100">
                 @foreach($order->details as $item)
@@ -131,20 +164,20 @@
         });
     }
 
-    // Tampilkan QRIS Resmi
+    // Pemanggilan Snap Midtrans jika pengguna memilih opsi pop-up
     async function payWithMidtrans() {
         const btn = document.getElementById('btnPayMidtrans');
         if (!btn) return;
         const originalHtml = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-base mr-1.5"></i><span>Memuat QRIS...</span>`;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-xs mr-1.5"></i><span>Memuat...</span>`;
 
         try {
             const res = await fetch(`/pesanan/${orderToken}/midtrans-token`);
             const data = await res.json();
 
             if (!res.ok || !data.success) {
-                throw new Error(data.message || 'Gagal memuat sesi QRIS.');
+                throw new Error(data.message || 'Gagal memuat sesi transaksi.');
             }
 
             if (data.is_paid) {
@@ -156,14 +189,13 @@
                 throw new Error('Modul pembayaran belum siap. Silakan muat ulang halaman.');
             }
 
-            // Buka Modal Snap QRIS
             window.snap.pay(data.snap_token, {
                 onSuccess: function(result) {
                     isAlreadyPaid = true;
                     Swal.fire({
                         icon: 'success',
-                        title: 'Pembayaran Lunas',
-                        text: 'Terima kasih, pembayaran Anda telah berhasil!',
+                        title: 'Pembayaran Berhasil',
+                        text: 'Terima kasih, pembayaran pesanan Anda telah lunas!',
                         timer: 1500,
                         showConfirmButton: false
                     }).then(() => {
@@ -174,21 +206,21 @@
                     pollPaymentStatus();
                 },
                 onError: function(result) {
-                    Swal.fire('Kendala Pembayaran', 'Terjadi kesalahan pada transaksi. Silakan coba lagi.', 'error');
+                    Swal.fire('Kendala', 'Terjadi kesalahan pada transaksi. Silakan coba kembali.', 'error');
                 },
                 onClose: function() {
                     pollPaymentStatus();
                 }
             });
         } catch (err) {
-            Swal.fire('Kendala', err.message || 'Gagal memuat QRIS.', 'error');
+            Swal.fire('Kendala', err.message || 'Gagal memuat transaksi.', 'error');
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
         }
     }
 
-    // Polling Status Otomatis
+    // Pemantauan Status Pembayaran (Otomatis mendeteksi saat ponsel menyelesaikan pembayaran)
     async function pollPaymentStatus() {
         if (isAlreadyPaid) return;
 
@@ -202,7 +234,7 @@
                 Swal.fire({
                     icon: 'success',
                     title: 'Pembayaran Lunas',
-                    text: 'Terima kasih, pembayaran pesanan Anda telah lunas!',
+                    text: 'Terima kasih, pembayaran Anda telah berhasil diterima!',
                     timer: 1500,
                     showConfirmButton: false
                 }).then(() => {
@@ -214,6 +246,7 @@
         }
     }
 
+    // Polling setiap 2 detik
     setInterval(pollPaymentStatus, 2000);
 </script>
 @endpush

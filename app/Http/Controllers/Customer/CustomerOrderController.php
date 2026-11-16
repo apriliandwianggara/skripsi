@@ -366,7 +366,11 @@ class CustomerOrderController extends Controller
         $paymentShareUrl = route('customer.payment', $order->tracking_token);
         $paymentShareQrUri = $this->qrisService->generateQrisDataUri($paymentShareUrl);
 
-        // 4. Kredensial Payment Gateway Midtrans
+        // URL & Barcode QRIS yang dapat langsung dipindai oleh Kamera Bawaan HP / Google Lens
+        $simulatorUrl = route('customer.qris_simulator', $order->tracking_token);
+        $simulatorQrUri = $this->qrisService->generateQrisDataUri($simulatorUrl);
+
+        // Kredensial Payment Gateway Midtrans
         $midtransClientKey = config('services.midtrans.client_key', 'Mid-client-DdhidPXOfhiRBbRJ');
         $midtransSnapJs = config('services.midtrans.is_production') 
             ? 'https://app.midtrans.com/snap/snap.js' 
@@ -377,8 +381,51 @@ class CustomerOrderController extends Controller
             'staticPayload', 'staticQrisDataUri',
             'paymentShareUrl', 'paymentShareQrUri',
             'danaNumber', 'merchantName', 'nmid', 'danaMerchantName',
-            'midtransClientKey', 'midtransSnapJs'
+            'midtransClientKey', 'midtransSnapJs',
+            'simulatorUrl', 'simulatorQrUri'
         ));
+    }
+
+    /**
+     * Tampilan Antarmuka Simulasi Pembayaran QRIS di Ponsel
+     * Terbuka otomatis saat kamera bawaan HP / pemindai QR memindai barcode di layar
+     */
+    public function qrisSimulator($token)
+    {
+        $order = Order::with('details')->where('tracking_token', $token)->firstOrFail();
+        $setting = Setting::get();
+
+        return view('customer.qris-simulator', compact('order', 'setting'));
+    }
+
+    /**
+     * Proses Penyelesaian Pembayaran dari Halaman Simulasi di Ponsel
+     * Mengubah status pesanan menjadi LUNAS seketika dan langsung menyinkronkan layar pemesanan & barista
+     */
+    public function processQrisSimulatorPayment(Request $request, $token)
+    {
+        $order = Order::where('tracking_token', $token)->firstOrFail();
+
+        if ($order->isPaid()) {
+            return response()->json([
+                'success' => true,
+                'is_paid' => true,
+                'message' => 'Pesanan ini sudah berstatus lunas.',
+                'redirect_url' => route('customer.track', $order->tracking_token),
+            ]);
+        }
+
+        $source = $request->input('payment_source', 'QRIS m-Banking');
+        $this->midtransService->markOrderAsPaid($order, 'qris_simulator', [
+            'transaction_id' => 'QRIS-' . strtoupper(Str::random(10)),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'is_paid' => true,
+            'message' => 'Pembayaran QRIS berhasil! Status pesanan kini lunas.',
+            'redirect_url' => route('customer.track', $order->tracking_token),
+        ]);
     }
 
     /**

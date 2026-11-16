@@ -50,6 +50,10 @@ Route::post('/pesanan/{token}/midtrans-success', [MidtransController::class, 'co
 Route::post('/pesanan/{token}/midtrans-simulate', [MidtransController::class, 'simulatePaymentSuccess'])->name('midtrans.simulate');
 Route::post('/api/midtrans/notification', [MidtransController::class, 'handleNotification'])->name('midtrans.notification');
 
+// 2.c Halaman Simulasi Pembayaran QRIS (Dapat discan langsung oleh Kamera HP Bawaan)
+Route::get('/pesanan/{token}/simulasi-qris', [CustomerOrderController::class, 'qrisSimulator'])->name('customer.qris_simulator');
+Route::post('/pesanan/{token}/simulasi-qris/bayar', [CustomerOrderController::class, 'processQrisSimulatorPayment'])->name('customer.qris_simulator_pay');
+
 // 3. Halaman Konfirmasi Pesanan
 Route::get('/pesanan/{token}/konfirmasi', [CustomerOrderController::class, 'confirmation'])->name('customer.confirmation');
 
