@@ -408,12 +408,39 @@
 
             // Buka Modal Snap Resmi Midtrans
             window.snap.pay(data.snap_token, {
-                onSuccess: function(result) {
+                onSuccess: async function(result) {
                     isAlreadyPaid = true;
                     Swal.fire({
+                        title: 'Memverifikasi Pembayaran...',
+                        text: 'Server memverifikasi transaksi Midtrans otomatis',
+                        allowOutsideClick: false,
+                        didOpen: () => Swal.showLoading()
+                    });
+
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "{{ csrf_token() }}";
+                        await fetch(`/pesanan/${orderToken}/midtrans-success`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({
+                                _token: csrfToken,
+                                payment_type: result?.payment_type || 'midtrans_qris',
+                                transaction_id: result?.transaction_id || '',
+                                order_id: result?.order_id || ''
+                            })
+                        });
+                    } catch (e) {
+                        console.error('Confirm success error:', e);
+                    }
+
+                    Swal.fire({
                         icon: 'success',
-                        title: 'Pembayaran Sukses!',
-                        text: 'Pembayaran berhasil diverifikasi otomatis oleh Midtrans.',
+                        title: 'Pembayaran Lunas Otomatis!',
+                        text: 'Pembayaran telah diverifikasi 100% otomatis tanpa perlu konfirmasi kasir.',
                         timer: 2000,
                         showConfirmButton: false
                     }).then(() => {
@@ -421,10 +448,11 @@
                     });
                 },
                 onPending: function(result) {
+                    pollPaymentStatus();
                     Swal.fire({
                         icon: 'info',
                         title: 'Menunggu Pembayaran',
-                        text: 'Silakan selesaikan pembayaran pada m-Banking/E-Wallet Anda. Halaman ini akan otomatis terupdate begitu transaksi selesai.',
+                        text: 'Silakan selesaikan pembayaran pada m-Banking/E-Wallet Anda. Halaman ini akan otomatis beralih begitu transaksi terdeteksi.',
                         confirmButtonColor: '#4f46e5'
                     });
                 },
@@ -432,7 +460,7 @@
                     Swal.fire('Pembayaran Gagal', 'Terjadi kendala pada transaksi Midtrans. Silakan coba lagi.', 'error');
                 },
                 onClose: function() {
-                    console.log('Customer menutup jendela Midtrans Snap');
+                    pollPaymentStatus();
                 }
             });
         } catch (err) {

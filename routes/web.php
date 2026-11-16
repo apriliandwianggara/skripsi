@@ -46,6 +46,7 @@ Route::post('/pesanan/{token}/konfirmasi-bayar', [CustomerOrderController::class
 
 // 2.b Integrasi Payment Gateway Midtrans (Snap, Webhook & Simulator Skripsi)
 Route::get('/pesanan/{token}/midtrans-token', [MidtransController::class, 'getSnapToken'])->name('midtrans.snap_token');
+Route::post('/pesanan/{token}/midtrans-success', [MidtransController::class, 'confirmSuccess'])->name('midtrans.success');
 Route::post('/pesanan/{token}/midtrans-simulate', [MidtransController::class, 'simulatePaymentSuccess'])->name('midtrans.simulate');
 Route::post('/api/midtrans/notification', [MidtransController::class, 'handleNotification'])->name('midtrans.notification');
 

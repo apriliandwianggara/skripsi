@@ -78,6 +78,34 @@ class MidtransController extends Controller
     }
 
     /**
+     * Konfirmasi Pembayaran Sukses dari Frontend Snap (onSuccess)
+     * Langsung mengubah status pesanan menjadi LUNAS seketika tanpa perlu klik kasir!
+     */
+    public function confirmSuccess(Request $request, $token)
+    {
+        $order = Order::where('tracking_token', $token)->firstOrFail();
+
+        if ($order->isPaid()) {
+            return response()->json([
+                'success' => true,
+                'is_paid' => true,
+                'message' => 'Pesanan sudah berstatus lunas.',
+                'redirect_url' => route('customer.track', $order->tracking_token),
+            ]);
+        }
+
+        $paymentType = $request->input('payment_type', 'midtrans_qris');
+        $this->midtransService->markOrderAsPaid($order, $paymentType, $request->all());
+
+        return response()->json([
+            'success' => true,
+            'is_paid' => true,
+            'message' => 'Pembayaran lunas terverifikasi otomatis oleh Midtrans!',
+            'redirect_url' => route('customer.track', $order->tracking_token),
+        ]);
+    }
+
+    /**
      * Endpoint Simulasi Sukses (Khusus Pengujian / Sidang Skripsi)
      * Digunakan untuk mendemonstrasikan status lunas seketika tanpa jeda
      */
@@ -106,3 +134,4 @@ class MidtransController extends Controller
         ]);
     }
 }
+

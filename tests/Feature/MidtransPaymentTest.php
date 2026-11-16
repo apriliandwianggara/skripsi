@@ -100,3 +100,4 @@ class MidtransPaymentTest extends TestCase
         $this->assertNotNull($order->paid_at);
     }
 }
+

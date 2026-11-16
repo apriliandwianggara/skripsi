@@ -127,6 +127,34 @@ class MidtransService
     }
 
     /**
+     * Memeriksa status transaksi langsung ke server Midtrans (v2 Status API)
+     */
+    public function checkTransactionStatus(string $orderId): ?array
+    {
+        $baseUrl = $this->isProduction
+            ? 'https://api.midtrans.com/v2/'
+            : 'https://api.sandbox.midtrans.com/v2/';
+
+        $ch = curl_init($baseUrl . urlencode($orderId) . '/status');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 4);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Accept: application/json',
+            'Authorization: Basic ' . base64_encode($this->serverKey . ':'),
+        ]);
+
+        $res = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($code === 200 && $res) {
+            return json_decode($res, true);
+        }
+
+        return null;
+    }
+
+    /**
      * Memvalidasi keaslian signature dari notifikasi webhook Midtrans
      */
     public function isValidSignature(array $data): bool
@@ -216,3 +244,4 @@ class MidtransService
         Log::info("Pesanan {$order->order_number} berhasil diverifikasi LUNAS otomatis via Midtrans.");
     }
 }
+

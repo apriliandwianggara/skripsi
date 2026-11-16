@@ -10,6 +10,7 @@ use App\Models\OrderDetail;
 use App\Models\OrderStatusHistory;
 use App\Models\Setting;
 use App\Services\FifoQueueService;
+use App\Services\MidtransService;
 use App\Services\QrisService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -20,11 +21,13 @@ class CustomerOrderController extends Controller
 {
     protected FifoQueueService $fifoService;
     protected QrisService $qrisService;
+    protected MidtransService $midtransService;
 
-    public function __construct(FifoQueueService $fifoService, QrisService $qrisService)
+    public function __construct(FifoQueueService $fifoService, QrisService $qrisService, MidtransService $midtransService)
     {
         $this->fifoService = $fifoService;
         $this->qrisService = $qrisService;
+        $this->midtransService = $midtransService;
     }
 
     /**
@@ -502,6 +505,20 @@ class CustomerOrderController extends Controller
 
         if (!$order) {
             return response()->json(['success' => false, 'message' => 'Pesanan tidak ditemukan'], 404);
+        }
+
+        // Auto-Sync Pembayaran Midtrans Otomatis:
+        // Jika pesanan belum lunas, otomatis cek ke server Midtrans apakah sudah dibayar oleh pelanggan
+        if (!$order->isPaid() && $order->payment_method === 'qris') {
+            try {
+                $statusRes = $this->midtransService->checkTransactionStatus($order->order_number);
+                if ($statusRes && in_array($statusRes['transaction_status'] ?? '', ['settlement', 'capture'])) {
+                    $this->midtransService->markOrderAsPaid($order, $statusRes['payment_type'] ?? 'midtrans_qris', $statusRes);
+                    $order->refresh();
+                }
+            } catch (\Throwable $e) {
+                // Jangan gagalkan polling jika Midtrans lambat merespons
+            }
         }
 
         $queueInfo = $this->fifoService->getQueueInfo($order);
