@@ -149,10 +149,10 @@ class QrisService
             $raw = substr($raw, 0, $crcPos);
         }
 
-        // 2. Ubah Tag 01 dari '010211' (Statis) menjadi '010212' (Dinamis)
-        $raw = preg_replace('/^000201010211/', '000201010212', $raw);
+        // 2. Tetapkan Tag 01 tetap '010211' (Statis Resmi) agar DANA/m-Banking tidak hang mencari sesi dinamis di server
+        $raw = preg_replace('/^000201010212/', '000201010211', $raw);
 
-        // 3. Tambahkan atau ganti Tag 54 (Transaction Amount)
+        // 3. Tambahkan atau ganti Tag 54 (Transaction Amount) untuk mengisi nominal otomatis
         $intAmount = (int)round($amount);
         $tag54 = self::formatTlv('54', (string)$intAmount);
 
