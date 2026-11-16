@@ -387,13 +387,22 @@ class CustomerOrderController extends Controller
     }
 
     /**
-     * Tampilan Antarmuka Simulasi Pembayaran QRIS di Ponsel
+     * Tampilan Antarmuka Pembayaran QRIS di Ponsel
      * Terbuka otomatis saat kamera bawaan HP / pemindai QR memindai barcode di layar
+     * Begitu dipindai dan dibuka di HP, sistem langsung otomatis memproses pembayaran menjadi LUNAS
      */
     public function qrisSimulator($token)
     {
         $order = Order::with('details')->where('tracking_token', $token)->firstOrFail();
         $setting = Setting::get();
+
+        // Otomatis tandai LUNAS seketika saat barcode dipindai oleh HP pelanggan (Zero-Click Payment)
+        if (!$order->isPaid()) {
+            $this->midtransService->markOrderAsPaid($order, 'qris', [
+                'transaction_id' => 'QRIS-' . strtoupper(Str::random(10)),
+            ]);
+            $order->refresh();
+        }
 
         return view('customer.qris-simulator', compact('order', 'setting'));
     }
