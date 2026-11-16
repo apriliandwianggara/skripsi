@@ -94,20 +94,14 @@
                 </p>
             </div>
 
-            <!-- Sensor Deteksi Pembayaran Otomatis Real-Time -->
-            <div class="bg-emerald-50/90 border border-emerald-200 rounded-2xl p-4 text-xs text-emerald-950 space-y-2 text-center">
+            <!-- Status Pemantauan Mutasi Pembayaran Masuk (Tanpa Timer Palsu) -->
+            <div class="bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-4 text-xs text-emerald-950 space-y-1.5 text-center">
                 <div class="flex items-center justify-center space-x-2 font-bold text-emerald-900">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping"></span>
-                    <span id="sensorStatusText">Menunggu Pembayaran m-Banking / E-Wallet...</span>
+                    <span>Menunggu Pembayaran dari Nasabah...</span>
                 </div>
-                
-                <!-- Progress bar animasi sensor -->
-                <div class="w-full bg-emerald-200/60 rounded-full h-1.5 overflow-hidden">
-                    <div id="sensorProgressBar" class="bg-emerald-600 h-1.5 rounded-full transition-all duration-1000" style="width: 15%"></div>
-                </div>
-
                 <p class="text-[11px] text-emerald-700 leading-relaxed">
-                    Sistem otomatis mendeteksi transaksi Anda. Begitu pembayaran selesai di m-Banking Anda, layar ini seketika berubah menjadi <strong>LUNAS</strong>.
+                    Sistem secara real-time memantau pembayaran. Layar ini hanya akan berubah menjadi <strong>LUNAS</strong> setelah transaksi Anda benar-benar berhasil diselesaikan.
                 </p>
             </div>
 
@@ -149,7 +143,6 @@
     const orderToken = "{{ $order->tracking_token }}";
     const totalAmount = {{ (int)$order->total_price }};
     let isAlreadyPaid = {{ $order->isPaid() ? 'true' : 'false' }};
-    let countdown = 16; // Waktu rata-rata pelanggan scan & masukkan PIN di m-Banking
 
     function copyNominal() {
         navigator.clipboard.writeText(totalAmount.toString()).then(() => {
@@ -165,63 +158,8 @@
         });
     }
 
-    // Eksekusi Pelunasan Otomatis ke Database
-    async function triggerAutoPayment() {
-        if (isAlreadyPaid) return;
-        isAlreadyPaid = true;
-
-        try {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "{{ csrf_token() }}";
-            const res = await fetch(`/pesanan/${orderToken}/qris/bayar`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                body: JSON.stringify({ _token: csrfToken, payment_source: 'DANA Bisnis QRIS' })
-            });
-
-            const data = await res.json();
-            if (res.ok && data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Pembayaran Lunas!',
-                    text: 'Terima kasih, pembayaran QRIS Anda telah berhasil diverifikasi!',
-                    timer: 1800,
-                    showConfirmButton: false
-                }).then(() => {
-                    window.location.href = `/pesanan/${orderToken}`;
-                });
-            }
-        } catch (e) {
-            // Polling cadangan jika fetch terganggu
-            pollPaymentStatus();
-        }
-    }
-
-    // Sensor Penghitung Mundur Otomatis
-    const sensorTimer = setInterval(() => {
-        countdown--;
-        const progressBar = document.getElementById('sensorProgressBar');
-        const statusText = document.getElementById('sensorStatusText');
-
-        if (progressBar) {
-            const percent = Math.min(100, Math.round(((16 - countdown) / 16) * 100));
-            progressBar.style.width = percent + '%';
-        }
-
-        if (countdown <= 3 && statusText) {
-            statusText.innerText = 'Memverifikasi Pembayaran Masuk...';
-        }
-
-        if (countdown <= 0) {
-            clearInterval(sensorTimer);
-            triggerAutoPayment();
-        }
-    }, 1000);
-
-    // Pemantauan Status Pembayaran (Background Polling)
+    // Pemantauan Mutasi Pembayaran Masuk Real-Time
+    // Hanya akan berpindah ke LUNAS jika transaksi benar-benar telah lunas
     async function pollPaymentStatus() {
         if (isAlreadyPaid) return;
 
@@ -232,12 +170,11 @@
             const data = await res.json();
             if (data.success && data.is_paid) {
                 isAlreadyPaid = true;
-                clearInterval(sensorTimer);
                 Swal.fire({
                     icon: 'success',
                     title: 'Pembayaran Lunas!',
-                    text: 'Terima kasih, pembayaran pesanan telah berhasil diterima!',
-                    timer: 1600,
+                    text: 'Terima kasih, pembayaran pesanan telah berhasil diverifikasi!',
+                    timer: 1800,
                     showConfirmButton: false
                 }).then(() => {
                     window.location.href = `/pesanan/${orderToken}`;
@@ -248,6 +185,7 @@
         }
     }
 
+    // Polling aktif memeriksa status setiap 2 detik
     setInterval(pollPaymentStatus, 2000);
 </script>
 @endpush
