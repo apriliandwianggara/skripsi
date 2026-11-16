@@ -20,7 +20,7 @@
 
             <div class="flex items-center space-x-1.5 text-[11px] text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-full font-medium">
                 <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-                <span>QRIS & E-Wallet</span>
+                <span>QRIS Standar Nasional</span>
             </div>
         </div>
 
@@ -54,9 +54,9 @@
         </div>
 
         <!-- Box Tampilan QRIS Resmi Sekarsa Coffee -->
-        <div class="bg-white rounded-3xl shadow-xl border border-gray-150 p-6 space-y-5 text-center relative">
+        <div class="bg-white rounded-3xl shadow-xl border border-gray-150 p-6 space-y-4 text-center">
             
-            <!-- Header Frame QRIS Standar Nasional -->
+            <!-- Header QRIS Standar Nasional (GPN) -->
             <div class="flex items-center justify-between border-b border-gray-150 pb-3">
                 <div class="flex items-center space-x-2">
                     <span class="font-black text-2xl tracking-tighter text-red-600 font-sans">QRIS</span>
@@ -75,7 +75,7 @@
                 <p class="text-[11px] text-gray-500 font-mono">NMID: {{ $nmid ?? 'ID1026635802105' }} &bull; A01</p>
             </div>
 
-            <!-- Gambar Barcode QRIS yang dapat di-scan langsung oleh kamera HP -->
+            <!-- Barcode QRIS Resmi (Dapat discan langsung oleh kamera HP atau pemindai QR) -->
             <div class="relative inline-block mx-auto bg-white p-3 rounded-2xl border-2 border-dashed border-emerald-500/40 shadow-inner">
                 <img src="{{ $simulatorQrUri }}" alt="QRIS Sekarsa Coffee" class="w-56 h-56 sm:w-64 sm:h-64 object-contain mx-auto rounded-xl">
                 
@@ -85,30 +85,15 @@
             </div>
 
             <!-- Petunjuk Pemindaian -->
-            <div class="bg-emerald-50/70 border border-emerald-150 rounded-2xl p-3.5 text-xs text-emerald-950 space-y-1">
-                <div class="flex items-center justify-center space-x-1.5 font-bold text-emerald-800">
-                    <i class="fa-solid fa-camera"></i>
-                    <span>Arahkan Kamera HP ke Kode QR di Atas</span>
-                </div>
-                <p class="text-[11px] text-gray-600 leading-relaxed">
-                    Pindai menggunakan kamera bawaan ponsel atau pemindai QR untuk menyelesaikan pembayaran secara langsung.
-                </p>
-            </div>
+            <p class="text-xs text-gray-500 leading-relaxed px-2">
+                Pindai kode QRIS di atas menggunakan kamera HP, m-Banking, atau E-Wallet untuk menyelesaikan pembayaran.
+            </p>
 
-            <!-- Tombol Alternatif Pembayaran -->
-            <div class="space-y-2 pt-1">
-                <!-- Jika memesan di ponsel yang sama sehingga tidak bisa scan layar sendiri -->
-                <a href="{{ $simulatorUrl }}" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold rounded-2xl text-xs transition shadow-md shadow-emerald-600/20 flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-mobile-screen-button text-sm"></i>
-                    <span>Buka Pembayaran di Ponsel Ini</span>
-                </a>
-
-                <!-- Opsi Cadangan: Midtrans Gateway -->
-                <button type="button" onclick="payWithMidtrans()" id="btnPayMidtrans" class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 font-bold rounded-2xl text-xs transition flex items-center justify-center space-x-1.5">
-                    <i class="fa-solid fa-credit-card text-xs text-gray-500"></i>
-                    <span>Gunakan Pop-up Midtrans</span>
-                </button>
-            </div>
+            <!-- Tombol Utama: Bayar Sekarang -->
+            <button type="button" onclick="selesaikanPembayaran()" id="btnBayarSekarang" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold rounded-2xl text-sm transition shadow-lg shadow-emerald-600/25 flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-lock text-sm"></i>
+                <span>Bayar Sekarang (Rp {{ number_format($order->total_price, 0, ',', '.') }})</span>
+            </button>
 
             <!-- Logo Bank & E-Wallet Terdaftar -->
             <div class="pt-3 border-t border-gray-100">
@@ -144,7 +129,6 @@
 @endsection
 
 @push('scripts')
-<script src="{{ $midtransSnapJs }}" data-client-key="{{ $midtransClientKey }}"></script>
 <script>
     const orderToken = "{{ $order->tracking_token }}";
     const totalAmount = {{ (int)$order->total_price }};
@@ -164,63 +148,49 @@
         });
     }
 
-    // Pemanggilan Snap Midtrans jika pengguna memilih opsi pop-up
-    async function payWithMidtrans() {
-        const btn = document.getElementById('btnPayMidtrans');
+    // Proses Pembayaran Langsung dari Perangkat Ini
+    async function selesaikanPembayaran() {
+        const btn = document.getElementById('btnBayarSekarang');
         if (!btn) return;
         const originalHtml = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-xs mr-1.5"></i><span>Memuat...</span>`;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-sm mr-2"></i><span>Memproses Pembayaran...</span>`;
 
         try {
-            const res = await fetch(`/pesanan/${orderToken}/midtrans-token`);
-            const data = await res.json();
-
-            if (!res.ok || !data.success) {
-                throw new Error(data.message || 'Gagal memuat sesi transaksi.');
-            }
-
-            if (data.is_paid) {
-                window.location.href = data.redirect_url;
-                return;
-            }
-
-            if (!window.snap || typeof window.snap.pay !== 'function') {
-                throw new Error('Modul pembayaran belum siap. Silakan muat ulang halaman.');
-            }
-
-            window.snap.pay(data.snap_token, {
-                onSuccess: function(result) {
-                    isAlreadyPaid = true;
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Pembayaran Berhasil',
-                        text: 'Terima kasih, pembayaran pesanan Anda telah lunas!',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => {
-                        window.location.href = `/pesanan/${orderToken}`;
-                    });
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "{{ csrf_token() }}";
+            const res = await fetch(`/pesanan/${orderToken}/qris/bayar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
                 },
-                onPending: function(result) {
-                    pollPaymentStatus();
-                },
-                onError: function(result) {
-                    Swal.fire('Kendala', 'Terjadi kesalahan pada transaksi. Silakan coba kembali.', 'error');
-                },
-                onClose: function() {
-                    pollPaymentStatus();
-                }
+                body: JSON.stringify({ _token: csrfToken })
             });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                isAlreadyPaid = true;
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Pembayaran Berhasil!',
+                    text: 'Tagihan telah berhasil dibayar lunas. Dialihkan ke antrean...',
+                    timer: 1800,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.href = data.redirect_url;
+                });
+            } else {
+                throw new Error(data.message || 'Gagal memproses pembayaran.');
+            }
         } catch (err) {
-            Swal.fire('Kendala', err.message || 'Gagal memuat transaksi.', 'error');
-        } finally {
+            Swal.fire('Kendala', err.message || 'Gagal memproses transaksi.', 'error');
             btn.disabled = false;
             btn.innerHTML = originalHtml;
         }
     }
 
-    // Pemantauan Status Pembayaran (Otomatis mendeteksi saat ponsel menyelesaikan pembayaran)
+    // Pemantauan Status Pembayaran (Otomatis mendeteksi jika dibayar via pemindaian kamera HP lain)
     async function pollPaymentStatus() {
         if (isAlreadyPaid) return;
 

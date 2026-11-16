@@ -416,7 +416,7 @@ class CustomerOrderController extends Controller
         }
 
         $source = $request->input('payment_source', 'QRIS m-Banking');
-        $this->midtransService->markOrderAsPaid($order, 'qris_simulator', [
+        $this->midtransService->markOrderAsPaid($order, 'qris', [
             'transaction_id' => 'QRIS-' . strtoupper(Str::random(10)),
         ]);
 

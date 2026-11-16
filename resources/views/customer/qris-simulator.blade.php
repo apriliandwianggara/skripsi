@@ -92,7 +92,7 @@
                 <!-- Tombol Eksekusi Bayar -->
                 <button type="button" onclick="submitQrisPayment()" id="btnSubmitQris" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black rounded-2xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-lock text-sm"></i>
-                    <span>Konfirmasi & Bayar Sekarang</span>
+                    <span>Bayar Sekarang (Rp {{ number_format($order->total_price, 0, ',', '.') }})</span>
                 </button>
 
                 <p class="text-center text-[10px] text-gray-400 flex items-center justify-center space-x-1">
@@ -119,7 +119,7 @@
 
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "{{ csrf_token() }}";
-            const res = await fetch(`/pesanan/${orderToken}/simulasi-qris/bayar`, {
+            const res = await fetch(`/pesanan/${orderToken}/qris/bayar`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

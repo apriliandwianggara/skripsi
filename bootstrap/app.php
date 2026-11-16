@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'pesan/kirim',
             'pesanan/*/konfirmasi-bayar',
             'pesanan/*/midtrans-*',
+            'pesanan/*/qris/*',
             'pesanan/*/simulasi-qris/*',
             'api/*',
         ]);
