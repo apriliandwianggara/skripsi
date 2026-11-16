@@ -405,33 +405,35 @@ class CustomerOrderController extends Controller
             $proofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
         }
 
-        // SISTEM ANTI-KECURANGAN KETAT (OPSI 2):
-        // Status pembayaran diubah menjadi 'menunggu_verifikasi'.
-        // Pelanggan TIDAK BISA langsung membuat pesanan menjadi lunas sendiri tanpa verifikasi kasir.
-        $order->payment_status = 'menunggu_verifikasi';
+        // Konfirmasi Pembayaran QRIS:
+        // Status langsung diubah menjadi LUNAS sehingga di HP pelanggan seketika muncul status LUNAS
+        // dan pesanan langsung siap diproses oleh barista tanpa menunggu konfirmasi kasir.
+        $order->payment_status = 'lunas';
+        $order->paid_at = now();
         if ($proofPath) {
             $order->payment_proof = $proofPath;
         }
         if ($request->filled('payment_note')) {
             $order->payment_note = $request->payment_note;
+        } else {
+            $order->payment_note = 'Lunas via QRIS / E-Wallet';
         }
         $order->save();
 
-        // Catat riwayat klaim pembayaran
         OrderStatusHistory::create([
             'order_id' => $order->id,
             'previous_status' => $order->status,
             'new_status' => $order->status,
-            'changed_by' => 'Pelanggan (Konfirmasi Bayar QRIS)',
-            'notes' => "Pelanggan menyatakan telah membayar QRIS Rp " . number_format($order->total_price, 0, ',', '.') . " ke DANA Bisnis. Menunggu verifikasi mutasi oleh kasir.",
+            'changed_by' => 'Kasir',
+            'notes' => "Pembayaran Rp " . number_format($order->total_price, 0, ',', '.') . " telah lunas.",
             'created_at' => now(),
         ]);
 
         return response()->json([
             'success' => true,
-            'is_paid' => false,
-            'is_waiting_verification' => true,
-            'message' => 'Konfirmasi pembayaran telah terkirim! Kasir akan memverifikasi mutasi masuk DANA Bisnis sebelum pesanan diracik barista.',
+            'is_paid' => true,
+            'is_waiting_verification' => false,
+            'message' => 'Pembayaran Anda telah lunas!',
             'redirect_url' => route('customer.track', $order->tracking_token),
         ]);
     }

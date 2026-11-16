@@ -89,11 +89,7 @@ class MidtransService
             'enabled_payments' => [
                 'other_qris',
                 'gopay',
-                'shopeepay',
-                'bca_va',
-                'bni_va',
-                'bri_va',
-                'mandiri_va'
+                'shopeepay'
             ],
             'callbacks' => [
                 'finish' => route('customer.track', $order->tracking_token),
