@@ -14,8 +14,8 @@
                         <i class="fa-solid fa-qrcode"></i>
                     </span>
                     <div>
-                        <h2 class="font-bold text-sm leading-tight">Konfirmasi Pembayaran QRIS</h2>
-                        <p class="text-[10px] text-emerald-200">Merchant: Sekarsa Coffee</p>
+                        <h2 class="font-bold text-sm leading-tight">Pembayaran QRIS</h2>
+                        <p class="text-[10px] text-emerald-200">Sekarsa Coffee &bull; Midtrans Payment Gateway</p>
                     </div>
                 </div>
                 <span class="px-2.5 py-0.5 rounded-full bg-red-600 text-white font-extrabold text-[10px] tracking-wider">
@@ -70,10 +70,10 @@
                         </div>
                     @endif
                     <div class="flex justify-between py-1.5">
-                        <span class="text-gray-500">Sumber Dana</span>
+                        <span class="text-gray-500">Metode Pembayaran</span>
                         <span class="font-semibold text-gray-800 flex items-center space-x-1">
-                            <i class="fa-solid fa-wallet text-emerald-600 mr-1"></i>
-                            <span>Saldo Rekening / E-Wallet</span>
+                            <i class="fa-solid fa-qrcode text-emerald-600 mr-1"></i>
+                            <span>QRIS (Midtrans Sandbox)</span>
                         </span>
                     </div>
                 </div>
