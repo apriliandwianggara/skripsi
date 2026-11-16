@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'pesan/kirim',
             'pesanan/*/konfirmasi-bayar',
+            'pesanan/*/midtrans-*',
             'api/*',
         ]);
 

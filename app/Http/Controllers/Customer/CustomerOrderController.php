@@ -364,11 +364,18 @@ class CustomerOrderController extends Controller
         $paymentShareUrl = route('customer.payment', $order->tracking_token);
         $paymentShareQrUri = $this->qrisService->generateQrisDataUri($paymentShareUrl);
 
+        // 4. Kredensial Payment Gateway Midtrans
+        $midtransClientKey = config('services.midtrans.client_key', 'Mid-client-DdhidPXOfhiRBbRJ');
+        $midtransSnapJs = config('services.midtrans.is_production') 
+            ? 'https://app.midtrans.com/snap/snap.js' 
+            : 'https://app.sandbox.midtrans.com/snap/snap.js';
+
         return view('customer.payment', compact(
             'order', 'setting', 'qrisPayload', 'qrisDataUri',
             'staticPayload', 'staticQrisDataUri',
             'paymentShareUrl', 'paymentShareQrUri',
-            'danaNumber', 'merchantName', 'nmid', 'danaMerchantName'
+            'danaNumber', 'merchantName', 'nmid', 'danaMerchantName',
+            'midtransClientKey', 'midtransSnapJs'
         ));
     }
 

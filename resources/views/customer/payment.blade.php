@@ -53,6 +53,58 @@
             </p>
         </div>
 
+        <!-- Card Payment Gateway Midtrans (Otomatis & Real-Time) -->
+        <div class="bg-gradient-to-br from-indigo-700 via-blue-700 to-indigo-900 text-white rounded-3xl p-5 shadow-xl space-y-3 relative overflow-hidden border border-indigo-500/30">
+            <div class="absolute -right-8 -top-8 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span class="px-2 py-0.5 bg-amber-400 text-indigo-950 font-extrabold text-[10px] rounded uppercase tracking-wider shadow-sm">
+                        Payment Gateway
+                    </span>
+                    <span class="text-xs text-indigo-100 font-semibold flex items-center space-x-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block mr-1"></span>
+                        Otomatis Lunas
+                    </span>
+                </div>
+                <div class="flex items-center space-x-1 bg-white/15 px-2 py-0.5 rounded-full text-[10px] font-mono text-indigo-100">
+                    <i class="fa-solid fa-shield-halved text-amber-300 mr-1"></i>
+                    <span>Midtrans Snap</span>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="font-bold text-base text-white">Pembayaran Otomatis Real-Time</h3>
+                <p class="text-xs text-indigo-100/90 mt-0.5 leading-relaxed">
+                    Pilih QRIS (GoPay, BCA, ShopeePay, DANA) atau Virtual Account. Status pesanan <strong>otomatis langsung lunas</strong> via Webhook server tanpa konfirmasi kasir.
+                </p>
+            </div>
+
+            <!-- Tombol Buka Pop-up Midtrans -->
+            <button type="button" onclick="payWithMidtrans()" id="btnPayMidtrans" class="w-full py-3.5 bg-white hover:bg-amber-50 active:scale-95 text-indigo-900 font-black rounded-2xl text-sm transition shadow-lg flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-bolt text-amber-500 text-base"></i>
+                <span>Bayar Otomatis via Midtrans (Pop-up QRIS)</span>
+            </button>
+
+            <!-- Mode Simulasi Sidang Skripsi -->
+            <div class="pt-2 border-t border-indigo-400/30 flex items-center justify-between text-[11px] text-indigo-200">
+                <span class="flex items-center space-x-1">
+                    <i class="fa-solid fa-graduation-cap text-amber-300"></i>
+                    <span>Pengujian Sidang Skripsi:</span>
+                </span>
+                <button type="button" onclick="simulateMidtransSuccess()" class="text-amber-300 hover:text-white font-bold underline transition">
+                    Simulasi Bayar Lunas (Sandbox) &rarr;
+                </button>
+            </div>
+        </div>
+
+        <!-- Pemisah / Pilihan Metode -->
+        <div class="flex items-center space-x-3 py-1">
+            <div class="flex-1 h-px bg-gray-300"></div>
+            <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Atau Bayar Manual DANA Bisnis</span>
+            <div class="flex-1 h-px bg-gray-300"></div>
+        </div>
+
         <!-- Card Kartu QRIS Nasional -->
         <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
             <!-- Header QRIS Resmi -->
@@ -322,11 +374,128 @@
 @endsection
 
 @push('scripts')
+<script src="{{ $midtransSnapJs }}" data-client-key="{{ $midtransClientKey }}"></script>
 <script>
     const orderToken = "{{ $order->tracking_token }}";
     const totalAmount = {{ (int)$order->total_price }};
     const danaNumber = "{{ $danaNumber }}";
     let isAlreadyPaid = {{ $order->isPaid() ? 'true' : 'false' }};
+
+    // Integrasi Pembayaran Otomatis Midtrans Snap
+    async function payWithMidtrans() {
+        const btn = document.getElementById('btnPayMidtrans');
+        if (!btn) return;
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-base mr-1.5"></i><span>Mempersiapkan Midtrans...</span>`;
+
+        try {
+            const res = await fetch(`/pesanan/${orderToken}/midtrans-token`);
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || 'Gagal membuat sesi pembayaran Midtrans.');
+            }
+
+            if (data.is_paid) {
+                window.location.href = data.redirect_url;
+                return;
+            }
+
+            if (!window.snap || typeof window.snap.pay !== 'function') {
+                throw new Error('Modul Midtrans Snap belum selesai dimuat. Silakan muat ulang halaman.');
+            }
+
+            // Buka Modal Snap Resmi Midtrans
+            window.snap.pay(data.snap_token, {
+                onSuccess: function(result) {
+                    isAlreadyPaid = true;
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Pembayaran Sukses!',
+                        text: 'Pembayaran berhasil diverifikasi otomatis oleh Midtrans.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.href = `/pesanan/${orderToken}`;
+                    });
+                },
+                onPending: function(result) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Menunggu Pembayaran',
+                        text: 'Silakan selesaikan pembayaran pada m-Banking/E-Wallet Anda. Halaman ini akan otomatis terupdate begitu transaksi selesai.',
+                        confirmButtonColor: '#4f46e5'
+                    });
+                },
+                onError: function(result) {
+                    Swal.fire('Pembayaran Gagal', 'Terjadi kendala pada transaksi Midtrans. Silakan coba lagi.', 'error');
+                },
+                onClose: function() {
+                    console.log('Customer menutup jendela Midtrans Snap');
+                }
+            });
+        } catch (err) {
+            Swal.fire('Gagal Menghubungi Midtrans', err.message || 'Terjadi kesalahan sistem.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    }
+
+    // Simulasi Pembayaran Otomatis untuk Sidang Skripsi
+    async function simulateMidtransSuccess() {
+        const confirm = await Swal.fire({
+            title: 'Simulasi Pembayaran (Sandbox)',
+            html: 'Fitur ini untuk <b>demonstrasi sidang skripsi</b>:<br>Mengirimkan trigger pembayaran sukses seketika seolah-olah pelanggan baru saja selesai scan QRIS.<br><br>Status pesanan akan <b>otomatis berubah menjadi LUNAS</b>.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#4f46e5',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Jalankan Simulasi Lunas',
+            cancelButtonText: 'Batal'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        Swal.fire({
+            title: 'Memproses Pembayaran...',
+            text: 'Server memverifikasi transaksi Midtrans',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "{{ csrf_token() }}";
+            const res = await fetch(`/pesanan/${orderToken}/midtrans-simulate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ _token: csrfToken })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                isAlreadyPaid = true;
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Pembayaran Lunas Otomatis!',
+                    text: 'Status pesanan berhasil diubah menjadi LUNAS. Mengalihkan ke antrean...',
+                    timer: 1800,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.href = data.redirect_url;
+                });
+            } else {
+                throw new Error(data.message || 'Gagal melakukan simulasi');
+            }
+        } catch (e) {
+            Swal.fire('Error', e.message || 'Gagal simulasi.', 'error');
+        }
+    }
 
     function switchQrisView(type) {
         const dynBox = document.getElementById('qrisDynamicBox');

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Customer\CustomerOrderController;
+use App\Http\Controllers\Payment\MidtransController;
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MenuController;
@@ -42,6 +43,11 @@ Route::post('/pesan/kirim', [CustomerOrderController::class, 'submitOrder'])->na
 // 2. Halaman Pembayaran QRIS & Konfirmasi Pembayaran
 Route::get('/pesanan/{token}/bayar', [CustomerOrderController::class, 'payment'])->name('customer.payment');
 Route::post('/pesanan/{token}/konfirmasi-bayar', [CustomerOrderController::class, 'confirmPayment'])->name('customer.confirm_payment');
+
+// 2.b Integrasi Payment Gateway Midtrans (Snap, Webhook & Simulator Skripsi)
+Route::get('/pesanan/{token}/midtrans-token', [MidtransController::class, 'getSnapToken'])->name('midtrans.snap_token');
+Route::post('/pesanan/{token}/midtrans-simulate', [MidtransController::class, 'simulatePaymentSuccess'])->name('midtrans.simulate');
+Route::post('/api/midtrans/notification', [MidtransController::class, 'handleNotification'])->name('midtrans.notification');
 
 // 3. Halaman Konfirmasi Pesanan
 Route::get('/pesanan/{token}/konfirmasi', [CustomerOrderController::class, 'confirmation'])->name('customer.confirmation');
