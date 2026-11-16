@@ -420,12 +420,12 @@
                                     <div class="flex items-center justify-between">
                                         <span class="font-bold text-xs text-gray-900 flex items-center space-x-1.5">
                                             <i class="fa-solid fa-qrcode text-emerald-700"></i>
-                                            <span>QRIS / DANA (Otomatis Sesuai Nominal)</span>
+                                            <span>QRIS & E-Wallet (BCA, Mandiri, BRI, DANA, GoPay)</span>
                                         </span>
-                                        <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-600 text-white tracking-wider">Instan</span>
+                                        <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-600 text-white tracking-wider">Non-Tunai</span>
                                     </div>
                                     <p class="text-[11px] text-emerald-800/90 mt-1 leading-relaxed">
-                                        Scan QRIS langsung masuk nominal pesanan. Mengarah ke DANA <b>087811139210</b> (Sekarsa Coffee).
+                                        Bayar praktis dengan scan kode QRIS melalui m-Banking atau E-Wallet.
                                     </p>
                                 </div>
                             </label>
@@ -442,7 +442,7 @@
                                         <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Kasir</span>
                                     </div>
                                     <p class="text-[11px] text-gray-500 mt-1 leading-relaxed">
-                                        Datang ke meja kasir sebutkan nama Anda untuk membayar tunai. Status di HP langsung terupdate otomatis.
+                                        Datang ke meja kasir dan sebutkan nama Anda untuk menyelesaikan pembayaran tunai.
                                     </p>
                                 </div>
                             </label>

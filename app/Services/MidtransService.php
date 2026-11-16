@@ -86,6 +86,15 @@ class MidtransService
                 'phone' => $order->customer_phone ?? '087811139210',
             ],
             'item_details' => $items,
+            'enabled_payments' => [
+                'other_qris',
+                'gopay',
+                'shopeepay',
+                'bca_va',
+                'bni_va',
+                'bri_va',
+                'mandiri_va'
+            ],
             'callbacks' => [
                 'finish' => route('customer.track', $order->tracking_token),
             ],
@@ -229,15 +238,15 @@ class MidtransService
 
         $order->payment_status = 'lunas';
         $order->paid_at = now();
-        $order->payment_note = "Lunas via Midtrans ({$paymentType}) - ID: " . ($data['transaction_id'] ?? 'N/A');
+        $order->payment_note = "Lunas via QRIS / E-Wallet";
         $order->save();
 
         OrderStatusHistory::create([
             'order_id' => $order->id,
             'previous_status' => $order->status,
             'new_status' => $order->status,
-            'changed_by' => 'Midtrans Payment Gateway (Automated Webhook)',
-            'notes' => "Pembayaran berhasil diverifikasi 100% otomatis oleh sistem Midtrans ({$paymentType}). Nominal: Rp " . number_format($order->total_price, 0, ',', '.') . ".",
+            'changed_by' => 'Kasir',
+            'notes' => "Pembayaran sejumlah Rp " . number_format($order->total_price, 0, ',', '.') . " telah lunas.",
             'created_at' => now(),
         ]);
 

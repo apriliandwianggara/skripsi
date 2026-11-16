@@ -283,13 +283,12 @@ class CustomerOrderController extends Controller
             }
 
             // Catat riwayat status awal di order_status_history
-            $paymentMethodLabel = $paymentMethod === 'qris' ? 'QRIS (DANA)' : 'Tunai di Kasir';
             OrderStatusHistory::create([
                 'order_id' => $order->id,
                 'previous_status' => null,
                 'new_status' => 'menunggu',
-                'changed_by' => 'Sistem Pemesanan Digital',
-                'notes' => "Pesanan diterima server. Metode pembayaran: {$paymentMethodLabel}. Masuk ke antrean FIFO dengan Nomor Antrean [{$queueNumber}].",
+                'changed_by' => 'Kasir',
+                'notes' => "Pesanan berhasil dibuat (Antrean #{$queueNumber}). Menunggu pembayaran.",
                 'created_at' => $receivedAt,
             ]);
 

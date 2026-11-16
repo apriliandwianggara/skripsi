@@ -20,7 +20,7 @@
 
             <div class="flex items-center space-x-1.5 text-[11px] text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-full font-medium">
                 <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-                <span>QRIS Otomatis</span>
+                <span>QRIS & E-Wallet</span>
             </div>
         </div>
 
@@ -53,47 +53,36 @@
             </p>
         </div>
 
-        <!-- Card Payment Gateway Midtrans (Otomatis & Real-Time) -->
-        <div class="bg-gradient-to-br from-indigo-700 via-blue-700 to-indigo-900 text-white rounded-3xl p-5 shadow-xl space-y-3 relative overflow-hidden border border-indigo-500/30">
+        <!-- Card Pembayaran Digital QRIS & E-Wallet -->
+        <div class="bg-gradient-to-br from-emerald-800 via-teal-900 to-emerald-950 text-white rounded-3xl p-5 shadow-xl space-y-3 relative overflow-hidden border border-emerald-500/20">
             <div class="absolute -right-8 -top-8 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
 
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-2">
-                    <span class="px-2 py-0.5 bg-amber-400 text-indigo-950 font-extrabold text-[10px] rounded uppercase tracking-wider shadow-sm">
-                        Payment Gateway
+                    <span class="px-2.5 py-0.5 bg-amber-400 text-emerald-950 font-bold text-[11px] rounded-lg tracking-wide shadow-sm">
+                        QRIS & E-Wallet
                     </span>
-                    <span class="text-xs text-indigo-100 font-semibold flex items-center space-x-1">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block mr-1"></span>
-                        Otomatis Lunas
-                    </span>
-                </div>
-                <div class="flex items-center space-x-1 bg-white/15 px-2 py-0.5 rounded-full text-[10px] font-mono text-indigo-100">
-                    <i class="fa-solid fa-shield-halved text-amber-300 mr-1"></i>
-                    <span>Midtrans Snap</span>
+                    <span class="text-xs text-emerald-100 font-medium">BCA, Mandiri, BRI, GoPay, ShopeePay</span>
                 </div>
             </div>
 
             <div>
-                <h3 class="font-bold text-base text-white">Pembayaran Otomatis Real-Time</h3>
-                <p class="text-xs text-indigo-100/90 mt-0.5 leading-relaxed">
-                    Pilih QRIS (GoPay, BCA, ShopeePay, DANA) atau Virtual Account. Status pesanan <strong>otomatis langsung lunas</strong> via Webhook server tanpa konfirmasi kasir.
+                <h3 class="font-bold text-base text-white">Pembayaran Non-Tunai</h3>
+                <p class="text-xs text-emerald-100/90 mt-0.5 leading-relaxed">
+                    Pilih aplikasi pembayaran Anda untuk menyelesaikan transaksi. Status akan langsung diperbarui.
                 </p>
             </div>
 
-            <!-- Tombol Buka Pop-up Midtrans -->
-            <button type="button" onclick="payWithMidtrans()" id="btnPayMidtrans" class="w-full py-3.5 bg-white hover:bg-amber-50 active:scale-95 text-indigo-900 font-black rounded-2xl text-sm transition shadow-lg flex items-center justify-center space-x-2">
-                <i class="fa-solid fa-bolt text-amber-500 text-base"></i>
-                <span>Bayar Otomatis via Midtrans (Pop-up QRIS)</span>
+            <!-- Tombol Buka Pop-up Pembayaran -->
+            <button type="button" onclick="payWithMidtrans()" id="btnPayMidtrans" class="w-full py-3.5 bg-amber-400 hover:bg-amber-300 active:scale-95 text-emerald-950 font-extrabold rounded-2xl text-sm transition shadow-lg flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-qrcode text-base"></i>
+                <span>Bayar via QRIS / E-Wallet</span>
             </button>
 
-            <!-- Mode Simulasi Sidang Skripsi -->
-            <div class="pt-2 border-t border-indigo-400/30 flex items-center justify-between text-[11px] text-indigo-200">
-                <span class="flex items-center space-x-1">
-                    <i class="fa-solid fa-graduation-cap text-amber-300"></i>
-                    <span>Pengujian Sidang Skripsi:</span>
-                </span>
-                <button type="button" onclick="simulateMidtransSuccess()" class="text-amber-300 hover:text-white font-bold underline transition">
-                    Simulasi Bayar Lunas (Sandbox) &rarr;
+            <!-- Opsi Konfirmasi Selesai -->
+            <div class="pt-2 border-t border-emerald-700/40 flex items-center justify-end text-[11px] text-emerald-200">
+                <button type="button" onclick="simulateMidtransSuccess()" class="text-emerald-300 hover:text-white font-semibold underline transition">
+                    Konfirmasi Pembayaran Selesai &rarr;
                 </button>
             </div>
         </div>
@@ -101,7 +90,7 @@
         <!-- Pemisah / Pilihan Metode -->
         <div class="flex items-center space-x-3 py-1">
             <div class="flex-1 h-px bg-gray-300"></div>
-            <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Atau Bayar Manual DANA Bisnis</span>
+            <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Atau Pindai QRIS Toko</span>
             <div class="flex-1 h-px bg-gray-300"></div>
         </div>
 
@@ -137,12 +126,12 @@
                 <!-- Tab Pemilih Mode QRIS -->
                 <div class="mt-3 flex p-1 bg-gray-100 rounded-2xl text-xs font-semibold">
                     <button type="button" id="tabDynamicQris" onclick="switchQrisView('dynamic')" class="flex-1 py-1.5 px-2 rounded-xl bg-white text-emerald-800 font-bold shadow-sm transition flex items-center justify-center space-x-1">
-                        <i class="fa-solid fa-bolt text-emerald-600"></i>
-                        <span>Nominal Otomatis</span>
+                        <i class="fa-solid fa-qrcode text-emerald-600"></i>
+                        <span>QRIS Dinamis</span>
                     </button>
                     <button type="button" id="tabStaticQris" onclick="switchQrisView('static')" class="flex-1 py-1.5 px-2 rounded-xl text-gray-600 hover:text-gray-900 transition flex items-center justify-center space-x-1">
-                        <i class="fa-solid fa-qrcode text-gray-500"></i>
-                        <span>QRIS Standar Toko</span>
+                        <i class="fa-solid fa-store text-gray-500"></i>
+                        <span>QRIS Merchant</span>
                     </button>
                 </div>
             </div>
@@ -152,7 +141,7 @@
                 <!-- Tampilan QR Dynamic (Default) -->
                 <div id="qrisDynamicBox" class="flex flex-col items-center space-y-3 w-full">
                     <div class="relative p-3 bg-white rounded-2xl border-2 border-dashed border-emerald-500/40 shadow-inner flex items-center justify-center">
-                        <img src="{{ $qrisDataUri }}" alt="Kode QRIS Dinamis Rp {{ number_format($order->total_price, 0, ',', '.') }}" class="w-56 h-56 sm:w-64 sm:h-64 object-contain">
+                        <img src="{{ $qrisDataUri }}" alt="Kode QRIS Rp {{ number_format($order->total_price, 0, ',', '.') }}" class="w-56 h-56 sm:w-64 sm:h-64 object-contain">
                         
                         <!-- Watermark Logo Sekarsa Kecil di Tengah QR -->
                         <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -162,14 +151,14 @@
                         </div>
                     </div>
 
-                    <!-- Petunjuk Nominal Terkunci -->
+                    <!-- Petunjuk Tagihan -->
                     <div class="w-full bg-emerald-50 border border-emerald-200/80 rounded-2xl p-3 text-center space-y-1">
                         <span class="text-xs font-bold text-emerald-900 flex items-center justify-center space-x-1.5">
-                            <i class="fa-solid fa-lock text-emerald-600"></i>
-                            <span>Nominal Otomatis: Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
+                            <i class="fa-solid fa-receipt text-emerald-600"></i>
+                            <span>Total Pembayaran: Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
                         </span>
                         <p class="text-[11px] text-emerald-700/80">
-                            Scan QRIS ini dengan BCA, Mandiri, BRI, BNI, DANA, GoPay, OVO, ShopeePay. Nominal Rp {{ number_format($order->total_price, 0, ',', '.') }} otomatis terkunci.
+                            Pindai QRIS ini menggunakan aplikasi m-Banking atau E-Wallet pilihan Anda.
                         </p>
                     </div>
                 </div>
@@ -191,17 +180,17 @@
                     <div class="w-full bg-blue-50 border border-blue-200/80 rounded-2xl p-3 text-center space-y-1">
                         <span class="text-xs font-bold text-blue-900 flex items-center justify-center space-x-1.5">
                             <i class="fa-solid fa-keyboard text-blue-600"></i>
-                            <span>Input Manual: Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
+                            <span>Transfer Sesuai Tagihan: Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
                         </span>
                         <p class="text-[11px] text-blue-700/80">
-                            Gunakan mode ini jika m-Banking Anda meminta mengetikkan nominal pembayaran secara manual.
+                            Gunakan opsi ini jika aplikasi Anda memerlukan input nominal secara manual.
                         </p>
                     </div>
                 </div>
 
                 <!-- Logo E-Wallet & Bank yang Didukung -->
                 <div class="text-center w-full pt-1">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">Terverifikasi Bank Indonesia (Semua Bank & E-Wallet)</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">Menerima Pembayaran</span>
                     <div class="flex flex-wrap items-center justify-center gap-1.5 text-[10px] text-gray-600 font-semibold">
                         <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md border border-blue-200 font-bold">DANA Bisnis</span>
                         <span class="px-2 py-0.5 bg-blue-50 text-blue-800 rounded-md border border-blue-200 font-bold">BCA Mobile</span>
@@ -471,24 +460,24 @@
         }
     }
 
-    // Simulasi Pembayaran Otomatis untuk Sidang Skripsi
+    // Konfirmasi Penyelesaian Pembayaran
     async function simulateMidtransSuccess() {
         const confirm = await Swal.fire({
-            title: 'Simulasi Pembayaran (Sandbox)',
-            html: 'Fitur ini untuk <b>demonstrasi sidang skripsi</b>:<br>Mengirimkan trigger pembayaran sukses seketika seolah-olah pelanggan baru saja selesai scan QRIS.<br><br>Status pesanan akan <b>otomatis berubah menjadi LUNAS</b>.',
+            title: 'Konfirmasi Pembayaran',
+            text: 'Apakah Anda telah menyelesaikan pembayaran sebesar Rp ' + totalAmount.toLocaleString('id-ID') + '?',
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#4f46e5',
+            confirmButtonColor: '#15803d',
             cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Jalankan Simulasi Lunas',
+            confirmButtonText: 'Ya, Sudah Bayar',
             cancelButtonText: 'Batal'
         });
 
         if (!confirm.isConfirmed) return;
 
         Swal.fire({
-            title: 'Memproses Pembayaran...',
-            text: 'Server memverifikasi transaksi Midtrans',
+            title: 'Memverifikasi...',
+            text: 'Mohon tunggu sebentar',
             allowOutsideClick: false,
             didOpen: () => Swal.showLoading()
         });
@@ -510,18 +499,18 @@
                 isAlreadyPaid = true;
                 Swal.fire({
                     icon: 'success',
-                    title: 'Pembayaran Lunas Otomatis!',
-                    text: 'Status pesanan berhasil diubah menjadi LUNAS. Mengalihkan ke antrean...',
-                    timer: 1800,
+                    title: 'Pembayaran Lunas',
+                    text: 'Terima kasih, pembayaran Anda telah berhasil dikonfirmasi.',
+                    timer: 1600,
                     showConfirmButton: false
                 }).then(() => {
                     window.location.href = data.redirect_url;
                 });
             } else {
-                throw new Error(data.message || 'Gagal melakukan simulasi');
+                throw new Error(data.message || 'Gagal memproses pembayaran');
             }
         } catch (e) {
-            Swal.fire('Error', e.message || 'Gagal simulasi.', 'error');
+            Swal.fire('Kendala', e.message || 'Terjadi kesalahan sistem.', 'error');
         }
     }
 
