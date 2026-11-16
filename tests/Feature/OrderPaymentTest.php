@@ -72,12 +72,15 @@ class OrderPaymentTest extends TestCase
         $paymentPage->assertStatus(200);
         $paymentPage->assertSee('22.000');
 
-        // Pelanggan konfirmasi bayar
+        // Percobaan konfirmasi bayar tanpa verifikasi gateway DITOLAK sistem
         $confirmResponse = $this->postJson(route('customer.confirm_payment', $token));
-        $confirmResponse->assertStatus(200);
-        $confirmResponse->assertJson(['success' => true, 'is_paid' => true]);
+        $confirmResponse->assertStatus(422);
 
+        // Simulasi pembayaran lunas melalui sistem Payment Gateway
         $order = Order::first();
+        app(\App\Services\MidtransService::class)->markOrderAsPaid($order, 'qris');
+        $order->refresh();
+
         // Status langsung lunas seketika
         $this->assertTrue($order->isPaid());
         $this->assertEquals('lunas', $order->payment_status);

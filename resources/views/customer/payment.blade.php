@@ -79,12 +79,6 @@
                 <span>Tampilkan Barcode QRIS</span>
             </button>
 
-            <!-- Tombol Alternatif / Konfirmasi Cepat -->
-            <button type="button" onclick="confirmPaymentDirect()" id="btnConfirmPay" class="w-full py-3 bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 font-bold rounded-2xl text-xs transition flex items-center justify-center space-x-1.5">
-                <i class="fa-solid fa-circle-check text-emerald-600"></i>
-                <span>Saya Sudah Selesai Bayar</span>
-            </button>
-
             <!-- Logo Bank & E-Wallet -->
             <div class="pt-2 border-t border-gray-100 text-center">
                 <div class="flex flex-wrap items-center justify-center gap-1.5 text-[10px] text-gray-500 font-medium">
@@ -164,8 +158,17 @@
 
             // Buka Modal Snap QRIS
             window.snap.pay(data.snap_token, {
-                onSuccess: async function(result) {
-                    await markAsPaidAndRedirect(result?.payment_type || 'qris');
+                onSuccess: function(result) {
+                    isAlreadyPaid = true;
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Pembayaran Lunas',
+                        text: 'Terima kasih, pembayaran Anda telah berhasil!',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.href = `/pesanan/${orderToken}`;
+                    });
                 },
                 onPending: function(result) {
                     pollPaymentStatus();
@@ -182,70 +185,6 @@
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
-        }
-    }
-
-    // Tombol Konfirmasi Langsung Selesai Bayar
-    async function confirmPaymentDirect() {
-        const confirm = await Swal.fire({
-            title: 'Konfirmasi Pembayaran',
-            text: 'Apakah Anda telah menyelesaikan pembayaran sebesar Rp ' + totalAmount.toLocaleString('id-ID') + '?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#16a34a',
-            cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Ya, Sudah Bayar',
-            cancelButtonText: 'Batal'
-        });
-
-        if (!confirm.isConfirmed) return;
-
-        await markAsPaidAndRedirect('qris');
-    }
-
-    // Eksekusi Ubah Status Menjadi LUNAS Seketika & Alihkan ke Antrean
-    async function markAsPaidAndRedirect(paymentType) {
-        isAlreadyPaid = true;
-
-        Swal.fire({
-            title: 'Memverifikasi Pembayaran...',
-            text: 'Mohon tunggu sebentar',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-
-        try {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "{{ csrf_token() }}";
-            const res = await fetch(`/pesanan/${orderToken}/konfirmasi-bayar`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                body: JSON.stringify({
-                    _token: csrfToken,
-                    payment_type: paymentType
-                })
-            });
-
-            const data = await res.json();
-            if (res.ok && data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Pembayaran Lunas',
-                    text: 'Terima kasih, pembayaran pesanan Anda telah lunas!',
-                    timer: 1500,
-                    showConfirmButton: false
-                }).then(() => {
-                    window.location.href = data.redirect_url;
-                });
-            } else {
-                throw new Error(data.message || 'Gagal mengonfirmasi');
-            }
-        } catch (e) {
-            // Fallback ke tracking jika redirect
-            window.location.href = `/pesanan/${orderToken}`;
         }
     }
 

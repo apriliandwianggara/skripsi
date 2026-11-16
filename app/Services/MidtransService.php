@@ -124,6 +124,10 @@ class MidtransService
             throw new \Exception($msg);
         }
 
+        // Simpan ID transaksi Midtrans pada order agar statusnya dapat dilacak dengan presisi
+        $order->payment_note = $midtransOrderId;
+        $order->save();
+
         return [
             'token' => $resData['token'],
             'redirect_url' => $resData['redirect_url'] ?? null,

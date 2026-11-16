@@ -405,37 +405,36 @@ class CustomerOrderController extends Controller
             $proofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
         }
 
-        // Konfirmasi Pembayaran QRIS:
-        // Status langsung diubah menjadi LUNAS sehingga di HP pelanggan seketika muncul status LUNAS
-        // dan pesanan langsung siap diproses oleh barista tanpa menunggu konfirmasi kasir.
-        $order->payment_status = 'lunas';
-        $order->paid_at = now();
-        if ($proofPath) {
-            $order->payment_proof = $proofPath;
-        }
-        if ($request->filled('payment_note')) {
-            $order->payment_note = $request->payment_note;
-        } else {
-            $order->payment_note = 'Lunas via QRIS / E-Wallet';
-        }
-        $order->save();
+        // Verifikasi Ketat Pembayaran via Payment Gateway Midtrans:
+        // Status HANYA diubah menjadi LUNAS jika Payment Gateway mengonfirmasi bahwa transaksi sudah sukses (settlement / capture).
+        // Tidak ada celah bagi pengguna untuk mengeklik tombol sebelum menyelesaikan pembayaran.
+        $midtransOrderId = $order->payment_note ?: $order->order_number;
+        $statusRes = $this->midtransService->checkTransactionStatus($midtransOrderId);
 
-        OrderStatusHistory::create([
-            'order_id' => $order->id,
-            'previous_status' => $order->status,
-            'new_status' => $order->status,
-            'changed_by' => 'Kasir',
-            'notes' => "Pembayaran Rp " . number_format($order->total_price, 0, ',', '.') . " telah lunas.",
-            'created_at' => now(),
-        ]);
+        if (!$statusRes) {
+            $statusRes = $this->midtransService->checkTransactionStatus($order->order_number);
+        }
+
+        $trxStatus = $statusRes['transaction_status'] ?? '';
+
+        if (in_array($trxStatus, ['settlement', 'capture'])) {
+            $this->midtransService->markOrderAsPaid($order, $statusRes['payment_type'] ?? 'qris', $statusRes);
+
+            return response()->json([
+                'success' => true,
+                'is_paid' => true,
+                'is_waiting_verification' => false,
+                'message' => 'Pembayaran terverifikasi lunas oleh Payment Gateway.',
+                'redirect_url' => route('customer.track', $order->tracking_token),
+            ]);
+        }
 
         return response()->json([
-            'success' => true,
-            'is_paid' => true,
+            'success' => false,
+            'is_paid' => false,
             'is_waiting_verification' => false,
-            'message' => 'Pembayaran Anda telah lunas!',
-            'redirect_url' => route('customer.track', $order->tracking_token),
-        ]);
+            'message' => 'Pembayaran belum terdeteksi. Silakan selesaikan scan dan pembayaran QRIS terlebih dahulu.',
+        ], 422);
     }
 
     /**
@@ -512,7 +511,11 @@ class CustomerOrderController extends Controller
         // Jika pesanan belum lunas, otomatis cek ke server Midtrans apakah sudah dibayar oleh pelanggan
         if (!$order->isPaid() && $order->payment_method === 'qris') {
             try {
-                $statusRes = $this->midtransService->checkTransactionStatus($order->order_number);
+                $midtransOrderId = $order->payment_note ?: $order->order_number;
+                $statusRes = $this->midtransService->checkTransactionStatus($midtransOrderId);
+                if (!$statusRes) {
+                    $statusRes = $this->midtransService->checkTransactionStatus($order->order_number);
+                }
                 if ($statusRes && in_array($statusRes['transaction_status'] ?? '', ['settlement', 'capture'])) {
                     $this->midtransService->markOrderAsPaid($order, $statusRes['payment_type'] ?? 'midtrans_qris', $statusRes);
                     $order->refresh();
