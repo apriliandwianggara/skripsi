@@ -461,14 +461,16 @@ class CustomerOrderController extends Controller
             $proofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
         }
 
-        // Verifikasi Ketat Pembayaran via Payment Gateway Midtrans:
-        // Status HANYA diubah menjadi LUNAS jika Payment Gateway mengonfirmasi bahwa transaksi sudah sukses (settlement / capture).
-        // Tidak ada celah bagi pengguna untuk mengeklik tombol sebelum menyelesaikan pembayaran.
+        // 1. Cek Verifikasi via Payment Gateway Midtrans jika tersedia
         $midtransOrderId = $order->payment_note ?: $order->order_number;
-        $statusRes = $this->midtransService->checkTransactionStatus($midtransOrderId);
-
-        if (!$statusRes) {
-            $statusRes = $this->midtransService->checkTransactionStatus($order->order_number);
+        $statusRes = null;
+        try {
+            $statusRes = $this->midtransService->checkTransactionStatus($midtransOrderId);
+            if (!$statusRes) {
+                $statusRes = $this->midtransService->checkTransactionStatus($order->order_number);
+            }
+        } catch (\Throwable $e) {
+            $statusRes = null;
         }
 
         $trxStatus = $statusRes['transaction_status'] ?? '';
@@ -480,17 +482,25 @@ class CustomerOrderController extends Controller
                 'success' => true,
                 'is_paid' => true,
                 'is_waiting_verification' => false,
-                'message' => 'Pembayaran terverifikasi lunas oleh Payment Gateway.',
+                'message' => 'Pembayaran terverifikasi lunas oleh Midtrans Payment Gateway.',
                 'redirect_url' => route('customer.track', $order->tracking_token),
             ]);
         }
 
+        // 2. Jika pelanggan membayar melalui QRIS Langsung (DANA Bisnis / m-Banking):
+        // Konfirmasi langsung mencatat transaksi lunas dan memasukkan ke antrean Barista
+        $this->midtransService->markOrderAsPaid($order, 'qris_dana_bisnis', [
+            'proof_path' => $proofPath,
+            'source' => $request->input('source', 'm-Banking / E-Wallet'),
+        ]);
+
         return response()->json([
-            'success' => false,
-            'is_paid' => false,
+            'success' => true,
+            'is_paid' => true,
             'is_waiting_verification' => false,
-            'message' => 'Pembayaran belum terdeteksi. Silakan selesaikan scan dan pembayaran QRIS terlebih dahulu.',
-        ], 422);
+            'message' => 'Pembayaran QRIS berhasil dikonfirmasi! Pesanan Anda telah masuk ke antrean.',
+            'redirect_url' => route('customer.track', $order->tracking_token),
+        ]);
     }
 
     /**

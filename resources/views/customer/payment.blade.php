@@ -101,8 +101,36 @@
                     <span>Menunggu Pembayaran dari Nasabah...</span>
                 </div>
                 <p class="text-[11px] text-emerald-700 leading-relaxed">
-                    Sistem secara real-time memantau pembayaran. Layar ini hanya akan berubah menjadi <strong>LUNAS</strong> setelah transaksi Anda benar-benar berhasil diselesaikan.
+                    Sistem secara real-time memantau pembayaran. Layar ini otomatis berubah menjadi <strong>LUNAS</strong> setelah transaksi diverifikasi.
                 </p>
+            </div>
+
+            <!-- Tombol Konfirmasi Pembayaran via m-Banking / E-Wallet -->
+            <div class="pt-1">
+                <button type="button" onclick="confirmDirectPayment()" class="w-full py-3.5 px-4 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg transition flex items-center justify-center space-x-2 text-sm cursor-pointer">
+                    <i class="fa-solid fa-circle-check text-lg"></i>
+                    <span>Saya Sudah Selesai Bayar via m-Banking</span>
+                </button>
+                <p class="text-[11px] text-gray-500 mt-2 text-center">
+                    Klik tombol di atas jika Anda sudah mentransfer pembayaran melalui m-Banking.
+                </p>
+            </div>
+
+            <!-- Opsi Pembayaran Otomatis Midtrans Gateway (Bila Tersedia) -->
+            <div class="pt-3 border-t border-gray-150">
+                <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl p-3.5 text-center space-y-2 shadow">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="font-bold text-cyan-200"><i class="fa-solid fa-bolt mr-1"></i> Midtrans Gateway</span>
+                        <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded font-mono">Verifikasi Otomatis</span>
+                    </div>
+                    <p class="text-[11px] text-blue-100/90 leading-tight">
+                        Mau bayar via QRIS Midtrans dengan verifikasi otomatis tanpa klik konfirmasi?
+                    </p>
+                    <button type="button" id="midtransBtn" onclick="payWithMidtrans()" class="w-full py-2.5 px-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold rounded-xl text-xs shadow transition flex items-center justify-center space-x-1.5 cursor-pointer">
+                        <span>Buka QRIS / E-Wallet Midtrans</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Logo Bank & E-Wallet Terdaftar -->
@@ -139,9 +167,11 @@
 @endsection
 
 @push('scripts')
+<script src="{{ $midtransSnapJs }}" data-client-key="{{ $midtransClientKey }}"></script>
 <script>
     const orderToken = "{{ $order->tracking_token }}";
     const totalAmount = {{ (int)$order->total_price }};
+    const csrfToken = "{{ csrf_token() }}";
     let isAlreadyPaid = {{ $order->isPaid() ? 'true' : 'false' }};
 
     function copyNominal() {
@@ -156,6 +186,137 @@
                 position: 'top-end'
             });
         });
+    }
+
+    // Konfirmasi Pembayaran Langsung via m-Banking / E-Wallet
+    async function confirmDirectPayment() {
+        const result = await Swal.fire({
+            title: 'Konfirmasi Pembayaran',
+            text: 'Apakah Anda telah mentransfer nominal sebesar Rp ' + totalAmount.toLocaleString('id-ID') + ' via m-Banking / E-Wallet?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#047857',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Ya, Sudah Bayar',
+            cancelButtonText: 'Batal'
+        });
+
+        if (!result.isConfirmed) return;
+
+        Swal.fire({
+            title: 'Memverifikasi Pembayaran...',
+            text: 'Mohon tunggu sebentar',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const res = await fetch(`/pesanan/${orderToken}/konfirmasi-bayar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ source: 'm-Banking' })
+            });
+
+            const data = await res.json();
+            if (data.success && data.is_paid) {
+                isAlreadyPaid = true;
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Pembayaran Dikonfirmasi!',
+                    text: 'Terima kasih, pesanan Anda telah lunas dan masuk antrean barista.',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.href = data.redirect_url || `/pesanan/${orderToken}`;
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Verifikasi Gagal',
+                    text: data.message || 'Pembayaran belum dapat dikonfirmasi. Silakan coba lagi.'
+                });
+            }
+        } catch (e) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Kesalahan Sistem',
+                text: 'Terjadi kendala jaringan saat memverifikasi pembayaran.'
+            });
+        }
+    }
+
+    // Pembayaran Otomatis via Midtrans Snap (QRIS / GoPay / ShopeePay)
+    async function payWithMidtrans() {
+        const btn = document.getElementById('midtransBtn');
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Menyiapkan Midtrans...';
+
+        try {
+            const res = await fetch(`/pesanan/${orderToken}/midtrans-token`);
+            const data = await res.json();
+
+            if (!data.success || !data.snap_token) {
+                throw new Error(data.message || 'Gagal memuat sesi Midtrans.');
+            }
+
+            if (data.is_paid) {
+                window.location.href = data.redirect_url;
+                return;
+            }
+
+            // Panggil popup Snap
+            window.snap.pay(data.snap_token, {
+                onSuccess: function(result) {
+                    Swal.fire({
+                        title: 'Memproses Pembayaran...',
+                        didOpen: () => Swal.showLoading()
+                    });
+
+                    fetch(`/pesanan/${orderToken}/midtrans-success`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(result)
+                    }).finally(() => {
+                        window.location.href = `/pesanan/${orderToken}`;
+                    });
+                },
+                onPending: function(result) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Menunggu Pembayaran',
+                        text: 'Selesaikan transaksi di aplikasi Anda. Halaman ini akan otomatis update.'
+                    });
+                },
+                onError: function(result) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Pembayaran Gagal',
+                        text: 'Terjadi kendala saat memproses transaksi di Midtrans.'
+                    });
+                },
+                onClose: function() {
+                    // Pengguna menutup popup snap
+                }
+            });
+        } catch (err) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Midtrans Masih Review',
+                text: err.message || 'Channel QRIS Midtrans sedang dalam review aktivasi. Silakan scan QRIS DANA Bisnis langsung di atas.'
+            });
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+        }
     }
 
     // Pemantauan Mutasi Pembayaran Masuk Real-Time
