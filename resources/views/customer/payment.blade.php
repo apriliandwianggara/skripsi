@@ -116,18 +116,22 @@
                 </p>
             </div>
 
-            <!-- Opsi Pembayaran Otomatis Midtrans Gateway (Bila Tersedia) -->
+            <!-- Opsi Pembayaran Otomatis DOKU Payment Gateway Resmi -->
             <div class="pt-3 border-t border-gray-150">
-                <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl p-3.5 text-center space-y-2 shadow">
+                <div class="bg-gradient-to-r from-red-800 via-rose-900 to-red-950 text-white rounded-2xl p-4 text-center space-y-2.5 shadow-lg border border-red-500/20">
                     <div class="flex items-center justify-between text-xs">
-                        <span class="font-bold text-cyan-200"><i class="fa-solid fa-bolt mr-1"></i> Midtrans Gateway</span>
-                        <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded font-mono">Verifikasi Otomatis</span>
+                        <span class="font-bold text-rose-200 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-red-400 animate-ping"></span>
+                            <span>DOKU Payment Gateway</span>
+                        </span>
+                        <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded font-mono font-bold">VERIFIKASI OTOMATIS</span>
                     </div>
-                    <p class="text-[11px] text-blue-100/90 leading-tight">
-                        Mau bayar via QRIS Midtrans dengan verifikasi otomatis tanpa klik konfirmasi?
+                    <p class="text-[11px] text-rose-100/90 leading-snug">
+                        Mau verifikasi otomatis instan? Bayar via <strong>DOKU Gateway Resmi</strong> (Virtual Account BCA/BRI/BNI/Mandiri, Alfamart, Indomaret, QRIS).
                     </p>
-                    <button type="button" id="midtransBtn" onclick="payWithMidtrans()" class="w-full py-2.5 px-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold rounded-xl text-xs shadow transition flex items-center justify-center space-x-1.5 cursor-pointer">
-                        <span>Buka QRIS / E-Wallet Midtrans</span>
+                    <button type="button" id="dokuBtn" onclick="payWithDoku()" class="w-full py-3 px-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-1.5 cursor-pointer">
+                        <i class="fa-solid fa-credit-card mr-1"></i>
+                        <span>Bayar Otomatis via DOKU</span>
                         <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
@@ -246,6 +250,39 @@
                 title: 'Kesalahan Sistem',
                 text: 'Terjadi kendala jaringan saat memverifikasi pembayaran.'
             });
+        }
+    }
+
+    // Pembayaran Otomatis via DOKU Payment Gateway (Resmi Aktif)
+    async function payWithDoku() {
+        const btn = document.getElementById('dokuBtn');
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Menyiapkan DOKU Checkout...';
+
+        try {
+            const res = await fetch(`/pesanan/${orderToken}/doku-checkout`);
+            const data = await res.json();
+
+            if (!data.success || !data.payment_url) {
+                throw new Error(data.message || 'Gagal memuat sesi DOKU Checkout.');
+            }
+
+            if (data.is_paid) {
+                window.location.href = data.redirect_url;
+                return;
+            }
+
+            // Arahkan ke halaman pembayaran resmi DOKU
+            window.location.href = data.payment_url;
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: 'DOKU Checkout',
+                text: err.message || 'Terjadi kendala saat memuat DOKU. Silakan coba lagi.'
+            });
+            btn.disabled = false;
+            btn.innerHTML = origText;
         }
     }
 

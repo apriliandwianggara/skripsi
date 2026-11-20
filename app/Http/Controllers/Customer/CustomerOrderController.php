@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderStatusHistory;
 use App\Models\Setting;
+use App\Services\DokuService;
 use App\Services\FifoQueueService;
 use App\Services\MidtransService;
 use App\Services\QrisService;
@@ -22,12 +23,18 @@ class CustomerOrderController extends Controller
     protected FifoQueueService $fifoService;
     protected QrisService $qrisService;
     protected MidtransService $midtransService;
+    protected DokuService $dokuService;
 
-    public function __construct(FifoQueueService $fifoService, QrisService $qrisService, MidtransService $midtransService)
-    {
+    public function __construct(
+        FifoQueueService $fifoService, 
+        QrisService $qrisService, 
+        MidtransService $midtransService,
+        DokuService $dokuService
+    ) {
         $this->fifoService = $fifoService;
         $this->qrisService = $qrisService;
         $this->midtransService = $midtransService;
+        $this->dokuService = $dokuService;
     }
 
     /**
@@ -370,18 +377,19 @@ class CustomerOrderController extends Controller
         $simulatorUrl = route('customer.qris_simulator', $order->tracking_token);
         $simulatorQrUri = $this->qrisService->generateQrisDataUri($simulatorUrl);
 
-        // Kredensial Payment Gateway Midtrans
+        // Kredensial Payment Gateway Midtrans & DOKU
         $midtransClientKey = config('services.midtrans.client_key', 'Mid-client-DdhidPXOfhiRBbRJ');
         $midtransSnapJs = config('services.midtrans.is_production') 
             ? 'https://app.midtrans.com/snap/snap.js' 
             : 'https://app.sandbox.midtrans.com/snap/snap.js';
+        $dokuClientId = $this->dokuService->getClientId();
 
         return view('customer.payment', compact(
             'order', 'setting', 'qrisPayload', 'qrisDataUri',
             'staticPayload', 'staticQrisDataUri',
             'paymentShareUrl', 'paymentShareQrUri',
             'danaNumber', 'merchantName', 'nmid', 'danaMerchantName',
-            'midtransClientKey', 'midtransSnapJs',
+            'midtransClientKey', 'midtransSnapJs', 'dokuClientId',
             'simulatorUrl', 'simulatorQrUri'
         ));
     }

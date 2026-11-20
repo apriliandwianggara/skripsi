@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Customer\CustomerOrderController;
+use App\Http\Controllers\Payment\DokuController;
 use App\Http\Controllers\Payment\MidtransController;
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -49,6 +50,10 @@ Route::get('/pesanan/{token}/midtrans-token', [MidtransController::class, 'getSn
 Route::post('/pesanan/{token}/midtrans-success', [MidtransController::class, 'confirmSuccess'])->name('midtrans.success');
 Route::post('/pesanan/{token}/midtrans-simulate', [MidtransController::class, 'simulatePaymentSuccess'])->name('midtrans.simulate');
 Route::post('/api/midtrans/notification', [MidtransController::class, 'handleNotification'])->name('midtrans.notification');
+
+// 2.d Integrasi Payment Gateway Resmi DOKU (Checkout & Webhook Notifikasi)
+Route::get('/pesanan/{token}/doku-checkout', [DokuController::class, 'getCheckoutUrl'])->name('doku.checkout');
+Route::post('/api/doku/notification', [DokuController::class, 'handleNotification'])->name('doku.notification');
 
 // 2.c Halaman Pembayaran QRIS Ponsel (Dapat discan langsung oleh Kamera HP Bawaan)
 Route::get('/pesanan/{token}/qris', [CustomerOrderController::class, 'qrisSimulator'])->name('customer.qris_simulator');

@@ -43,4 +43,11 @@ return [
         'is_3ds' => env('MIDTRANS_IS_3DS', true),
     ],
 
+    'doku' => [
+        'client_id' => env('DOKU_CLIENT_ID', 'BRN-0218-1795121278962'),
+        'secret_key' => env('DOKU_SECRET_KEY'),
+        'public_key' => env('DOKU_PUBLIC_KEY'),
+        'is_production' => env('DOKU_IS_PRODUCTION', true),
+    ],
+
 ];
