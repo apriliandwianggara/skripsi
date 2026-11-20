@@ -581,21 +581,37 @@ class CustomerOrderController extends Controller
             return response()->json(['success' => false, 'message' => 'Pesanan tidak ditemukan'], 404);
         }
 
-        // Auto-Sync Pembayaran Midtrans Otomatis:
-        // Jika pesanan belum lunas, otomatis cek ke server Midtrans apakah sudah dibayar oleh pelanggan
-        if (!$order->isPaid() && $order->payment_method === 'qris') {
-            try {
-                $midtransOrderId = $order->payment_note ?: $order->order_number;
-                $statusRes = $this->midtransService->checkTransactionStatus($midtransOrderId);
-                if (!$statusRes) {
-                    $statusRes = $this->midtransService->checkTransactionStatus($order->order_number);
+        // Auto-Sync Pembayaran Otomatis (DOKU Gateway & Midtrans):
+        // Jika pesanan belum lunas, otomatis cek ke server DOKU atau Midtrans apakah sudah dibayar
+        if (!$order->isPaid()) {
+            // 1. Cek status ke server DOKU secara berkala
+            if ($order->payment_note && str_starts_with($order->payment_note, $order->order_number)) {
+                try {
+                    $dokuRes = $this->dokuService->checkTransactionStatus($order->payment_note);
+                    if ($dokuRes && strtoupper($dokuRes['transaction']['status'] ?? '') === 'SUCCESS') {
+                        $this->dokuService->markOrderAsPaid($order, 'doku', $dokuRes);
+                        $order->refresh();
+                    }
+                } catch (\Throwable $e) {
+                    // silent catch
                 }
-                if ($statusRes && in_array($statusRes['transaction_status'] ?? '', ['settlement', 'capture'])) {
-                    $this->midtransService->markOrderAsPaid($order, $statusRes['payment_type'] ?? 'midtrans_qris', $statusRes);
-                    $order->refresh();
+            }
+
+            // 2. Cek status ke server Midtrans
+            if (!$order->isPaid() && $order->payment_method === 'qris') {
+                try {
+                    $midtransOrderId = $order->payment_note ?: $order->order_number;
+                    $statusRes = $this->midtransService->checkTransactionStatus($midtransOrderId);
+                    if (!$statusRes) {
+                        $statusRes = $this->midtransService->checkTransactionStatus($order->order_number);
+                    }
+                    if ($statusRes && in_array($statusRes['transaction_status'] ?? '', ['settlement', 'capture'])) {
+                        $this->midtransService->markOrderAsPaid($order, $statusRes['payment_type'] ?? 'midtrans_qris', $statusRes);
+                        $order->refresh();
+                    }
+                } catch (\Throwable $e) {
+                    // Jangan gagalkan polling jika Midtrans lambat merespons
                 }
-            } catch (\Throwable $e) {
-                // Jangan gagalkan polling jika Midtrans lambat merespons
             }
         }
 

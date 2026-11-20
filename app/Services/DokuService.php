@@ -147,6 +147,48 @@ class DokuService
     }
 
     /**
+     * Memeriksa status transaksi langsung ke server DOKU (Non-SNAP Check Status API)
+     */
+    public function checkTransactionStatus(string $invoiceNumber): ?array
+    {
+        $requestTarget = '/orders/v1/status/' . $invoiceNumber;
+        $requestId = uniqid('req-', true);
+        $timestamp = gmdate('Y-m-d\TH:i:s\Z');
+
+        $componentString = 
+            "Client-Id:" . $this->clientId . "\n" .
+            "Request-Id:" . $requestId . "\n" .
+            "Request-Timestamp:" . $timestamp . "\n" .
+            "Request-Target:" . $requestTarget;
+
+        $signature = 'HMACSHA256=' . base64_encode(hash_hmac('sha256', $componentString, $this->secretKey, true));
+
+        $headers = [
+            'Client-Id: ' . $this->clientId,
+            'Request-Id: ' . $requestId,
+            'Request-Timestamp: ' . $timestamp,
+            'Signature: ' . $signature,
+        ];
+
+        $url = ($this->isProduction ? 'https://api.doku.com' : 'https://api-sandbox.doku.com') . $requestTarget;
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+
+        $res = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($code === 200 && $res) {
+            return json_decode($res, true);
+        }
+
+        return null;
+    }
+
+    /**
      * Memvalidasi keaslian signature dari Webhook Notifikasi HTTP DOKU
      */
     public function isValidSignature(array $headers, string $rawBody): bool
