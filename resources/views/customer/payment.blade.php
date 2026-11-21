@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Pembayaran QRIS Rp ' . number_format($order->total_price, 0, ',', '.') . ' - ' . ($setting->cafe_name ?? 'Sekarsa Coffee'))
+@section('title', 'Pembayaran Tagihan Rp ' . number_format($order->total_price, 0, ',', '.') . ' - ' . ($setting->cafe_name ?? 'Sekarsa Coffee'))
 
 @section('content')
 <div class="min-h-screen bg-slate-50 flex flex-col py-6 px-4 pb-20">
@@ -18,9 +18,9 @@
                 </div>
             </div>
 
-            <div class="flex items-center space-x-1.5 text-[11px] text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-full font-medium">
-                <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-                <span>QRIS Dinamis Otomatis</span>
+            <div class="flex items-center space-x-1.5 text-[11px] text-rose-800 bg-rose-100/80 px-2.5 py-1 rounded-full font-medium">
+                <span class="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+                <span>DOKU Gateway</span>
             </div>
         </div>
 
@@ -53,101 +53,71 @@
             </p>
         </div>
 
-        <!-- Box Tampilan QRIS Resmi DANA Bisnis Sekarsa Coffee -->
-        <div class="bg-white rounded-3xl shadow-xl border border-gray-150 p-6 space-y-4 text-center">
+        <!-- Box Portal Pembayaran Resmi DOKU Gateway -->
+        <div class="bg-white rounded-3xl shadow-xl border border-gray-150 p-6 space-y-5 text-center">
             
-            <!-- Header QRIS Standar Nasional (GPN) -->
-            <div class="flex items-center justify-between border-b border-gray-150 pb-3">
+            <!-- Header DOKU -->
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3">
                 <div class="flex items-center space-x-2">
-                    <span class="font-black text-2xl tracking-tighter text-red-600 font-sans">QRIS</span>
-                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Standar Pembayaran Nasional</span>
+                    <span class="font-black text-2xl tracking-tight text-rose-600 font-sans">DOKU</span>
+                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Official Payment Gateway</span>
                 </div>
-                <div class="flex items-center space-x-1">
-                    <span class="px-2 py-0.5 bg-red-600 text-white font-extrabold text-[10px] rounded">GPN</span>
+                <div class="flex items-center space-x-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Verifikasi Otomatis</span>
                 </div>
             </div>
 
-            <!-- Identitas Merchant DANA Bisnis Resmi -->
-            <div class="space-y-0.5 text-center">
-                <h3 class="font-bold text-sm text-gray-900 leading-tight">
-                    {{ $danaMerchantName ?? 'M Aprilian Dwi Anggara, S (Sekarsa Coffee)' }}
+            <!-- Ilustrasi / Visual Gateway -->
+            <div class="py-2">
+                <div class="w-20 h-20 bg-rose-50 text-rose-600 rounded-3xl mx-auto flex items-center justify-center text-3xl shadow-inner border border-rose-100">
+                    <i class="fa-solid fa-credit-card"></i>
+                </div>
+                <h3 class="font-bold text-base text-gray-900 mt-3">
+                    Gerbang Pembayaran Sekarsa Coffee
                 </h3>
-                <p class="text-[11px] text-gray-500 font-mono">NMID: {{ $nmid ?? 'ID1026635802105' }} &bull; A01</p>
-            </div>
-
-            <!-- Barcode QRIS Resmi DANA Bisnis (Langsung dibaca m-Banking & E-Wallet dengan nominal terkunci) -->
-            <div class="relative inline-block mx-auto bg-white p-3 rounded-2xl border-2 border-dashed border-emerald-500/40 shadow-inner">
-                <img src="{{ $qrisDataUri }}" alt="QRIS DANA Bisnis Sekarsa Coffee" class="w-60 h-60 sm:w-64 sm:h-64 object-contain mx-auto rounded-xl">
-                
-                <div class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-emerald-700 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow whitespace-nowrap">
-                    Nominal Terkunci: Rp {{ number_format($order->total_price, 0, ',', '.') }}
-                </div>
-            </div>
-
-            <!-- Petunjuk Pemindaian m-Banking & E-Wallet -->
-            <div class="space-y-1 pt-2">
-                <p class="text-xs font-bold text-gray-800">
-                    Pindai Menggunakan BCA Mobile, Livin', BRImo, DANA, GoPay, atau ShopeePay
-                </p>
-                <p class="text-[11px] text-gray-500 leading-relaxed px-2">
-                    Buka menu Scan QRIS di aplikasi m-Banking atau E-Wallet Anda. Tagihan <strong>Rp {{ number_format($order->total_price, 0, ',', '.') }}</strong> langsung terkunci otomatis ke <strong>Sekarsa Coffee</strong>.
+                <p class="text-xs text-gray-500 max-w-xs mx-auto mt-1 leading-relaxed">
+                    Selesaikan pembayaran dengan mudah dan aman. Transaksi Anda akan diverifikasi secara otomatis tanpa konfirmasi manual.
                 </p>
             </div>
 
-            <!-- Status Pemantauan Mutasi Pembayaran Masuk (Tanpa Timer Palsu) -->
+            <!-- Tombol Utama: Bayar via DOKU -->
+            <div class="space-y-2.5 pt-1">
+                <button type="button" id="dokuBtn" onclick="payWithDoku()" class="w-full py-4 px-4 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg shadow-rose-600/30 transition flex items-center justify-center space-x-2.5 text-sm cursor-pointer">
+                    <i class="fa-solid fa-lock text-base"></i>
+                    <span>Bayar Sekarang via DOKU</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+
+                <p class="text-[11px] text-gray-400">
+                    Mendukung Virtual Account (BRI, BNI, Mandiri, Permata, dll.), Alfamart, Indomaret & QRIS
+                </p>
+            </div>
+
+            <!-- Status Pemantauan Transaksi Masuk -->
             <div class="bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-4 text-xs text-emerald-950 space-y-1.5 text-center">
                 <div class="flex items-center justify-center space-x-2 font-bold text-emerald-900">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping"></span>
-                    <span>Menunggu Pembayaran dari Nasabah...</span>
+                    <span>Menunggu Pembayaran...</span>
                 </div>
                 <p class="text-[11px] text-emerald-700 leading-relaxed">
-                    Sistem secara real-time memantau pembayaran. Layar ini otomatis berubah menjadi <strong>LUNAS</strong> setelah transaksi diverifikasi.
+                    Sistem secara real-time memantau transaksi Anda. Begitu pembayaran selesai di DOKU, layar ini otomatis berubah menjadi <strong>LUNAS</strong>.
                 </p>
             </div>
 
-            <!-- Tombol Konfirmasi Pembayaran via m-Banking / E-Wallet -->
-            <div class="pt-1">
-                <button type="button" onclick="confirmDirectPayment()" class="w-full py-3.5 px-4 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg transition flex items-center justify-center space-x-2 text-sm cursor-pointer">
-                    <i class="fa-solid fa-circle-check text-lg"></i>
-                    <span>Saya Sudah Selesai Bayar via m-Banking</span>
-                </button>
-                <p class="text-[11px] text-gray-500 mt-2 text-center">
-                    Klik tombol di atas jika Anda sudah mentransfer pembayaran melalui m-Banking.
-                </p>
-            </div>
-
-            <!-- Opsi Pembayaran Otomatis DOKU Payment Gateway Resmi -->
-            <div class="pt-3 border-t border-gray-150">
-                <div class="bg-gradient-to-r from-red-800 via-rose-900 to-red-950 text-white rounded-2xl p-4 text-center space-y-2.5 shadow-lg border border-red-500/20">
-                    <div class="flex items-center justify-between text-xs">
-                        <span class="font-bold text-rose-200 flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-red-400 animate-ping"></span>
-                            <span>DOKU Payment Gateway</span>
-                        </span>
-                        <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded font-mono font-bold">VERIFIKASI OTOMATIS</span>
-                    </div>
-                    <p class="text-[11px] text-rose-100/90 leading-snug">
-                        Mau verifikasi otomatis instan? Bayar via <strong>DOKU Gateway Resmi</strong> (Virtual Account BCA/BRI/BNI/Mandiri, Alfamart, Indomaret, QRIS).
-                    </p>
-                    <button type="button" id="dokuBtn" onclick="payWithDoku()" class="w-full py-3 px-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-1.5 cursor-pointer">
-                        <i class="fa-solid fa-credit-card mr-1"></i>
-                        <span>Bayar Otomatis via DOKU</span>
-                        <i class="fa-solid fa-arrow-right"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Logo Bank & E-Wallet Terdaftar -->
+            <!-- Logo Bank & Rekanan DOKU -->
             <div class="pt-3 border-t border-gray-100">
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Menerima Pembayaran:</p>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2.5">Metode Pembayaran Tersedia:</p>
                 <div class="flex flex-wrap items-center justify-center gap-1.5 text-[10px] text-gray-600 font-medium">
-                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">BCA Mobile</span>
-                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">Livin' Mandiri</span>
-                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">BRImo</span>
-                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">BNI Mobile</span>
-                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">DANA</span>
-                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">GoPay</span>
-                    <span class="px-2 py-0.5 bg-gray-50 rounded border border-gray-200">ShopeePay</span>
+                    <span class="px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-200">BRI VA</span>
+                    <span class="px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-200">BNI VA</span>
+                    <span class="px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-200">Mandiri / BSI VA</span>
+                    <span class="px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-200">Permata VA</span>
+                    <span class="px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-200">CIMB Niaga VA</span>
+                    <span class="px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-200">Danamon VA</span>
+                    <span class="px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-200">Alfamart</span>
+                    <span class="px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-200">Indomaret</span>
+                    <span class="px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-200 font-bold text-rose-600">QRIS</span>
                 </div>
             </div>
 
@@ -171,7 +141,6 @@
 @endsection
 
 @push('scripts')
-<script src="{{ $midtransSnapJs }}" data-client-key="{{ $midtransClientKey }}"></script>
 <script>
     const orderToken = "{{ $order->tracking_token }}";
     const totalAmount = {{ (int)$order->total_price }};
@@ -192,73 +161,12 @@
         });
     }
 
-    // Konfirmasi Pembayaran Langsung via m-Banking / E-Wallet
-    async function confirmDirectPayment() {
-        const result = await Swal.fire({
-            title: 'Konfirmasi Pembayaran',
-            text: 'Apakah Anda telah mentransfer nominal sebesar Rp ' + totalAmount.toLocaleString('id-ID') + ' via m-Banking / E-Wallet?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#047857',
-            cancelButtonColor: '#64748b',
-            confirmButtonText: 'Ya, Sudah Bayar',
-            cancelButtonText: 'Batal'
-        });
-
-        if (!result.isConfirmed) return;
-
-        Swal.fire({
-            title: 'Memverifikasi Pembayaran...',
-            text: 'Mohon tunggu sebentar',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-
-        try {
-            const res = await fetch(`/pesanan/${orderToken}/konfirmasi-bayar`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ source: 'm-Banking' })
-            });
-
-            const data = await res.json();
-            if (data.success && data.is_paid) {
-                isAlreadyPaid = true;
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Pembayaran Dikonfirmasi!',
-                    text: 'Terima kasih, pesanan Anda telah lunas dan masuk antrean barista.',
-                    timer: 2000,
-                    showConfirmButton: false
-                }).then(() => {
-                    window.location.href = data.redirect_url || `/pesanan/${orderToken}`;
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Verifikasi Gagal',
-                    text: data.message || 'Pembayaran belum dapat dikonfirmasi. Silakan coba lagi.'
-                });
-            }
-        } catch (e) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Kesalahan Sistem',
-                text: 'Terjadi kendala jaringan saat memverifikasi pembayaran.'
-            });
-        }
-    }
-
-    // Pembayaran Otomatis via DOKU Payment Gateway (Resmi Aktif)
+    // Pembayaran Otomatis via DOKU Payment Gateway
     async function payWithDoku() {
         const btn = document.getElementById('dokuBtn');
         const origText = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Menyiapkan DOKU Checkout...';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyiapkan DOKU Checkout...';
 
         try {
             const res = await fetch(`/pesanan/${orderToken}/doku-checkout`);
@@ -286,78 +194,8 @@
         }
     }
 
-    // Pembayaran Otomatis via Midtrans Snap (QRIS / GoPay / ShopeePay)
-    async function payWithMidtrans() {
-        const btn = document.getElementById('midtransBtn');
-        const origText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Menyiapkan Midtrans...';
-
-        try {
-            const res = await fetch(`/pesanan/${orderToken}/midtrans-token`);
-            const data = await res.json();
-
-            if (!data.success || !data.snap_token) {
-                throw new Error(data.message || 'Gagal memuat sesi Midtrans.');
-            }
-
-            if (data.is_paid) {
-                window.location.href = data.redirect_url;
-                return;
-            }
-
-            // Panggil popup Snap
-            window.snap.pay(data.snap_token, {
-                onSuccess: function(result) {
-                    Swal.fire({
-                        title: 'Memproses Pembayaran...',
-                        didOpen: () => Swal.showLoading()
-                    });
-
-                    fetch(`/pesanan/${orderToken}/midtrans-success`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify(result)
-                    }).finally(() => {
-                        window.location.href = `/pesanan/${orderToken}`;
-                    });
-                },
-                onPending: function(result) {
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'Menunggu Pembayaran',
-                        text: 'Selesaikan transaksi di aplikasi Anda. Halaman ini akan otomatis update.'
-                    });
-                },
-                onError: function(result) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Pembayaran Gagal',
-                        text: 'Terjadi kendala saat memproses transaksi di Midtrans.'
-                    });
-                },
-                onClose: function() {
-                    // Pengguna menutup popup snap
-                }
-            });
-        } catch (err) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Midtrans Masih Review',
-                text: err.message || 'Channel QRIS Midtrans sedang dalam review aktivasi. Silakan scan QRIS DANA Bisnis langsung di atas.'
-            });
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = origText;
-        }
-    }
-
-    // Pemantauan Mutasi Pembayaran Masuk Real-Time
-    // Hanya akan berpindah ke LUNAS jika transaksi benar-benar telah lunas
+    // Pemantauan Transaksi Real-Time
+    // Akan otomatis berpindah ke halaman status saat pembayaran sukses di DOKU
     async function pollPaymentStatus() {
         if (isAlreadyPaid) return;
 
@@ -371,7 +209,7 @@
                 Swal.fire({
                     icon: 'success',
                     title: 'Pembayaran Lunas!',
-                    text: 'Terima kasih, pembayaran pesanan telah berhasil diverifikasi!',
+                    text: 'Terima kasih, pembayaran pesanan Anda telah berhasil diverifikasi!',
                     timer: 1800,
                     showConfirmButton: false
                 }).then(() => {
