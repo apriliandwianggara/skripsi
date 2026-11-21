@@ -26,11 +26,6 @@
             </div>
 
             <div class="flex items-center space-x-2">
-                <!-- Info FIFO Badge -->
-                <div class="hidden sm:flex items-center space-x-1.5 bg-emerald-800/80 px-2.5 py-1 rounded-full text-[11px] text-emerald-200 border border-emerald-700/60">
-                    <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i>
-                    <span>Antrean FIFO</span>
-                </div>
                 <!-- Cart Quick Indicator -->
                 <button onclick="openCartModal()" class="relative p-2 rounded-xl bg-emerald-700/50 hover:bg-emerald-700 text-white transition focus:outline-none">
                     <i class="fa-solid fa-basket-shopping text-lg"></i>
@@ -41,8 +36,8 @@
 
         <!-- Banner Info Pelanggan -->
         <div class="bg-emerald-950/60 border-t border-emerald-800/50 px-4 py-1.5 text-center text-[11px] text-emerald-200/90 flex items-center justify-center space-x-2">
-            <i class="fa-solid fa-circle-info text-emerald-400 text-xs"></i>
-            <span>Pesanan diproses berurutan sesuai waktu masuk (FIFO).</span>
+            <i class="fa-solid fa-mug-hot text-emerald-400 text-xs"></i>
+            <span>Setiap sajian disiapkan segar dan berurutan demi cita rasa terbaik.</span>
         </div>
     </header>
 
@@ -447,17 +442,6 @@
                                 </div>
                             </label>
                         </div>
-                    </div>
-
-                    <!-- Ringkasan Algoritma FIFO -->
-                    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900 space-y-1">
-                        <div class="font-bold flex items-center space-x-1.5 text-emerald-800">
-                            <i class="fa-solid fa-shield-halved text-emerald-600"></i>
-                            <span>Sistem Antrean FIFO Sekarsa Coffee</span>
-                        </div>
-                        <p class="text-[11px] text-emerald-700">
-                            Waktu server saat pesanan dikirim akan menjadi penentu urutan pengerjaan pesanan Anda.
-                        </p>
                     </div>
                 </div>
             </div>

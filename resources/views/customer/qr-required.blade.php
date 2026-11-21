@@ -39,7 +39,7 @@
                     Pemesanan Wajib Melalui Scan QR
                 </h2>
                 <p class="text-xs text-gray-600 leading-relaxed">
-                    Untuk menjaga ketertiban antrean <strong class="text-emerald-800 font-semibold">First-In First-Out (FIFO)</strong> dan memastikan pesanan dibuat langsung di tempat, menu digital hanya dapat diakses dengan memindai <strong>Kode QR resmi</strong> yang terpasang di meja kafe.
+                    Untuk memastikan pesanan dibuat langsung saat Anda berada di kafe, menu digital hanya dapat diakses dengan memindai <strong>Kode QR resmi</strong> yang terpasang di meja kafe.
                 </p>
             </div>
 
@@ -98,7 +98,7 @@
 
         <!-- Footer Bar -->
         <div class="bg-gray-50 px-6 py-3 border-t border-gray-150 text-[10px] text-gray-400">
-            Sistem Pemesanan Digital Berbasis FIFO &copy; {{ date('Y') }} {{ $setting->cafe_name ?? 'Sekarsa Coffee' }}
+            &copy; {{ date('Y') }} {{ $setting->cafe_name ?? 'Sekarsa Coffee' }} &bull; Digital Order System
         </div>
 
     </div>

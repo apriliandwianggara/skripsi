@@ -13,14 +13,14 @@
                 <span>Manajemen Pesanan Masuk</span>
             </h1>
             <p class="text-xs text-gray-500 mt-1">
-                Pantau seluruh pesanan aktif dan urutan antrean sistem FIFO di Sekarsa Coffee.
+                Pantau seluruh pesanan aktif dan urutan antrean di Sekarsa Coffee.
             </p>
         </div>
 
         <div class="flex items-center space-x-2">
             <a href="{{ route('pegawai.dashboard') }}" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
                 <i class="fa-solid fa-list-ol"></i>
-                <span>Buka Layar Barista FIFO</span>
+                <span>Buka Layar Barista</span>
             </a>
         </div>
     </div>

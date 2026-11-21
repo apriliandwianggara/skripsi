@@ -246,7 +246,7 @@
 
                     <div>
                         <label class="block text-xs font-bold uppercase text-gray-700 mb-1">
-                            Estimasi Menit per Antrean FIFO <span class="text-red-500">*</span>
+                            Estimasi Waktu per Pesanan <span class="text-red-500">*</span>
                         </label>
                         <div class="flex items-center space-x-2">
                             <input type="number" name="estimated_minutes_per_queue" value="{{ old('estimated_minutes_per_queue', $setting->estimated_minutes_per_queue) }}" required min="1" max="30" class="w-28 text-xs p-3 border border-gray-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500">

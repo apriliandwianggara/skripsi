@@ -31,7 +31,7 @@
                 </div>
                 <h1 class="font-bold text-xl font-serif">Pesanan Berhasil Diterima!</h1>
                 <p class="text-xs text-emerald-200/90 mt-0.5">
-                    Pesanan Anda telah masuk ke dalam antrean sistem FIFO
+                    Pesanan Anda telah diteruskan ke barista dan siap diproses
                 </p>
 
                 <!-- Box Nomor Antrean Besar -->
@@ -51,11 +51,11 @@
             <!-- Detail Pesanan -->
             <div class="p-6 space-y-4">
 
-                <!-- Info Algoritma FIFO -->
+                <!-- Info Status Antrean -->
                 <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 text-xs text-emerald-950 space-y-2">
                     <div class="flex items-center space-x-2 font-bold text-emerald-900">
                         <i class="fa-solid fa-list-ol text-emerald-700"></i>
-                        <span>Posisi Antrean FIFO</span>
+                        <span>Status Antrean Anda</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-center pt-1">
                         <div class="bg-white rounded-xl p-2 border border-emerald-100">
@@ -165,7 +165,7 @@
 
         <!-- Footer -->
         <p class="text-center text-[11px] text-gray-400 mt-6">
-            &copy; {{ date('Y') }} {{ $setting->cafe_name ?? 'Sekarsa Coffee' }} &bull; Sistem Pemesanan FIFO
+            &copy; {{ date('Y') }} {{ $setting->cafe_name ?? 'Sekarsa Coffee' }} &bull; Layanan Pemesanan Meja
         </p>
 
     </div>

@@ -94,7 +94,7 @@
     </div>
 
     <p class="mt-6 text-xs text-emerald-200/80 text-center">
-        Perancangan Sistem Pemesanan Digital Berbasis FIFO &bull; Sekarsa Coffee
+        Sistem Manajemen & Kasir &bull; Sekarsa Coffee
     </p>
 </div>
 

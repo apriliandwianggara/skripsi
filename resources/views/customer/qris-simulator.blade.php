@@ -55,7 +55,7 @@
                     Nomor Antrean Anda: <span class="font-mono text-base text-emerald-950 font-black">#{{ $order->queue_number }}</span>
                 </div>
                 <p class="text-[11px] text-emerald-700">
-                    Pesanan Anda langsung masuk ke antrean barista Sekarsa Coffee (FIFO) dan sedang dipersiapkan.
+                    Pesanan Anda langsung masuk ke antrean barista Sekarsa Coffee dan sedang dipersiapkan.
                 </p>
             </div>
 

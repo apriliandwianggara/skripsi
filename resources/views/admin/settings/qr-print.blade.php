@@ -101,7 +101,7 @@
                 <div class="text-center">
                     <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 font-bold inline-flex items-center justify-center mb-1">2</span>
                     <p class="font-semibold text-gray-800">Kirim Order</p>
-                    <p class="text-[9px] text-gray-400">Antrean FIFO</p>
+                    <p class="text-[9px] text-gray-400">Masuk antrean</p>
                 </div>
                 <div class="text-center">
                     <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 font-bold inline-flex items-center justify-center mb-1">3</span>
@@ -113,8 +113,8 @@
 
         <!-- Footer Card -->
         <div class="w-full bg-emerald-950 text-white py-3 px-4 text-[10px] text-emerald-200/80 flex items-center justify-between">
-            <span>&bull; Kode QR Permanen</span>
-            <span>FIFO System &bull;</span>
+            <span>&bull; Kode QR Meja</span>
+            <span>Sekarsa Coffee &bull;</span>
         </div>
 
     </div>

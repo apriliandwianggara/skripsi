@@ -13,7 +13,7 @@
                 <span>Dashboard Administrator</span>
             </h1>
             <p class="text-xs text-gray-500 mt-1">
-                Ringkasan jumlah pesanan, status operasional FIFO, dan pendapatan harian Sekarsa Coffee.
+                Ringkasan jumlah pesanan, status operasional kafe, dan pendapatan harian Sekarsa Coffee.
             </p>
         </div>
 
@@ -37,7 +37,7 @@
                     Sekarsa Coffee & Space
                 </span>
                 <h2 class="text-base sm:text-lg font-bold font-serif leading-tight">Selamat Datang, {{ auth()->user()->name }}!</h2>
-                <p class="text-xs text-emerald-200 mt-0.5">Sistem Pemesanan Digital & Algoritma FIFO beroperasi secara real-time.</p>
+                <p class="text-xs text-emerald-200 mt-0.5">Sistem Pemesanan Digital & Kasir beroperasi secara real-time.</p>
             </div>
         </div>
     </div>

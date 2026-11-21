@@ -1,24 +1,24 @@
 @extends('layouts.admin')
 
-@section('title', 'Pusat Operasional FIFO - ' . ($setting->cafe_name ?? 'Sekarsa Coffee'))
+@section('title', 'Pusat Operasional Pesanan - ' . ($setting->cafe_name ?? 'Sekarsa Coffee'))
 
 @section('content')
 <div class="space-y-6">
 
-    <!-- Top KPI Bar & Info FIFO -->
+    <!-- Top KPI Bar -->
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
             <div class="flex items-center space-x-3">
                 <h1 class="text-2xl font-bold font-serif text-gray-900 tracking-tight flex items-center space-x-2">
                     <i class="fa-solid fa-list-ol text-emerald-600"></i>
-                    <span>Pusat Operasional Antrean FIFO</span>
+                    <span>Pusat Operasional Antrean Pesanan</span>
                 </h1>
                 <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                     {{ auth()->user()->name }}
                 </span>
             </div>
             <p class="text-xs text-gray-500 mt-1">
-                Sistem Multi-Kasir Terintegrasi Real-Time. Pesanan diurutkan ketat berdasarkan waktu server (FIFO).
+                Sistem antrean pesanan kafe terintegrasi secara real-time.
             </p>
         </div>
 
@@ -45,7 +45,7 @@
                     Sekarsa Coffee & Space
                 </span>
                 <h2 class="text-sm sm:text-base font-bold font-serif leading-tight">Pos Barista & Kasir &bull; {{ auth()->user()->name }}</h2>
-                <p class="text-[11px] text-emerald-200">Pesanan pelanggan diproses berurutan sesuai waktu masuk (FIFO).</p>
+                <p class="text-[11px] text-emerald-200">Pesanan pelanggan diproses berurutan sesuai waktu pesanan masuk.</p>
             </div>
         </div>
     </div>
@@ -113,7 +113,7 @@
                     <div class="flex items-center space-x-2">
                         <span class="w-3 h-3 rounded-full bg-emerald-600"></span>
                         <h2 class="font-bold text-sm text-gray-800 uppercase tracking-wide">
-                            Antrean Aktif FIFO (Prioritas Pengerjaan)
+                            Antrean Pesanan Masuk
                         </h2>
                     </div>
                     <span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
@@ -127,9 +127,9 @@
                         <div class="p-5 hover:bg-slate-50/80 transition {{ $index === 0 ? 'bg-amber-50/30' : '' }}" id="order-card-{{ $order->id }}">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                                 <div class="flex items-center space-x-3">
-                                    <!-- Ranking Badge FIFO -->
+                                    <!-- Ranking Badge -->
                                     <div class="w-10 h-10 rounded-xl {{ $index === 0 ? 'bg-amber-500 text-white shadow-amber-500/30' : 'bg-gray-100 text-gray-700' }} flex flex-col items-center justify-center font-bold shrink-0 shadow-sm">
-                                        <span class="text-[9px] uppercase leading-none {{ $index === 0 ? 'text-amber-100' : 'text-gray-400' }}">FIFO</span>
+                                        <span class="text-[9px] uppercase leading-none {{ $index === 0 ? 'text-amber-100' : 'text-gray-400' }}">Urutan</span>
                                         <span class="text-base font-mono leading-none mt-0.5">#{{ $index + 1 }}</span>
                                     </div>
 
@@ -243,7 +243,7 @@
                                         @elseif($order->id === ($firstWaitingOrderId ?? null))
                                             <button type="button" onclick="actionProcess({{ $order->id }})" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-blue-600/20">
                                                 <i class="fa-solid fa-play"></i>
-                                                <span>Mulai Proses (Prioritas FIFO)</span>
+                                                <span>Mulai Proses Pesanan</span>
                                             </button>
                                         @else
                                             @php $targetQ = $firstWaitingQueueNumber ?? 'sebelumnya'; @endphp
@@ -367,7 +367,7 @@
 <div id="cancelModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
         <h3 class="font-bold text-base text-gray-900 mb-1">Batalkan Pesanan Antrean?</h3>
-        <p class="text-xs text-gray-500 mb-4" id="cancelModalSubtext">Nomor Antrean akan dikeluarkan dari antrean aktif FIFO.</p>
+        <p class="text-xs text-gray-500 mb-4" id="cancelModalSubtext">Nomor antrean akan dikeluarkan dari daftar antrean aktif.</p>
 
         <form id="cancelOrderForm" method="POST" action="">
             @csrf
@@ -491,7 +491,7 @@
             } else {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Urutan FIFO Wajib Dipatuhi',
+                    title: 'Selesaikan Pesanan Terdahulu',
                     text: data.message || 'Harap proses pesanan yang masuk terlebih dahulu.',
                     confirmButtonColor: '#2563eb'
                 });
@@ -505,8 +505,8 @@
     function alertFifoWaiting(queueNumber) {
         Swal.fire({
             icon: 'warning',
-            title: 'Urutan FIFO Wajib Dipatuhi',
-            html: `Sesuai aturan algoritma <b>First In First Out (FIFO)</b>, kasir wajib memproses pesanan yang masuk terlebih dahulu.<br><br>Harap proses pesanan dengan <b>Nomor Antrean #${queueNumber}</b> terlebih dahulu sebelum memproses pesanan ini.`,
+            title: 'Selesaikan Pesanan Terdahulu',
+            html: `Harap proses pesanan dengan <b>Nomor Antrean #${queueNumber}</b> terlebih dahulu sebelum memproses pesanan ini agar alur penyajian tetap teratur.`,
             confirmButtonColor: '#2563eb',
             confirmButtonText: 'Baik, Saya Proses Antrean Terdepan'
         });
@@ -596,7 +596,7 @@
     function openCancelModal(orderId, queueNumber) {
         const form = document.getElementById('cancelOrderForm');
         form.action = `/pegawai/pesanan/${orderId}/batal`;
-        document.getElementById('cancelModalSubtext').innerText = `Nomor Antrean #${queueNumber} akan dikeluarkan dari antrean aktif FIFO.`;
+        document.getElementById('cancelModalSubtext').innerText = `Nomor Antrean #${queueNumber} akan dikeluarkan dari daftar antrean aktif.`;
         document.getElementById('cancelModal').classList.remove('hidden');
     }
 
@@ -692,7 +692,7 @@
                 } else if (order.is_allowed_to_process) {
                     actionBtn = `<button type="button" onclick="actionProcess(${order.id})" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5 shadow-blue-600/20">
                         <i class="fa-solid fa-play"></i>
-                        <span>Mulai Proses (Prioritas FIFO)</span>
+                        <span>Mulai Proses Pesanan</span>
                     </button>`;
                 } else {
                     const reqQueue = order.first_waiting_queue_number || 'sebelumnya';
@@ -713,7 +713,7 @@
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                         <div class="flex items-center space-x-3">
                             <div class="w-10 h-10 rounded-xl ${rankBg} flex flex-col items-center justify-center font-bold shrink-0 shadow-sm">
-                                <span class="text-[9px] uppercase leading-none ${isFirst ? 'text-amber-100' : 'text-gray-400'}">FIFO</span>
+                                <span class="text-[9px] uppercase leading-none ${isFirst ? 'text-amber-100' : 'text-gray-400'}">Urutan</span>
                                 <span class="text-base font-mono leading-none mt-0.5">#${order.fifo_rank}</span>
                             </div>
                             <div>

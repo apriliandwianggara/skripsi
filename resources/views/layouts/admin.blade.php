@@ -190,7 +190,7 @@
                class="flex items-center justify-between px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('pegawai.dashboard') ? 'nav-active' : 'nav-item' }}">
                 <div class="flex items-center space-x-3">
                     <i class="fa-solid fa-list-ol w-5 text-center"></i>
-                    <span>Antrean FIFO</span>
+                    <span>Antrean Pesanan</span>
                 </div>
                 <span class="bg-amber-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full" id="sidebarQueueBadge">
                     {{ \App\Models\Order::whereIn('status', ['menunggu', 'diproses'])->count() }}

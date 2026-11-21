@@ -14,7 +14,7 @@
                 </div>
                 <div>
                     <h2 class="font-bold text-sm text-gray-800 font-serif">{{ $setting->cafe_name ?? 'Sekarsa Coffee' }}</h2>
-                    <p class="text-[10px] text-gray-500">Live Tracker Pesanan FIFO</p>
+                    <p class="text-[10px] text-gray-500">Live Status Pesanan</p>
                 </div>
             </div>
 
@@ -179,7 +179,7 @@
             <div class="p-5 border-b border-gray-100 bg-gray-50/70">
                 <div class="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center justify-between">
                     <span>Tahapan Pengerjaan</span>
-                    <span class="text-emerald-700 font-mono text-[10px]">FIFO Server Time</span>
+                    <span class="text-emerald-700 font-mono text-[10px]">Real-time Tracking</span>
                 </div>
 
                 <div class="relative flex items-center justify-between">
@@ -228,7 +228,7 @@
                 <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 text-emerald-950">
                     <div class="flex items-center justify-between mb-3">
                         <span class="text-xs font-bold text-emerald-900 flex items-center">
-                            <i class="fa-solid fa-chart-simple mr-1.5 text-emerald-600"></i> Metrik Antrean FIFO
+                            <i class="fa-solid fa-list-ol mr-1.5 text-emerald-600"></i> Informasi Antrean
                         </span>
                         <span class="text-[10px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-full font-semibold">
                             Posisi ke-<span id="posisiAntreanVal">{{ $queueInfo['posisi_antrean'] }}</span>

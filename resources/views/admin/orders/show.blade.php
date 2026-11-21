@@ -50,7 +50,7 @@
                         <span class="text-gray-800 font-semibold">{{ $order->table_number ? 'Meja ' . $order->table_number : 'Pesan di Tempat' }}</span>
                     </div>
                     <div>
-                        <span class="text-gray-400 block">Waktu Diterima Server (FIFO)</span>
+                        <span class="text-gray-400 block">Waktu Pesanan Masuk</span>
                         <span class="text-gray-800 font-mono">{{ $order->received_at->format('H:i:s d/m/Y') }}</span>
                     </div>
                     <div>
