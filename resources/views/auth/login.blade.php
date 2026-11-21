@@ -64,9 +64,9 @@
                 </button>
             </form>
 
-            <!-- Demo Account Helper (Multi-Kasir untuk Sidang Skripsi) -->
+            <!-- Pilihan Cepat Akun Kasir -->
             <div class="mt-8 pt-6 border-t border-gray-100">
-                <p class="text-xs text-center font-bold text-gray-500 uppercase tracking-wider mb-3">Akun Akses Multi-Kasir (Sidang Skripsi):</p>
+                <p class="text-xs text-center font-bold text-gray-500 uppercase tracking-wider mb-3">Pilihan Cepat Akun Demo / Kasir:</p>
                 <div class="grid grid-cols-2 gap-2">
                     <button type="button" onclick="fillDemo('admin', 'password123')"
                         class="p-2.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 rounded-xl text-xs text-left transition">

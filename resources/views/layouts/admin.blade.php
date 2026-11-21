@@ -273,7 +273,7 @@
 
         <!-- Footer -->
         <footer class="bg-white border-t border-gray-200 py-3 px-6 text-center text-xs text-gray-400">
-            &copy; {{ date('Y') }} Sistem Pemesanan QR Code Sekarsa Coffee &bull; Tugas Akhir Skripsi
+            &copy; {{ date('Y') }} Sekarsa Coffee &bull; All Rights Reserved
         </footer>
     </div>
 
