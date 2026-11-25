@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cetak Standee QR Code Meja - {{ $setting->cafe_name ?? 'Sekarsa Coffee' }}</title>
+    <title>Cetak & Unduh Standee QR Code Meja - {{ $setting->cafe_name ?? 'Sekarsa Coffee' }}</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,6 +11,10 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- html2canvas untuk Unduh Gambar Otomatis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- SweetAlert2 untuk notifikasi unduh sukses -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         body {
@@ -82,23 +86,23 @@
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800">
 
-    <!-- ================= TOOLBAR KONTROL CETAK (NO-PRINT) ================= -->
+    <!-- ================= TOOLBAR KONTROL CETAK & UNDUH (NO-PRINT) ================= -->
     <header class="no-print bg-white border-b border-slate-200 sticky top-0 z-50 shadow-md">
-        <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
             
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-xl bg-emerald-800 text-white flex items-center justify-center font-bold text-lg shadow">
                     <i class="fa-solid fa-qrcode"></i>
                 </div>
                 <div>
-                    <h1 class="text-sm font-bold text-slate-900 font-serif-title">Cetak Standee QR Code Meja</h1>
-                    <p class="text-[11px] text-slate-500">Pilih format cetak yang diinginkan untuk meja kafe Anda</p>
+                    <h1 class="text-sm font-bold text-slate-900 font-serif-title">Standee QR Code Meja</h1>
+                    <p class="text-[11px] text-slate-500">Pilih format lalu klik <strong>Unduh Gambar</strong> atau Cetak</p>
                 </div>
             </div>
 
-            <!-- Pilihan Format Cetak -->
-            <div class="flex flex-wrap items-center gap-2">
-                <span class="text-xs font-semibold text-slate-600 hidden sm:inline">Format:</span>
+            <!-- Pilihan Format Tampilan / Desain -->
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span class="text-xs font-semibold text-slate-600 hidden md:inline">Format:</span>
                 
                 <button type="button" onclick="setLayout('a4-full')" id="btn-a4-full"
                         class="layout-btn px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-700 text-white shadow-sm">
@@ -125,33 +129,44 @@
                 </button>
             </div>
 
-            <!-- Input Ubah Meja & Tombol Cetak -->
-            <div class="flex items-center space-x-2">
+            <!-- Input Ubah Meja & Tombol Aksi Utama -->
+            <div class="flex flex-wrap items-center gap-2">
                 <div class="relative">
                     <input type="text" id="inputTableNumber" value="{{ $tableNumber ?? '' }}"
                            placeholder="No. Meja (misal: 01)"
                            oninput="updateTableBadge(this.value)"
-                           class="w-32 px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white"
-                           title="Ketik nomor meja untuk mengubah tampilan badge meja">
+                           class="w-32 px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white"
+                           title="Ketik nomor meja untuk mengubah nomor meja di kartu secara langsung">
                 </div>
 
-                <button onclick="window.print()" class="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 active:scale-95 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-md shadow-emerald-800/30">
+                <!-- Tombol Utama: UNDUH GAMBAR (PNG HD) -->
+                <button type="button" onclick="downloadAsImage()" id="btnDownloadImage"
+                        class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white rounded-xl text-xs font-extrabold transition flex items-center space-x-1.5 shadow-md shadow-emerald-700/30 cursor-pointer">
+                    <i class="fa-solid fa-download text-sm"></i>
+                    <span>Unduh Gambar (PNG)</span>
+                </button>
+
+                <!-- Tombol Sekunder: Cetak Langsung -->
+                <button type="button" onclick="window.print()"
+                        class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1 shadow">
                     <i class="fa-solid fa-print"></i>
-                    <span>Cetak Sekarang</span>
+                    <span>Cetak</span>
                 </button>
             </div>
 
         </div>
 
-        <!-- Baris Panduan Praktis Cetak Browser -->
-        <div class="bg-emerald-50/80 border-t border-emerald-100 px-4 py-1.5 text-center text-[11px] text-emerald-900">
-            <i class="fa-solid fa-circle-info mr-1 text-emerald-700"></i>
-            <strong>Tips Pengaturan Cetak:</strong> Pada jendela cetak browser, pastikan centang opsi <strong>"Background graphics / Grafik latar belakang"</strong> aktif, dan hilangkan centang <strong>"Headers and footers"</strong> agar tanggal & URL tidak tercetak.
+        <!-- Baris Info Status & Tips Unduh -->
+        <div class="bg-emerald-50/90 border-t border-emerald-100 px-4 py-1.5 text-center text-[11px] text-emerald-900 flex items-center justify-center gap-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-200 text-emerald-900">
+                <i class="fa-solid fa-bolt mr-1"></i> Format Gambar HD
+            </span>
+            <span>Klik tombol <strong>"Unduh Gambar (PNG)"</strong> untuk langsung menyimpan gambar standee beresolusi tinggi ke HP / Komputer Anda tanpa melalui dialog PDF browser.</span>
         </div>
     </header>
 
 
-    <!-- ================= AREA KERTAS DOKUMEN CETAK ================= -->
+    <!-- ================= AREA KERTAS DOKUMEN CETAK & TANGKAPAN GAMBAR ================= -->
     <main class="print-container py-6 px-4 flex flex-col items-center justify-center">
 
         <!-- ================= MODE 1: A4 PENUH / STAND BESAR ================= -->
@@ -161,12 +176,12 @@
                 <!-- Header Atas Kafe (Hijau Mewah & Logo) -->
                 <div class="w-full relative overflow-hidden bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-950 text-white pt-9 pb-7 px-8">
                     <!-- Foto Banner Latar Belakang -->
-                    <img src="{{ $setting->banner_url }}" alt="Sekarsa Cafe" class="absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.35] opacity-50">
+                    <img src="{{ $setting->banner_url }}" crossorigin="anonymous" alt="Sekarsa Cafe" class="absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.35] opacity-50">
                     <div class="absolute inset-0 bg-gradient-to-b from-emerald-950/90 via-emerald-900/80 to-emerald-950/95"></div>
 
                     <div class="relative z-10 flex flex-col items-center">
                         <div class="w-20 h-20 bg-white p-1.5 rounded-2xl shadow-2xl mx-auto mb-3.5 border-2 border-white/60 overflow-hidden flex items-center justify-center">
-                            <img src="{{ $setting->logo_url }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
+                            <img src="{{ $setting->logo_url }}" crossorigin="anonymous" alt="Sekarsa Logo" class="w-full h-full object-contain">
                         </div>
                         <h2 class="font-bold text-3xl font-serif-title tracking-wider text-white drop-shadow-md">
                             {{ $setting->cafe_name ?? 'SEKARSA COFFEE' }}
@@ -244,12 +259,12 @@
                 
                 <!-- Header A5 -->
                 <div class="w-full relative overflow-hidden bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-950 text-white pt-6 pb-5 px-6">
-                    <img src="{{ $setting->banner_url }}" alt="Sekarsa Cafe" class="absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.35] opacity-50">
+                    <img src="{{ $setting->banner_url }}" crossorigin="anonymous" alt="Sekarsa Cafe" class="absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.35] opacity-50">
                     <div class="absolute inset-0 bg-gradient-to-b from-emerald-950/90 via-emerald-900/80 to-emerald-950/95"></div>
 
                     <div class="relative z-10 flex flex-col items-center">
                         <div class="w-14 h-14 bg-white p-1 rounded-2xl shadow-xl mx-auto mb-2.5 border-2 border-white/60 overflow-hidden flex items-center justify-center">
-                            <img src="{{ $setting->logo_url }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
+                            <img src="{{ $setting->logo_url }}" crossorigin="anonymous" alt="Sekarsa Logo" class="w-full h-full object-contain">
                         </div>
                         <h2 class="font-bold text-2xl font-serif-title tracking-wider text-white drop-shadow-md">
                             {{ $setting->cafe_name ?? 'SEKARSA COFFEE' }}
@@ -323,7 +338,7 @@
                     <div class="standee-card bg-white rounded-3xl border-2 border-emerald-900/15 overflow-hidden flex flex-col text-center">
                         <div class="bg-emerald-900 text-white pt-6 pb-4 px-4 text-center">
                             <div class="w-12 h-12 bg-white p-1 rounded-xl shadow-lg mx-auto mb-2 flex items-center justify-center">
-                                <img src="{{ $setting->logo_url }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
+                                <img src="{{ $setting->logo_url }}" crossorigin="anonymous" alt="Sekarsa Logo" class="w-full h-full object-contain">
                             </div>
                             <h3 class="font-bold text-lg font-serif-title">{{ $setting->cafe_name ?? 'Sekarsa Coffee' }}</h3>
                             <div id="badge-tent-front" class="table-badge mt-2 inline-block bg-amber-400 text-slate-950 text-[10px] font-black px-3 py-0.5 rounded-full uppercase tracking-wider">
@@ -347,7 +362,7 @@
                     <div class="standee-card bg-white rounded-3xl border-2 border-emerald-900/15 overflow-hidden flex flex-col text-center">
                         <div class="bg-emerald-900 text-white pt-6 pb-4 px-4 text-center">
                             <div class="w-12 h-12 bg-white p-1 rounded-xl shadow-lg mx-auto mb-2 flex items-center justify-center">
-                                <img src="{{ $setting->logo_url }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
+                                <img src="{{ $setting->logo_url }}" crossorigin="anonymous" alt="Sekarsa Logo" class="w-full h-full object-contain">
                             </div>
                             <h3 class="font-bold text-lg font-serif-title">{{ $setting->cafe_name ?? 'Sekarsa Coffee' }}</h3>
                             <div id="badge-tent-back" class="table-badge mt-2 inline-block bg-amber-400 text-slate-950 text-[10px] font-black px-3 py-0.5 rounded-full uppercase tracking-wider">
@@ -380,13 +395,13 @@
 
         <!-- ================= MODE 4: 2 KARTU PER LEMBAR A4 (HEMAT KERTAS) ================= -->
         <div id="view-2up" class="print-view w-full hidden justify-center">
-            <div class="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-8 items-center justify-center">
+            <div id="container-2up" class="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-8 items-center justify-center">
                 
                 <!-- KARTU 1 -->
                 <div class="standee-card layout-2up bg-white rounded-3xl shadow-lg border-2 border-emerald-900/15 overflow-hidden flex flex-col text-center mx-auto">
                     <div class="bg-emerald-900 text-white pt-5 pb-3 px-4 text-center">
                         <div class="w-10 h-10 bg-white p-1 rounded-xl shadow mx-auto mb-1 flex items-center justify-center">
-                            <img src="{{ $setting->logo_url }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
+                            <img src="{{ $setting->logo_url }}" crossorigin="anonymous" alt="Sekarsa Logo" class="w-full h-full object-contain">
                         </div>
                         <h3 class="font-bold text-base font-serif-title">{{ $setting->cafe_name ?? 'Sekarsa Coffee' }}</h3>
                         <div id="badge-2up-1" class="table-badge mt-1.5 inline-block bg-amber-400 text-slate-950 text-[10px] font-black px-3 py-0.5 rounded-full uppercase tracking-wider">
@@ -410,7 +425,7 @@
                 <div class="standee-card layout-2up bg-white rounded-3xl shadow-lg border-2 border-emerald-900/15 overflow-hidden flex flex-col text-center mx-auto">
                     <div class="bg-emerald-900 text-white pt-5 pb-3 px-4 text-center">
                         <div class="w-10 h-10 bg-white p-1 rounded-xl shadow mx-auto mb-1 flex items-center justify-center">
-                            <img src="{{ $setting->logo_url }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
+                            <img src="{{ $setting->logo_url }}" crossorigin="anonymous" alt="Sekarsa Logo" class="w-full h-full object-contain">
                         </div>
                         <h3 class="font-bold text-base font-serif-title">{{ $setting->cafe_name ?? 'Sekarsa Coffee' }}</h3>
                         <div id="badge-2up-2" class="table-badge mt-1.5 inline-block bg-amber-400 text-slate-950 text-[10px] font-black px-3 py-0.5 rounded-full uppercase tracking-wider">
@@ -436,9 +451,13 @@
     </main>
 
 
-    <!-- SCRIPT INTERAKTIF GANTI FORMAT & NOMOR MEJA REAL-TIME -->
+    <!-- SCRIPT INTERAKTIF: GANTI FORMAT, GANTI MEJA & UNDUH GAMBAR PNG -->
     <script>
+        let currentLayout = 'a4-full';
+
         function setLayout(layout) {
+            currentLayout = layout;
+
             // Sembunyikan semua view
             document.querySelectorAll('.print-view').forEach(el => {
                 el.classList.add('hidden');
@@ -452,7 +471,7 @@
                 target.classList.add('flex');
             }
 
-            // Update active state tombol
+            // Update active state tombol toolbar
             document.querySelectorAll('.layout-btn').forEach(btn => {
                 btn.classList.remove('bg-emerald-700', 'text-white', 'shadow-sm');
                 btn.classList.add('bg-slate-100', 'text-slate-700');
@@ -471,6 +490,72 @@
             document.querySelectorAll('.table-badge').forEach(badge => {
                 badge.innerText = text;
             });
+        }
+
+        // ================= FUNGSI UNDUH GAMBAR PNG HD =================
+        async function downloadAsImage() {
+            const btn = document.getElementById('btnDownloadImage');
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Sedang Memproses...';
+
+            // Ambil elemen yang sedang aktif tampil
+            const activeView = document.getElementById('view-' + currentLayout);
+            let targetEl = activeView.querySelector('.standee-card');
+
+            if (currentLayout === 'tent-card') {
+                targetEl = activeView.querySelector('.layout-tent-card');
+            } else if (currentLayout === '2up') {
+                targetEl = document.getElementById('container-2up');
+            }
+
+            if (!targetEl) {
+                targetEl = activeView;
+            }
+
+            try {
+                // Konversi DOM menjadi Canvas beresolusi tinggi (scale 3x = 300 DPI ultra-tajam)
+                const canvas = await html2canvas(targetEl, {
+                    scale: 3,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    imageTimeout: 10000,
+                });
+
+                const tableVal = document.getElementById('inputTableNumber').value.trim();
+                const tableSuffix = tableVal ? ('_Meja_' + tableVal.replace(/[^a-zA-Z0-9]/g, '_')) : '_Umum';
+                const fileName = `Standee_QR_Sekarsa_${currentLayout}${tableSuffix}.png`;
+
+                // Buat link download otomatis
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = canvas.toDataURL('image/png', 1.0);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Gambar Berhasil Diunduh!',
+                    text: `File ${fileName} telah tersimpan. Gambar siap dicetak atau digunakan langsung!`,
+                    timer: 2500,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            } catch (err) {
+                console.error('Download image error:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Mengunduh',
+                    text: 'Terjadi kendala saat memproses gambar: ' + (err.message || 'Coba gunakan tombol Cetak.')
+                });
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
         }
     </script>
 
