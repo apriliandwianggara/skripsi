@@ -82,6 +82,13 @@
                     <h3 class="font-bold text-xs uppercase tracking-wider text-gray-500">Rincian Sajian yang Dipesan</h3>
                 </div>
 
+                @if($order->is_member_reward_order)
+                    <div class="p-3 bg-amber-50 border-b border-amber-200 flex items-center space-x-2 text-xs text-amber-900 font-bold">
+                        <i class="fa-solid fa-gift text-amber-600 text-sm"></i>
+                        <span>Pesanan ini mengklaim Hadiah Member Gratis ke-10: {{ $order->reward_menu_name }}</span>
+                    </div>
+                @endif
+
                 <div class="divide-y divide-gray-100">
                     @foreach($order->details as $item)
                         <div class="p-4 flex items-center justify-between text-xs hover:bg-gray-50 transition">

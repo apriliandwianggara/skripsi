@@ -19,13 +19,20 @@ class Menu extends Model
         'price',
         'image',
         'is_available',
+        'is_member_reward',
         'order',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'is_available' => 'boolean',
+        'is_member_reward' => 'boolean',
     ];
+
+    public function scopeMemberRewards($query)
+    {
+        return $query->where('is_member_reward', true)->where('is_available', true);
+    }
 
     public function category(): BelongsTo
     {

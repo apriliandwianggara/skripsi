@@ -20,6 +20,9 @@ class Order extends Model
         'table_number',
         'customer_notes',
         'total_price',
+        'is_member_reward_order',
+        'reward_menu_id',
+        'reward_menu_name',
         'payment_method',
         'payment_status',
         'paid_at',
@@ -36,6 +39,7 @@ class Order extends Model
 
     protected $casts = [
         'total_price' => 'decimal:2',
+        'is_member_reward_order' => 'boolean',
         'paid_at' => 'datetime',
         'received_at' => 'datetime',
         'processed_at' => 'datetime',
@@ -46,6 +50,40 @@ class Order extends Model
     public function details(): HasMany
     {
         return $this->hasMany(OrderDetail::class);
+    }
+
+    public function rewardMenu(): BelongsTo
+    {
+        return $this->belongsTo(Menu::class, 'reward_menu_id');
+    }
+
+    /**
+     * Sinkronisasi data loyalitas membership saat pesanan lunas
+     */
+    public function syncMemberOnPaid(): void
+    {
+        if (empty($this->customer_phone)) {
+            return;
+        }
+
+        $phone = Member::normalizePhone($this->customer_phone);
+        if (empty($phone)) {
+            return;
+        }
+
+        $member = Member::firstOrCreate(
+            ['phone' => $phone],
+            ['name' => $this->customer_name]
+        );
+
+        $member->increment('total_orders');
+
+        if ($this->is_member_reward_order) {
+            $member->increment('rewards_claimed');
+        }
+
+        $member->last_ordered_at = now();
+        $member->save();
     }
 
     public function statusHistory(): HasMany

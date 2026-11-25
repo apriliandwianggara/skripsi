@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Member;
 use App\Models\Menu;
 use App\Models\Order;
 use App\Models\OrderDetail;
@@ -211,6 +212,7 @@ class CustomerOrderController extends Controller
             'table_number' => 'nullable|string|max:20',
             'customer_notes' => 'nullable|string|max:500',
             'payment_method' => 'nullable|string|in:qris,cash',
+            'reward_menu_id' => 'nullable|exists:menus,id',
             'items' => 'required|array|min:1',
             'items.*.menu_id' => 'required|exists:menus,id',
             'items.*.variation_id' => 'nullable|exists:menu_variations,id',
@@ -226,6 +228,32 @@ class CustomerOrderController extends Controller
             $totalPrice = 0;
             $itemsData = [];
 
+            // Identifikasi & Sinkronisasi Member berdasarkan Nomor HP
+            $customerPhone = $request->customer_phone ? Member::normalizePhone($request->customer_phone) : null;
+            $customerName = trim($request->customer_name);
+            $isEligibleForReward = false;
+            $member = null;
+
+            if ($customerPhone) {
+                $member = Member::where('phone', $customerPhone)->first();
+                if ($member) {
+                    // Kunci nama sesuai nama pendaftaran pertama kali agar riwayat konsisten
+                    if (!empty($member->name)) {
+                        $customerName = $member->name;
+                    }
+                    $isEligibleForReward = $member->isEligibleForReward();
+                } else {
+                    // Daftarkan sebagai member baru dengan nama awal yang diinput
+                    $member = Member::create([
+                        'phone' => $customerPhone,
+                        'name' => $customerName,
+                        'total_orders' => 0,
+                        'rewards_claimed' => 0,
+                    ]);
+                }
+            }
+
+            // Proses item menu pesanan utama
             foreach ($request->items as $item) {
                 $menu = Menu::with('variations')->findOrFail($item['menu_id']);
                 
@@ -264,6 +292,36 @@ class CustomerOrderController extends Controller
                 ];
             }
 
+            // Proses Hadiah Menu Gratis (Khusus Pemesanan ke-10)
+            $isMemberRewardOrder = false;
+            $rewardMenuId = null;
+            $rewardMenuName = null;
+
+            if ($isEligibleForReward && !empty($request->reward_menu_id)) {
+                $rewardMenu = Menu::where('id', $request->reward_menu_id)
+                    ->where('is_member_reward', true)
+                    ->where('is_available', true)
+                    ->first();
+
+                if ($rewardMenu) {
+                    $isMemberRewardOrder = true;
+                    $rewardMenuId = $rewardMenu->id;
+                    $rewardMenuName = $rewardMenu->name;
+
+                    // Masukkan item hadiah ke order_details dengan harga Rp 0
+                    $itemsData[] = [
+                        'menu_id' => $rewardMenu->id,
+                        'menu_variation_id' => null,
+                        'menu_name' => $rewardMenu->name . ' (Hadiah Member ke-10)',
+                        'variation_name' => null,
+                        'price' => 0,
+                        'quantity' => 1,
+                        'subtotal' => 0,
+                        'notes' => 'Menu Hadiah Gratis Loyalty Member ke-10',
+                    ];
+                }
+            }
+
             // Algoritma FIFO: Generate Nomor Antrean (001, 002, ...) dan Nomor Pesanan
             $queueNumber = $this->fifoService->generateQueueNumber();
             $orderNumber = $this->fifoService->generateOrderNumber($queueNumber);
@@ -273,11 +331,14 @@ class CustomerOrderController extends Controller
             $order = Order::create([
                 'order_number' => $orderNumber,
                 'queue_number' => $queueNumber,
-                'customer_name' => trim($request->customer_name),
-                'customer_phone' => $request->customer_phone ? trim($request->customer_phone) : null,
+                'customer_name' => $customerName,
+                'customer_phone' => $customerPhone,
                 'table_number' => $request->table_number ? trim($request->table_number) : null,
                 'customer_notes' => $request->customer_notes,
                 'total_price' => $totalPrice,
+                'is_member_reward_order' => $isMemberRewardOrder,
+                'reward_menu_id' => $rewardMenuId,
+                'reward_menu_name' => $rewardMenuName,
                 'payment_method' => $paymentMethod,
                 'payment_status' => 'menunggu_pembayaran',
                 'status' => 'menunggu', // Status awal: Menunggu antrean
@@ -643,6 +704,64 @@ class CustomerOrderController extends Controller
                     'by' => $h->changed_by,
                 ];
             }),
+        ]);
+    }
+
+    /**
+     * API Cek Status Loyalitas Membership Pelanggan berdasarkan Nomor HP
+     */
+    public function checkMemberApi(Request $request)
+    {
+        $rawPhone = $request->query('phone');
+        $phone = Member::normalizePhone($rawPhone);
+
+        if (empty($phone) || strlen($phone) < 9) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Format nomor HP belum lengkap (minimal 10 digit).'
+            ], 422);
+        }
+
+        $member = Member::where('phone', $phone)->first();
+
+        // Hitung total pesanan lunas sebelumnya
+        $paidOrdersCount = Order::where('customer_phone', $phone)->where('payment_status', 'lunas')->count();
+        $totalOrders = $member ? max((int)$member->total_orders, $paidOrdersCount) : $paidOrdersCount;
+
+        $cycle = $totalOrders % 10;
+        // Jika cycle == 9, maka pemesanan yang sedang dibuat ini adalah pemesanan ke-10 (berhak menu gratis)
+        $isEligible = ($cycle === 9);
+        $remaining = 10 - $cycle;
+
+        $rewardMenus = [];
+        if ($isEligible) {
+            $rewardMenus = Menu::where('is_member_reward', true)
+                ->where('is_available', true)
+                ->orderBy('order')
+                ->orderBy('name')
+                ->get(['id', 'name', 'price', 'image', 'description'])
+                ->map(function ($m) {
+                    return [
+                        'id' => $m->id,
+                        'name' => $m->name,
+                        'price' => (float)$m->price,
+                        'image_url' => $m->image ? asset('storage/' . $m->image) : asset('images/menu-placeholder.svg'),
+                        'description' => $m->description,
+                    ];
+                });
+        }
+
+        return response()->json([
+            'success' => true,
+            'found' => (bool)$member,
+            'name' => $member ? $member->name : null,
+            'phone' => $phone,
+            'total_orders' => $totalOrders,
+            'cycle_order' => $cycle,
+            'orders_remaining' => $remaining,
+            'is_eligible_reward' => $isEligible,
+            'rewards_claimed' => $member ? (int)$member->rewards_claimed : 0,
+            'reward_menus' => $rewardMenus,
         ]);
     }
 }

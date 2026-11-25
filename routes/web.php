@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\OrderManagementController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\MembershipController;
 
 /*
 |--------------------------------------------------------------------------
@@ -67,6 +68,7 @@ Route::get('/pesanan/{token}/konfirmasi', [CustomerOrderController::class, 'conf
 // 4. Halaman Pelacakan Pesanan & Notifikasi Suara Pengambilan
 Route::get('/pesanan/{token}', [CustomerOrderController::class, 'track'])->name('customer.track');
 Route::get('/api/pesanan/{token}/status', [CustomerOrderController::class, 'trackStatusApi'])->name('customer.status_api');
+Route::get('/api/member/check', [CustomerOrderController::class, 'checkMemberApi'])->name('api.member.check');
 
 /*
 |--------------------------------------------------------------------------
@@ -124,6 +126,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/pesanan', [OrderManagementController::class, 'index'])->name('orders.index');
     Route::get('/pesanan/{order}', [OrderManagementController::class, 'show'])->name('orders.show');
     Route::get('/riwayat-pesanan', [OrderManagementController::class, 'history'])->name('orders.history');
+
+    // Manajemen Membership Pelanggan & Menu Hadiah
+    Route::get('/membership', [MembershipController::class, 'index'])->name('membership.index');
+    Route::get('/membership/hadiah', [MembershipController::class, 'rewards'])->name('membership.rewards');
+    Route::post('/membership/hadiah/{menu}/toggle', [MembershipController::class, 'toggleReward'])->name('membership.rewards.toggle');
+    Route::get('/membership/{id}', [MembershipController::class, 'show'])->name('membership.show');
 
     // Manajemen Pengguna (Admin & Pegawai)
     Route::resource('users', UserController::class)->except(['create', 'show', 'edit']);

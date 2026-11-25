@@ -266,6 +266,9 @@ class DokuService
         $order->payment_note = "Lunas via DOKU ({$channelName})";
         $order->save();
 
+        // Sinkronisasi poin membership
+        $order->syncMemberOnPaid();
+
         OrderStatusHistory::create([
             'order_id' => $order->id,
             'previous_status' => $order->status,

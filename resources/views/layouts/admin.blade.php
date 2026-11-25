@@ -164,6 +164,12 @@
 
             <div class="px-3 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-emerald-500">Manajemen</div>
 
+            <a href="{{ route('admin.membership.index') }}"
+               class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('admin.membership.*') ? 'nav-active' : 'nav-item' }}">
+                <i class="fa-solid fa-id-card-clip w-5 text-center"></i>
+                <span>Membership Pelanggan</span>
+            </a>
+
             <a href="{{ route('admin.users.index') }}"
                class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('admin.users.*') ? 'nav-active' : 'nav-item' }}">
                 <i class="fa-solid fa-users-gear w-5 text-center"></i>

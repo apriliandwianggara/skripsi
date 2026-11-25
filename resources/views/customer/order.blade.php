@@ -359,6 +359,19 @@
                         <span class="text-[11px] text-gray-500">* Wajib diisi</span>
                     </div>
 
+                    <!-- Banner Info Membership Sekarsa Coffee -->
+                    <div class="bg-gradient-to-r from-emerald-800 to-emerald-950 text-white rounded-2xl p-3.5 shadow-md flex items-start space-x-3 border border-emerald-700/50">
+                        <div class="w-9 h-9 rounded-xl bg-amber-400 text-emerald-950 flex items-center justify-center text-lg shrink-0 shadow">
+                            <i class="fa-solid fa-gift"></i>
+                        </div>
+                        <div class="flex-1 text-xs">
+                            <h4 class="font-bold text-amber-300 text-xs">Program Membership Sekarsa Coffee</h4>
+                            <p class="text-[11px] text-emerald-100/90 mt-0.5 leading-relaxed">
+                                Isi <strong>No. WhatsApp</strong> Anda! Kumpulkan 9 pemesanan, dapatkan <strong>1 Menu Pilihan GRATIS</strong> di pesanan ke-10 Anda.
+                            </p>
+                        </div>
+                    </div>
+
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1">
                             Nama Pelanggan <span class="text-red-500">*</span>
@@ -389,6 +402,74 @@
                                    id="inputCustomerPhone"
                                    placeholder="08xxxxxxxxxx"
                                    class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                    </div>
+
+                    <!-- Kotak Status Membership Interaktif -->
+                    <div id="memberStatusBox" class="hidden transition-all duration-300">
+                        <!-- Loading State -->
+                        <div id="memberLoading" class="hidden text-xs text-emerald-700 py-1.5 flex items-center gap-2">
+                            <i class="fa-solid fa-spinner fa-spin text-sm"></i>
+                            <span>Memeriksa status membership...</span>
+                        </div>
+
+                        <!-- New Member State -->
+                        <div id="memberNewCard" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs space-y-1">
+                            <p class="font-bold text-emerald-900 flex items-center gap-1.5">
+                                <i class="fa-solid fa-sparkles text-amber-500"></i>
+                                <span>Nomor Baru Siap Terdaftar!</span>
+                            </p>
+                            <p class="text-[11px] text-emerald-700 leading-relaxed">
+                                Pesanan ini akan dihitung sebagai <strong>pesanan ke-1</strong> Anda. Selesaikan 9 pesanan untuk mendapatkan 1 menu gratis di pesanan ke-10.
+                            </p>
+                        </div>
+
+                        <!-- Existing Member Progress State (1 s/d 8) -->
+                        <div id="memberProgressCard" class="hidden p-3.5 bg-emerald-50/90 border border-emerald-200 rounded-2xl text-xs space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-7 h-7 rounded-lg bg-emerald-700 text-white font-bold flex items-center justify-center text-xs shadow-sm">
+                                        <i class="fa-solid fa-id-badge"></i>
+                                    </span>
+                                    <div>
+                                        <p class="font-bold text-gray-900" id="memberGreetName">Halo Member!</p>
+                                        <p class="text-[10px] text-emerald-800">Total belanja: <strong id="memberTotalOrders">0</strong> kali</p>
+                                    </div>
+                                </div>
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-200 text-emerald-900" id="memberCycleBadge">
+                                    0 / 10 Pesanan
+                                </span>
+                            </div>
+                            <div>
+                                <div class="w-full bg-emerald-200/60 h-2.5 rounded-full overflow-hidden">
+                                    <div id="memberProgressBar" class="bg-emerald-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                                </div>
+                                <p class="text-[10px] text-emerald-700 mt-1 font-semibold" id="memberRemainingText">
+                                    Tersisa X pesanan lagi untuk mendapatkan 1 Menu Gratis!
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Eligible for Reward State (Pesanan ke-10) -->
+                        <div id="memberRewardCard" class="hidden p-3.5 bg-gradient-to-br from-amber-50 via-amber-100/60 to-amber-50 border-2 border-amber-400 rounded-2xl text-xs space-y-3 shadow-md">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center text-base font-black shrink-0 shadow animate-bounce">
+                                    <i class="fa-solid fa-gift"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-amber-950 text-xs flex items-center gap-1.5">
+                                        <span>🎉 SELAMAT! INI PESANAN KE-10 ANDA!</span>
+                                    </h4>
+                                    <p class="text-[11px] text-amber-800 leading-tight mt-0.5">
+                                        Anda berhak mendapatkan <strong>1 Menu Pilihan GRATIS</strong>. Silakan pilih menu di bawah ini:
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Pilihan Menu Hadiah Gratis -->
+                            <div class="space-y-2 pt-1" id="rewardMenuOptionsContainer">
+                                <!-- Populated dynamically by JS -->
+                            </div>
                         </div>
                     </div>
 
@@ -886,6 +967,7 @@
             table_number: tableNumber,
             customer_notes: customerNotes,
             payment_method: paymentMethod,
+            reward_menu_id: (isMemberEligibleReward && selectedRewardMenuId) ? selectedRewardMenuId : null,
             items: cart.map(item => ({
                 menu_id: item.id,
                 variation_id: item.variation_id || null,
@@ -947,9 +1029,160 @@
         }
     }
 
+    // ==========================================
+    // LOGIKA MEMBERSHIP & HADIAH PESANAN KE-10
+    // ==========================================
+    let memberCheckTimer = null;
+    let selectedRewardMenuId = null;
+    let isMemberEligibleReward = false;
+
+    function initMemberCheck() {
+        const phoneInput = document.getElementById('inputCustomerPhone');
+        if (!phoneInput) return;
+
+        phoneInput.addEventListener('input', (e) => {
+            clearTimeout(memberCheckTimer);
+            const val = e.target.value.trim();
+            if (val.length >= 10) {
+                memberCheckTimer = setTimeout(() => {
+                    checkMemberStatus(val);
+                }, 400);
+            } else {
+                hideMemberStatus();
+            }
+        });
+
+        phoneInput.addEventListener('blur', (e) => {
+            const val = e.target.value.trim();
+            if (val.length >= 10) {
+                checkMemberStatus(val);
+            }
+        });
+    }
+
+    async function checkMemberStatus(phone) {
+        const statusBox = document.getElementById('memberStatusBox');
+        const loading = document.getElementById('memberLoading');
+        const newCard = document.getElementById('memberNewCard');
+        const progressCard = document.getElementById('memberProgressCard');
+        const rewardCard = document.getElementById('memberRewardCard');
+        const nameInput = document.getElementById('inputCustomerName');
+
+        if (!statusBox) return;
+
+        statusBox.classList.remove('hidden');
+        loading.classList.remove('hidden');
+        newCard.classList.add('hidden');
+        progressCard.classList.add('hidden');
+        rewardCard.classList.add('hidden');
+
+        try {
+            const res = await fetch(`/api/member/check?phone=${encodeURIComponent(phone)}`);
+            const data = await res.json();
+            loading.classList.add('hidden');
+
+            if (!data.success) {
+                statusBox.classList.add('hidden');
+                return;
+            }
+
+            // Jika member sudah terdaftar sebelumnya:
+            if (data.found && data.name) {
+                // Kunci/isi otomatis nama pelanggan sesuai pengisian pertama kali agar tidak reset
+                if (!nameInput.value || nameInput.value.trim() === '') {
+                    nameInput.value = data.name;
+                }
+            }
+
+            if (data.is_eligible_reward) {
+                // PESANAN KE-10: Berhak Menu Gratis!
+                isMemberEligibleReward = true;
+                rewardCard.classList.remove('hidden');
+                renderRewardOptions(data.reward_menus || []);
+            } else if (data.found && data.total_orders > 0) {
+                // Member dalam progres 1 s/d 8
+                isMemberEligibleReward = false;
+                progressCard.classList.remove('hidden');
+
+                const greet = document.getElementById('memberGreetName');
+                const totalOrders = document.getElementById('memberTotalOrders');
+                const cycleBadge = document.getElementById('memberCycleBadge');
+                const progressBar = document.getElementById('memberProgressBar');
+                const remainingText = document.getElementById('memberRemainingText');
+
+                if (greet) greet.innerText = `Halo, ${data.name || 'Member'}!`;
+                if (totalOrders) totalOrders.innerText = data.total_orders;
+                if (cycleBadge) cycleBadge.innerText = `${data.cycle_order} / 10 Pesanan`;
+                if (progressBar) progressBar.style.width = `${data.cycle_order * 10}%`;
+                if (remainingText) {
+                    remainingText.innerText = `Tersisa ${data.orders_remaining} pesanan lagi untuk mendapatkan 1 Menu Pilihan Gratis!`;
+                }
+            } else {
+                // Nomor baru
+                isMemberEligibleReward = false;
+                newCard.classList.remove('hidden');
+            }
+        } catch (err) {
+            loading.classList.add('hidden');
+            statusBox.classList.add('hidden');
+        }
+    }
+
+    function hideMemberStatus() {
+        const statusBox = document.getElementById('memberStatusBox');
+        if (statusBox) statusBox.classList.add('hidden');
+        isMemberEligibleReward = false;
+        selectedRewardMenuId = null;
+    }
+
+    function renderRewardOptions(menus) {
+        const container = document.getElementById('rewardMenuOptionsContainer');
+        if (!container) return;
+
+        if (!menus || menus.length === 0) {
+            container.innerHTML = `
+                <div class="p-3 bg-white/80 rounded-xl border border-amber-200 text-amber-900 text-center text-xs">
+                    <p class="font-bold">Hadiah Spesial Member ke-10</p>
+                    <p class="text-[11px] text-amber-700 mt-0.5">Sebutkan nama dan nomor WhatsApp Anda ke barista untuk memilih sajian gratis Anda langsung di tempat!</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '<p class="text-[11px] font-bold text-amber-900 mb-1.5">Pilih 1 Menu Hadiah Anda:</p>';
+        menus.forEach((m, idx) => {
+            const isChecked = idx === 0 ? 'checked' : '';
+            if (idx === 0) {
+                selectedRewardMenuId = m.id;
+            }
+            html += `
+                <label class="flex items-center justify-between p-2.5 bg-white border-2 border-amber-300 rounded-xl cursor-pointer hover:bg-amber-50/50 transition shadow-sm">
+                    <div class="flex items-center space-x-2.5 min-w-0 pr-2">
+                        <input type="radio" name="reward_menu_radio" value="${m.id}" ${isChecked} onchange="onSelectRewardMenu(${m.id})" class="w-4 h-4 text-amber-600 focus:ring-amber-500">
+                        <img src="${m.image_url}" class="w-10 h-10 rounded-lg object-cover bg-gray-100 shrink-0" onerror="this.onerror=null; this.src='/images/menu-placeholder.svg';">
+                        <div class="min-w-0">
+                            <p class="font-bold text-xs text-gray-900 truncate">${m.name}</p>
+                            <p class="text-[10px] text-gray-400 line-through">Rp ${Number(m.price).toLocaleString('id-ID')}</p>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-sm shrink-0 uppercase tracking-wider">
+                        GRATIS Rp 0
+                    </span>
+                </label>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function onSelectRewardMenu(menuId) {
+        selectedRewardMenuId = menuId;
+    }
+
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {
         loadCart();
+        initMemberCheck();
         // Polling Real-time Status Ketersediaan Menu (Jika Kasir Mengubah Menu Jadi Habis)
         setInterval(checkRealtimeMenuAvailability, 3000);
     });

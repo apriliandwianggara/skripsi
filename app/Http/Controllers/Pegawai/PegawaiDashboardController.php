@@ -223,6 +223,9 @@ class PegawaiDashboardController extends Controller
             $locked->paid_at = now();
             $locked->save();
 
+            // Sinkronisasi akumulasi loyalitas membership
+            $locked->syncMemberOnPaid();
+
             $nominalFmt = 'Rp ' . number_format($locked->total_price, 0, ',', '.');
             $methodName = $locked->payment_method === 'cash' ? 'Tunai' : 'QRIS';
 
