@@ -50,12 +50,16 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        if (Auth::check()) {
-            Auth::logout();
-        }
-        if ($request->hasSession()) {
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+        try {
+            if (Auth::check()) {
+                Auth::logout();
+            }
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+        } catch (\Throwable $e) {
+            // Sesi sudah kedaluwarsa atau null, tetap lanjutkan redirect ke login
         }
 
         return redirect()->route('login')->with('success', 'Anda telah berhasil keluar dari sistem.');
