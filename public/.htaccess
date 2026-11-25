@@ -5,6 +5,10 @@
 
     RewriteEngine On
 
+    # Blokir akses langsung ke file tersembunyi dan ekstensi sensitif
+    RewriteRule ^\.(?!well-known).* - [F,L,NC]
+    RewriteRule ^.*\.(env|log|sql|sqlite|json|lock|bak|backup)$ - [F,L,NC]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
