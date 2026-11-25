@@ -16,15 +16,19 @@ class MembershipController extends Controller
      */
     public function index(Request $request)
     {
-        $search = $request->input('search');
+        $search = trim((string)($request->input('phone_search') ?: $request->input('search')));
         $filter = $request->input('filter'); // 'all', 'eligible_reward', 'claimed'
 
         $query = Member::query();
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+        if ($search !== '') {
+            $cleanPhone = preg_replace('/[^0-9]/', '', $search);
+            $query->where(function ($q) use ($search, $cleanPhone) {
+                $q->where('phone', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%");
+                if ($cleanPhone !== '') {
+                    $q->orWhere('phone', 'like', "%{$cleanPhone}%");
+                }
             });
         }
 

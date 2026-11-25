@@ -536,10 +536,6 @@
                     position: 'top-end'
                 });
 
-                if (data.whatsapp_url) {
-                    window.open(data.whatsapp_url, '_blank');
-                }
-
                 fetchQueueData();
             } else {
                 Swal.fire({

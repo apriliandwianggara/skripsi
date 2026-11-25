@@ -377,18 +377,13 @@ class PegawaiDashboardController extends Controller
 
             $notifResult = $this->notificationService->notifyOrderReady($lockedOrder);
 
-            $msg = "Pesanan #{$lockedOrder->queue_number} ({$lockedOrder->customer_name}) SIAP DIAMBIL! Notifikasi dipicu di HP pelanggan.";
+            $msg = "Pesanan #{$lockedOrder->queue_number} ({$lockedOrder->customer_name}) SIAP DIAMBIL!";
 
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => $msg,
-                    'whatsapp_url' => $notifResult['whatsapp_url'] ?? null
                 ]);
-            }
-
-            if (!empty($notifResult['whatsapp_url'])) {
-                return redirect()->back()->with('success', $msg)->with('whatsapp_url', $notifResult['whatsapp_url']);
             }
 
             return back()->with('success', $msg);

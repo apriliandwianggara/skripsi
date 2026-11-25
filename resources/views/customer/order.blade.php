@@ -77,6 +77,30 @@
             </div>
         </div>
 
+        <!-- Widget Cek Membership Pelanggan Sekarsa Coffee -->
+        <div class="mb-4 bg-gradient-to-r from-emerald-800 via-emerald-900 to-emerald-950 text-white p-3.5 rounded-2xl shadow-sm border border-emerald-700/50">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-gift text-amber-400"></i>
+                    <span>Cek Jumlah Pesanan & Hadiah Member</span>
+                </span>
+                <span class="text-[10px] text-emerald-200 bg-white/10 px-2 py-0.5 rounded-full font-semibold">
+                    Pesanan ke-10 GRATIS
+                </span>
+            </div>
+            <div class="flex gap-2">
+                <input type="tel" id="topCheckPhone" placeholder="Ketik No. WhatsApp (contoh: 0812...)"
+                       class="flex-1 bg-white/10 text-white placeholder-emerald-200/60 px-3 py-2 rounded-xl text-xs border border-emerald-600/60 focus:outline-none focus:ring-1 focus:ring-amber-400 font-mono">
+                <button type="button" onclick="checkMembershipTop()" class="px-4 py-2 bg-amber-400 hover:bg-amber-300 active:scale-95 text-emerald-950 font-bold text-xs rounded-xl transition shrink-0 cursor-pointer shadow">
+                    <span>Cek Poin</span>
+                </button>
+            </div>
+            <!-- Alert Hasil Cek di Menu Utama -->
+            <div id="topCheckResult" class="hidden mt-2.5 p-3 bg-white text-gray-900 rounded-xl text-xs shadow">
+                <!-- Populated dynamically by JS -->
+            </div>
+        </div>
+
         <!-- Search Bar -->
         <div class="mb-4">
             <form action="{{ route('customer.order') }}" method="GET" class="relative">
@@ -398,10 +422,16 @@
                             <label class="block text-xs font-semibold text-gray-700 mb-1">
                                 No. WhatsApp <span class="text-gray-400 font-normal">(Opsional)</span>
                             </label>
-                            <input type="tel"
-                                   id="inputCustomerPhone"
-                                   placeholder="08xxxxxxxxxx"
-                                   class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <div class="flex gap-1.5">
+                                <input type="tel"
+                                       id="inputCustomerPhone"
+                                       placeholder="08xxxxxxxxxx"
+                                       class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
+                                <button type="button" onclick="triggerManualCheckPhone()" class="px-3.5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shrink-0 cursor-pointer flex items-center gap-1 shadow-sm">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    <span>Cek</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -420,32 +450,33 @@
                                 <span>Nomor Baru Siap Terdaftar!</span>
                             </p>
                             <p class="text-[11px] text-emerald-700 leading-relaxed">
-                                Pesanan ini akan dihitung sebagai <strong>pesanan ke-1</strong> Anda. Selesaikan 9 pesanan untuk mendapatkan 1 menu gratis di pesanan ke-10.
+                                Nomor ini belum memiliki riwayat pesanan. Pesanan ini akan dihitung sebagai <strong>pesanan ke-1</strong> Anda. Selesaikan 9 pesanan untuk mendapatkan 1 menu gratis di pesanan ke-10!
                             </p>
                         </div>
 
                         <!-- Existing Member Progress State (1 s/d 8) -->
-                        <div id="memberProgressCard" class="hidden p-3.5 bg-emerald-50/90 border border-emerald-200 rounded-2xl text-xs space-y-2.5">
+                        <div id="memberProgressCard" class="hidden p-3.5 bg-emerald-50/90 border-2 border-emerald-500 rounded-2xl text-xs space-y-2.5 shadow-sm">
                             <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <span class="w-7 h-7 rounded-lg bg-emerald-700 text-white font-bold flex items-center justify-center text-xs shadow-sm">
-                                        <i class="fa-solid fa-id-badge"></i>
-                                    </span>
-                                    <div>
-                                        <p class="font-bold text-gray-900" id="memberGreetName">Halo Member!</p>
-                                        <p class="text-[10px] text-emerald-800">Total belanja: <strong id="memberTotalOrders">0</strong> kali</p>
-                                    </div>
+                                <div>
+                                    <p class="font-bold text-gray-900 text-sm" id="memberGreetName">Halo Member!</p>
+                                    <p class="text-xs text-emerald-800 font-medium">Nomor WhatsApp Anda terdaftar.</p>
                                 </div>
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-200 text-emerald-900" id="memberCycleBadge">
-                                    0 / 10 Pesanan
-                                </span>
+                                <div class="text-right">
+                                    <span class="inline-block px-3 py-1 bg-emerald-700 text-white font-mono font-black text-sm rounded-xl shadow-sm" id="memberTotalOrdersBadge">
+                                        0x Pesan
+                                    </span>
+                                </div>
                             </div>
-                            <div>
-                                <div class="w-full bg-emerald-200/60 h-2.5 rounded-full overflow-hidden">
+                            <div class="p-2.5 bg-white rounded-xl border border-emerald-200">
+                                <div class="flex justify-between items-center text-xs font-bold">
+                                    <span class="text-emerald-900">Sudah Memesan: <strong class="text-emerald-700 text-sm font-mono" id="memberTotalOrdersCount">0</strong> kali</span>
+                                    <span class="text-amber-700" id="memberCycleBadge">Siklus: 0 / 10</span>
+                                </div>
+                                <div class="w-full bg-emerald-100 h-2 rounded-full overflow-hidden my-1.5">
                                     <div id="memberProgressBar" class="bg-emerald-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
                                 </div>
-                                <p class="text-[10px] text-emerald-700 mt-1 font-semibold" id="memberRemainingText">
-                                    Tersisa X pesanan lagi untuk mendapatkan 1 Menu Gratis!
+                                <p class="text-[11px] text-gray-600 font-medium" id="memberRemainingText">
+                                    Kurang X kali pesanan lagi untuk mendapatkan 1 Menu Pilihan GRATIS!
                                 </p>
                             </div>
                         </div>
@@ -1060,6 +1091,91 @@
         });
     }
 
+    function triggerManualCheckPhone() {
+        const phone = document.getElementById('inputCustomerPhone')?.value.trim();
+        if (!phone || phone.length < 8) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Nomor WhatsApp',
+                text: 'Silakan masukkan nomor WhatsApp Anda minimal 10 digit untuk memeriksa riwayat pesanan.',
+                confirmButtonColor: '#16a34a'
+            });
+            return;
+        }
+        checkMemberStatus(phone);
+    }
+
+    async function checkMembershipTop() {
+        const phoneInput = document.getElementById('topCheckPhone');
+        const resultBox = document.getElementById('topCheckResult');
+        const phone = phoneInput ? phoneInput.value.trim() : '';
+
+        if (!phone || phone.length < 8) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Nomor WhatsApp',
+                text: 'Ketik nomor WhatsApp Anda (contoh: 081234567890) untuk melihat jumlah pesanan & status member.',
+                confirmButtonColor: '#16a34a'
+            });
+            return;
+        }
+
+        if (resultBox) {
+            resultBox.classList.remove('hidden');
+            resultBox.innerHTML = '<p class="text-gray-500 flex items-center gap-1.5"><i class="fa-solid fa-spinner fa-spin"></i><span>Memeriksa riwayat pesanan...</span></p>';
+        }
+
+        try {
+            const res = await fetch(`/api/member/check?phone=${encodeURIComponent(phone)}`);
+            const data = await res.json();
+
+            if (!data.success) {
+                if (resultBox) {
+                    resultBox.innerHTML = `<p class="text-red-600 font-semibold">${data.message || 'Nomor HP tidak valid'}</p>`;
+                }
+                return;
+            }
+
+            // Sinkronkan ke form checkout jika dibuka
+            const nameInput = document.getElementById('inputCustomerName');
+            const phoneCheckout = document.getElementById('inputCustomerPhone');
+            if (phoneCheckout) phoneCheckout.value = data.phone;
+            if (nameInput && data.name && !nameInput.value) nameInput.value = data.name;
+
+            if (data.found && data.total_orders > 0) {
+                resultBox.innerHTML = `
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-gray-900 text-xs">Halo, <strong class="text-emerald-800">${data.name || 'Member'}</strong>!</span>
+                            <span class="px-2.5 py-0.5 bg-emerald-700 text-white rounded-lg text-xs font-black font-mono shadow-sm">
+                                ${data.total_orders}x Pesan
+                            </span>
+                        </div>
+                        <p class="text-xs text-emerald-900 font-medium leading-relaxed">
+                            ${data.is_eligible_reward 
+                                ? '🎉 <strong class="text-amber-700">SELAMAT!</strong> Ini adalah pemesanan ke-10 Anda. Anda berhak memilih <strong class="text-amber-700">1 Menu GRATIS</strong> saat checkout!' 
+                                : 'Nomor WhatsApp Anda telah memesan sebanyak <strong class="font-bold text-emerald-800">' + data.total_orders + ' kali</strong>. Tersisa <strong class="font-bold text-amber-700">' + data.orders_remaining + ' kali pesanan lagi</strong> untuk mendapatkan 1 Menu Pilihan GRATIS!'}
+                        </p>
+                    </div>
+                `;
+            } else {
+                resultBox.innerHTML = `
+                    <div class="space-y-1">
+                        <p class="font-bold text-emerald-900"><i class="fa-solid fa-sparkles text-amber-500 mr-1"></i> Nomor Baru Siap Terdaftar!</p>
+                        <p class="text-gray-600 text-[11px]">Nomor ini belum memiliki riwayat pesanan. Lakukan pemesanan pertama Anda hari ini untuk mulai mengumpulkan poin menuju pesanan ke-10 GRATIS!</p>
+                    </div>
+                `;
+            }
+
+            // Trigger juga status box di form
+            checkMemberStatus(data.phone);
+        } catch (e) {
+            if (resultBox) {
+                resultBox.innerHTML = '<p class="text-red-500">Gagal memeriksa status. Silakan coba lagi.</p>';
+            }
+        }
+    }
+
     async function checkMemberStatus(phone) {
         const statusBox = document.getElementById('memberStatusBox');
         const loading = document.getElementById('memberLoading');
@@ -1105,17 +1221,19 @@
                 progressCard.classList.remove('hidden');
 
                 const greet = document.getElementById('memberGreetName');
-                const totalOrders = document.getElementById('memberTotalOrders');
+                const totalOrdersBadge = document.getElementById('memberTotalOrdersBadge');
+                const totalOrdersCount = document.getElementById('memberTotalOrdersCount');
                 const cycleBadge = document.getElementById('memberCycleBadge');
                 const progressBar = document.getElementById('memberProgressBar');
                 const remainingText = document.getElementById('memberRemainingText');
 
                 if (greet) greet.innerText = `Halo, ${data.name || 'Member'}!`;
-                if (totalOrders) totalOrders.innerText = data.total_orders;
-                if (cycleBadge) cycleBadge.innerText = `${data.cycle_order} / 10 Pesanan`;
+                if (totalOrdersBadge) totalOrdersBadge.innerText = `${data.total_orders}x Pesan`;
+                if (totalOrdersCount) totalOrdersCount.innerText = data.total_orders;
+                if (cycleBadge) cycleBadge.innerText = `Siklus: ${data.cycle_order} / 10`;
                 if (progressBar) progressBar.style.width = `${data.cycle_order * 10}%`;
                 if (remainingText) {
-                    remainingText.innerText = `Tersisa ${data.orders_remaining} pesanan lagi untuk mendapatkan 1 Menu Pilihan Gratis!`;
+                    remainingText.innerText = `Kurang ${data.orders_remaining} kali pesanan lagi untuk mendapatkan 1 Menu Pilihan GRATIS!`;
                 }
             } else {
                 // Nomor baru

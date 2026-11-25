@@ -108,6 +108,12 @@ Route::middleware(['auth', 'role:admin,pegawai'])->prefix('admin')->name('admin.
     Route::resource('menus', MenuController::class);
     Route::post('menus/{menu}/toggle', [MenuController::class, 'toggleAvailability'])->name('menus.toggle');
     Route::resource('categories', CategoryController::class)->except(['create', 'show', 'edit']);
+
+    // Manajemen Membership Pelanggan & Menu Hadiah (Dapat diakses Admin & Kasir/Pegawai)
+    Route::get('/membership', [MembershipController::class, 'index'])->name('membership.index');
+    Route::get('/membership/hadiah', [MembershipController::class, 'rewards'])->name('membership.rewards');
+    Route::post('/membership/hadiah/{menu}/toggle', [MembershipController::class, 'toggleReward'])->name('membership.rewards.toggle');
+    Route::get('/membership/{id}', [MembershipController::class, 'show'])->name('membership.show');
 });
 
 /*
@@ -126,12 +132,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/pesanan', [OrderManagementController::class, 'index'])->name('orders.index');
     Route::get('/pesanan/{order}', [OrderManagementController::class, 'show'])->name('orders.show');
     Route::get('/riwayat-pesanan', [OrderManagementController::class, 'history'])->name('orders.history');
-
-    // Manajemen Membership Pelanggan & Menu Hadiah
-    Route::get('/membership', [MembershipController::class, 'index'])->name('membership.index');
-    Route::get('/membership/hadiah', [MembershipController::class, 'rewards'])->name('membership.rewards');
-    Route::post('/membership/hadiah/{menu}/toggle', [MembershipController::class, 'toggleReward'])->name('membership.rewards.toggle');
-    Route::get('/membership/{id}', [MembershipController::class, 'show'])->name('membership.show');
 
     // Manajemen Pengguna (Admin & Pegawai)
     Route::resource('users', UserController::class)->except(['create', 'show', 'edit']);
