@@ -97,6 +97,10 @@ Route::middleware(['auth', 'role:pegawai,admin'])->prefix('pegawai')->name('pega
     
     // Notifikasi WhatsApp
     Route::get('/pesanan/{order}/whatsapp', [PegawaiDashboardController::class, 'sendWhatsApp'])->name('order.whatsapp');
+
+    // Sakelar Status Kafe Buka/Tutup & Pengaturan Jam Operasional (Kasir & Admin)
+    Route::post('/toggle-status-toko', [PegawaiDashboardController::class, 'toggleCafeStatus'])->name('toggle_status');
+    Route::post('/jam-operasional', [PegawaiDashboardController::class, 'updateOperatingHours'])->name('update_hours');
 });
 
 /*

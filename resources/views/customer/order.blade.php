@@ -44,6 +44,43 @@
     <!-- Main Container -->
     <main class="max-w-3xl mx-auto w-full px-4 pt-4 flex-1">
 
+        @if(!$setting->isOpenNow())
+        <!-- Banner Peringatan Menonjol: Kafe Sedang Tutup -->
+        <div id="cafeClosedBanner" class="mb-4 bg-gradient-to-r from-red-800 via-rose-900 to-red-950 text-white p-4 sm:p-5 rounded-2xl shadow-xl border-2 border-red-500/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+            <div class="flex items-start space-x-3.5">
+                <div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0 text-amber-300 text-2xl shadow-inner border border-white/20">
+                    <i class="fa-solid fa-store-slash"></i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-red-600 text-white shadow-sm">
+                            Kafe Sedang Tutup
+                        </span>
+                        @if(!empty($setting->cafe_opening_hours))
+                        <span class="text-xs text-rose-200">
+                            <i class="fa-solid fa-clock mr-1 text-rose-300"></i>{{ $setting->cafe_opening_hours }}
+                        </span>
+                        @endif
+                    </div>
+                    <h3 class="text-sm sm:text-base font-extrabold font-serif mt-1 text-white">
+                        Mohon Maaf, Pemesanan Menu Saat Ini Ditutup
+                    </h3>
+                    <p class="text-xs text-rose-100/90 mt-0.5 leading-relaxed">
+                        {{ $setting->cafe_closed_message ?? 'Sekarsa Coffee saat ini sedang tutup. Pemesanan dibuka kembali pada jam operasional kafe.' }}
+                    </p>
+                </div>
+            </div>
+
+            @if(!empty($setting->cafe_phone))
+            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $setting->cafe_phone) }}?text=Halo%20Sekarsa%20Coffee,%20apakah%20bisa%20reservasi%20atau%20kapan%20kafe%20buka?" target="_blank"
+               class="shrink-0 px-4 py-2.5 bg-white text-rose-950 hover:bg-rose-50 active:scale-95 font-bold text-xs rounded-xl transition shadow flex items-center justify-center space-x-1.5">
+                <i class="fa-brands fa-whatsapp text-emerald-600 text-sm"></i>
+                <span>Hubungi WhatsApp Kafe</span>
+            </a>
+            @endif
+        </div>
+        @endif
+
         @if(!empty($setting->announcement_text))
         <!-- Running Text / Pengumuman Kafe -->
         <div class="mb-3 bg-amber-500 text-slate-950 px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 shadow-sm border border-amber-600/30">
@@ -221,7 +258,13 @@
                                     @endif
                                 </div>
 
-                                @if($menu->is_available)
+                                @if(!$setting->isOpenNow())
+                                    <button type="button" disabled
+                                            class="inline-flex items-center space-x-1 bg-rose-50 text-rose-600 border border-rose-200 px-3 py-1.5 rounded-xl text-xs font-semibold cursor-not-allowed">
+                                        <i class="fa-solid fa-store-slash text-[10px]"></i>
+                                        <span>Kafe Tutup</span>
+                                    </button>
+                                @elseif($menu->is_available)
                                     @if($menu->variations->isNotEmpty())
                                         <button type="button"
                                                 onclick="openVariationModal({{ $menu->id }})"
@@ -597,6 +640,10 @@
 
 @push('scripts')
 <script>
+    // Status Operasional Kafe
+    let isCafeClosed = @json(!$setting->isOpenNow());
+    let cafeClosedMsg = @json($setting->cafe_closed_message ?: 'Mohon maaf, saat ini Sekarsa Coffee sedang tutup. Pemesanan menu dibuka kembali pada jam operasional kafe.');
+
     // Data Menu & Variasi untuk Akses Cepat di Klien
     const menuData = {
         @foreach($menus as $m)
@@ -654,6 +701,15 @@
 
     // Buka Modal Pilih Variasi
     function openVariationModal(menuId) {
+        if (isCafeClosed) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Kafe Sedang Tutup',
+                text: cafeClosedMsg,
+                confirmButtonColor: '#e11d48'
+            });
+            return;
+        }
         const menu = menuData[menuId];
         if (!menu) return;
 
@@ -782,6 +838,15 @@
 
     // Add item to cart (Menu reguler tanpa variasi)
     function addToCart(id, name, price, image) {
+        if (isCafeClosed) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Kafe Sedang Tutup',
+                text: cafeClosedMsg,
+                confirmButtonColor: '#e11d48'
+            });
+            return;
+        }
         const cartKey = String(id);
         const existing = cart.find(item => (item.cartKey || String(item.id)) === cartKey);
         if (existing) {
@@ -947,6 +1012,15 @@
 
     // Modal Cart Controls
     function openCartModal() {
+        if (isCafeClosed) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Kafe Sedang Tutup',
+                text: cafeClosedMsg,
+                confirmButtonColor: '#e11d48'
+            });
+            return;
+        }
         const modal = document.getElementById('cartModal');
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
@@ -1330,6 +1404,19 @@
 
             const data = await res.json();
             if (!data.success) return;
+
+            // Sinkronisasi Real-time Status Buka/Tutup Kafe jika diubah kasir/admin
+            if (data.is_cafe_open !== undefined) {
+                if (!data.is_cafe_open && !isCafeClosed) {
+                    isCafeClosed = true;
+                    location.reload();
+                    return;
+                } else if (data.is_cafe_open && isCafeClosed) {
+                    isCafeClosed = false;
+                    location.reload();
+                    return;
+                }
+            }
 
             if (data.version && data.version !== lastMenuVersion && lastMenuVersion !== 0) {
                 // Perubahan ketersediaan menu terjadi di kasir/admin

@@ -146,15 +146,17 @@ class CustomerOrderController extends Controller
         }
 
         $menus = $menuQuery->orderBy('category_id')->orderBy('name')->get();
+        $isCafeClosed = !$setting->isOpenNow();
 
-        return view('customer.order', compact('categories', 'menus', 'selectedCategory', 'search', 'tableParam', 'tokenParam', 'setting'));
+        return view('customer.order', compact('categories', 'menus', 'selectedCategory', 'search', 'tableParam', 'tokenParam', 'setting', 'isCafeClosed'));
     }
 
     /**
-     * API Real-time Cek Ketersediaan Menu
+     * API Real-time Cek Ketersediaan Menu & Status Operasional Kafe
      */
     public function menuStatusApi()
     {
+        $setting = Setting::get();
         $menus = Menu::select('id', 'name', 'is_available', 'updated_at')->get();
         $latestUpdate = Menu::max('updated_at');
         $version = $latestUpdate ? Carbon::parse($latestUpdate)->timestamp : time();
@@ -162,6 +164,8 @@ class CustomerOrderController extends Controller
         return response()->json([
             'success' => true,
             'version' => $version,
+            'is_cafe_open' => $setting->isOpenNow(),
+            'cafe_closed_message' => $setting->cafe_closed_message ?: 'Mohon maaf, Sekarsa Coffee saat ini sedang tutup. Pemesanan dibuka kembali pada jam operasional kafe.',
             'menus' => $menus,
         ]);
     }
@@ -188,6 +192,15 @@ class CustomerOrderController extends Controller
     public function submitOrder(Request $request)
     {
         $setting = Setting::get();
+
+        // Validasi Status Operasional Kafe: Tolak jika kafe sedang tutup
+        if (!$setting->isOpenNow()) {
+            return response()->json([
+                'success' => false,
+                'message' => $setting->cafe_closed_message ?: 'Mohon maaf, saat ini Sekarsa Coffee sedang tutup. Pemesanan menu dibuka kembali pada jam operasional kafe.',
+                'is_closed' => true,
+            ], 422);
+        }
 
         // Validasi QR Gate: Cegah inject pesanan tanpa otorisasi scan QR di meja
         if ($setting->require_qr_scan && !auth()->check()) {

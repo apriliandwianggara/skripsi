@@ -105,7 +105,72 @@
                     </div>
                 </div>
 
-                <!-- KARTU 2: KONTEN TEKS PELANGGAN (CMS) -->
+                <!-- KARTU 2: STATUS OPERASIONAL & JAM BUKA/TUTUP KAFE -->
+                <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-4">
+                    <h3 class="font-bold text-sm uppercase tracking-wider text-gray-800 pb-2 border-b border-gray-100 flex items-center justify-between">
+                        <span class="flex items-center">
+                            <i class="fa-solid fa-door-open mr-2 text-emerald-600"></i> Status Operasional & Jam Buka/Tutup Kafe
+                        </span>
+                        @if($setting->isOpenNow())
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1"></span> SAAT INI BUKA
+                            </span>
+                        @else
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-red-100 text-red-800 border border-red-300">
+                                <span class="w-2 h-2 rounded-full bg-red-500 inline-block mr-1"></span> SAAT INI TUTUP
+                            </span>
+                        @endif
+                    </h3>
+
+                    <!-- Sakelar Buka / Tutup Manual -->
+                    <div class="p-4 {{ $setting->isOpenNow() ? 'bg-emerald-50/70 border-emerald-200' : 'bg-red-50/70 border-red-200' }} border rounded-2xl space-y-2">
+                        <div class="flex items-start justify-between">
+                            <div class="pr-3">
+                                <label for="is_cafe_open" class="text-xs font-extrabold text-gray-900 flex items-center cursor-pointer">
+                                    <i class="fa-solid fa-power-off text-emerald-600 mr-1.5"></i>
+                                    Status Kafe Buka (Menerima Pesanan Pelanggan)
+                                </label>
+                                <p class="text-[11px] text-gray-600 mt-1 leading-relaxed">
+                                    Jika dimatikan (TUTUP), pelanggan yang scan menu akan melihat banner informasi kafe tutup dan tidak dapat memilih / memesan menu. Kasir juga memiliki tombol cepat untuk membuka/menutup kafe ini dari dashboard kasir.
+                                </p>
+                            </div>
+                            <div class="pt-0.5">
+                                <input type="checkbox" id="is_cafe_open" name="is_cafe_open" value="1" {{ old('is_cafe_open', $setting->is_cafe_open ?? true) ? 'checked' : '' }}
+                                       class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300 transition cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Jam Operasional & Jadwal Otomatis -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Jam Buka Kafe</label>
+                            <input type="time" name="cafe_opening_time" value="{{ old('cafe_opening_time', $setting->cafe_opening_time ?? '08:00') }}" class="w-full text-xs p-3 border border-gray-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <span class="text-[10px] text-gray-400 mt-1 block">Contoh: 08:00 WIB</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Jam Tutup Kafe</label>
+                            <input type="time" name="cafe_closing_time" value="{{ old('cafe_closing_time', $setting->cafe_closing_time ?? '23:00') }}" class="w-full text-xs p-3 border border-gray-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <span class="text-[10px] text-gray-400 mt-1 block">Contoh: 23:00 WIB</span>
+                        </div>
+                    </div>
+
+                    <!-- Jadwal Otomatis Checkbox -->
+                    <label class="flex items-center p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100 transition">
+                        <input type="checkbox" name="auto_schedule_enabled" value="1" {{ old('auto_schedule_enabled', $setting->auto_schedule_enabled) ? 'checked' : '' }}
+                               class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300">
+                        <span class="ml-2.5 text-xs text-gray-700">
+                            <strong>Otomatis Tutup di Luar Jam Operasional:</strong> Kafe otomatis tutup jika waktu saat ini di luar jam buka & tutup di atas.
+                        </span>
+                    </label>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Pesan Khusus Saat Kafe Tutup (Tampil di Layar Pelanggan)</label>
+                        <textarea name="cafe_closed_message" rows="2" placeholder="Mohon maaf, Sekarsa Coffee saat ini sedang tutup. Pemesanan menu dibuka kembali pada jam operasional kafe." class="w-full text-xs p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">{{ old('cafe_closed_message', $setting->cafe_closed_message) }}</textarea>
+                    </div>
+                </div>
+
+                <!-- KARTU 3: KONTEN TEKS PELANGGAN (CMS) -->
                 <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-4">
                     <h3 class="font-bold text-sm uppercase tracking-wider text-gray-800 pb-2 border-b border-gray-100 flex items-center">
                         <i class="fa-solid fa-pen-to-square mr-2 text-emerald-600"></i> Konten Teks Halaman Pelanggan

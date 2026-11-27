@@ -465,6 +465,47 @@ class PegawaiDashboardController extends Controller
     }
 
     /**
+     * Sakelar Cepat Buka / Tutup Kafe (Dioperasikan langsung oleh Kasir / Pegawai & Admin)
+     */
+    public function toggleCafeStatus(Request $request)
+    {
+        $setting = Setting::get();
+        $newStatus = $request->has('is_cafe_open') 
+            ? $request->boolean('is_cafe_open') 
+            : !$setting->is_cafe_open;
+
+        $setting->update([
+            'is_cafe_open' => $newStatus,
+        ]);
+
+        $statusLabel = $newStatus ? 'BUKA' : 'TUTUP';
+        return back()->with('success', "Status operasional kafe berhasil diubah menjadi: {$statusLabel}.");
+    }
+
+    /**
+     * Update Pengaturan Jam Operasional & Jadwal Kafe oleh Kasir / Pegawai
+     */
+    public function updateOperatingHours(Request $request)
+    {
+        $data = $request->validate([
+            'is_cafe_open' => 'nullable|boolean',
+            'cafe_opening_hours' => 'nullable|string|max:150',
+            'cafe_opening_time' => 'nullable|string|max:10',
+            'cafe_closing_time' => 'nullable|string|max:10',
+            'auto_schedule_enabled' => 'nullable|boolean',
+            'cafe_closed_message' => 'nullable|string|max:500',
+        ]);
+
+        $data['is_cafe_open'] = $request->boolean('is_cafe_open', true);
+        $data['auto_schedule_enabled'] = $request->boolean('auto_schedule_enabled', false);
+
+        $setting = Setting::get();
+        $setting->update($data);
+
+        return back()->with('success', 'Jam operasional dan pengaturan status kafe berhasil diperbarui.');
+    }
+
+    /**
      * Pastikan kolom pembayaran ada di database remote (Self-Healing InfinityFree)
      */
     private function ensurePaymentColumnsExist(): void

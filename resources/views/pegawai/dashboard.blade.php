@@ -33,6 +33,59 @@
         </div>
     </div>
 
+    <!-- BAR STATUS OPERASIONAL KAFE (KONTROL BUKA / TUTUP OLEH KASIR & ADMIN) -->
+    <div class="bg-white rounded-2xl p-4 border {{ $setting->isOpenNow() ? 'border-emerald-200 bg-emerald-50/40' : 'border-red-200 bg-red-50/50' }} shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center space-x-3.5">
+            <div class="w-11 h-11 rounded-2xl {{ $setting->isOpenNow() ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white animate-pulse' }} flex items-center justify-center text-xl shrink-0 shadow">
+                <i class="fa-solid {{ $setting->isOpenNow() ? 'fa-store' : 'fa-store-slash' }}"></i>
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-black uppercase tracking-wider {{ $setting->isOpenNow() ? 'text-emerald-950' : 'text-red-950' }}">
+                        Status Kafe:
+                    </span>
+                    @if($setting->isOpenNow())
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span> BUKA (Menerima Pesanan)
+                        </span>
+                    @else
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-red-100 text-red-800 border border-red-300 shadow-sm">
+                            <span class="w-2 h-2 rounded-full bg-red-500 mr-1.5"></span> TUTUP (Pemesanan Dimatikan)
+                        </span>
+                    @endif
+                </div>
+                <p class="text-[11px] text-gray-500 mt-0.5">
+                    @if($setting->isOpenNow())
+                        Pelanggan dapat melakukan scan QR meja dan membuat pesanan baru secara normal.
+                    @else
+                        Pelanggan yang scan menu akan melihat informasi kafe sedang tutup dan tidak bisa memesan menu.
+                    @endif
+                    <span class="font-semibold text-gray-700">({{ $setting->cafe_opening_hours ?? '08:00 - 23:00 WIB' }})</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 shrink-0">
+            <!-- Form Sakelar 1-Klik Buka / Tutup -->
+            <form action="{{ route('pegawai.toggle_status') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin mengubah status kafe menjadi {{ $setting->isOpenNow() ? 'TUTUP' : 'BUKA' }}?')">
+                @csrf
+                <input type="hidden" name="is_cafe_open" value="{{ $setting->isOpenNow() ? '0' : '1' }}">
+                <button type="submit"
+                        class="px-4 py-2.5 rounded-xl text-xs font-black transition flex items-center space-x-1.5 shadow-sm active:scale-95 {{ $setting->isOpenNow() ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20' }}">
+                    <i class="fa-solid {{ $setting->isOpenNow() ? 'fa-power-off' : 'fa-door-open' }}"></i>
+                    <span>{{ $setting->isOpenNow() ? 'Tutup Kafe Sementara' : 'Buka Kafe Sekarang' }}</span>
+                </button>
+            </form>
+
+            <!-- Tombol Modal Atur Jam Operasional -->
+            <button type="button" onclick="openOperatingHoursModal()"
+                    class="px-3.5 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-clock text-emerald-600"></i>
+                <span>Atur Jam Buka / Tutup</span>
+            </button>
+        </div>
+    </div>
+
     <!-- Banner Suasana Sekarsa Coffee -->
     <div class="relative rounded-2xl overflow-hidden shadow-sm border border-emerald-900/10 h-24 sm:h-28">
         <img src="{{ $setting->banner_url }}" alt="Sekarsa Cafe" class="w-full h-full object-cover object-center filter brightness-75">
@@ -382,6 +435,87 @@
                 </button>
                 <button type="submit" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition">
                     Ya, Batalkan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL ATUR JAM BUKA / TUTUP OLEH KASIR -->
+<div id="operatingHoursModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-gray-150 overflow-hidden">
+        <div class="bg-gradient-to-r from-emerald-900 to-emerald-800 text-white p-5 flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-amber-300">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold">Atur Jam Buka / Tutup Kafe</h3>
+                    <p class="text-[11px] text-emerald-200">Kontrol operasional pemesanan pelanggan</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeOperatingHoursModal()" class="text-white/80 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form action="{{ route('pegawai.update_hours') }}" method="POST" class="p-5 space-y-4">
+            @csrf
+
+            <!-- Sakelar Buka / Tutup -->
+            <label class="flex items-start p-3 rounded-2xl border {{ $setting->isOpenNow() ? 'bg-emerald-50/70 border-emerald-200' : 'bg-red-50/70 border-red-200' }} cursor-pointer">
+                <input type="checkbox" name="is_cafe_open" value="1" {{ old('is_cafe_open', $setting->is_cafe_open ?? true) ? 'checked' : '' }}
+                       class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300 mt-0.5">
+                <div class="ml-2.5 flex-1">
+                    <span class="text-xs font-bold text-gray-900 block">Kafe Buka (Menerima Pesanan)</span>
+                    <span class="text-[11px] text-gray-500">Hilangkan centang jika ingin menutup kafe seketika.</span>
+                </div>
+            </label>
+
+            <!-- Jam Buka & Jam Tutup -->
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Jam Buka</label>
+                    <input type="time" name="cafe_opening_time" value="{{ old('cafe_opening_time', $setting->cafe_opening_time ?? '08:00') }}"
+                           class="w-full text-xs p-2.5 bg-gray-50 border border-gray-200 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Jam Tutup</label>
+                    <input type="time" name="cafe_closing_time" value="{{ old('cafe_closing_time', $setting->cafe_closing_time ?? '23:00') }}"
+                           class="w-full text-xs p-2.5 bg-gray-50 border border-gray-200 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+            </div>
+
+            <!-- Jam Operasional Teks -->
+            <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">Teks Jam Buka (Tertera di Banner)</label>
+                <input type="text" name="cafe_opening_hours" value="{{ old('cafe_opening_hours', $setting->cafe_opening_hours ?? 'Setiap Hari: 08:00 - 23:00 WIB') }}"
+                       class="w-full text-xs p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+
+            <!-- Jadwal Otomatis -->
+            <label class="flex items-center p-2.5 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer">
+                <input type="checkbox" name="auto_schedule_enabled" value="1" {{ old('auto_schedule_enabled', $setting->auto_schedule_enabled) ? 'checked' : '' }}
+                       class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300">
+                <span class="ml-2 text-[11px] text-gray-700">
+                    Otomatis tutup di luar jam buka & tutup di atas
+                </span>
+            </label>
+
+            <!-- Pesan Tutup -->
+            <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">Pesan saat Kafe Tutup</label>
+                <textarea name="cafe_closed_message" rows="2" class="w-full text-xs p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">{{ old('cafe_closed_message', $setting->cafe_closed_message) }}</textarea>
+            </div>
+
+            <div class="flex items-center space-x-2 pt-2">
+                <button type="button" onclick="closeOperatingHoursModal()"
+                        class="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition">
+                    Batal
+                </button>
+                <button type="submit"
+                        class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm">
+                    Simpan Pengaturan
                 </button>
             </div>
         </form>
@@ -868,6 +1002,14 @@
         });
 
         container.innerHTML = html;
+    }
+
+    function openOperatingHoursModal() {
+        document.getElementById('operatingHoursModal').classList.remove('hidden');
+    }
+
+    function closeOperatingHoursModal() {
+        document.getElementById('operatingHoursModal').classList.add('hidden');
     }
 
     // Auto Polling Real-time setiap 2.5 Detik (Tanpa Refresh Halaman)

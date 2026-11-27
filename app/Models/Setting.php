@@ -23,6 +23,11 @@ class Setting extends Model
         'cafe_phone',
         'cafe_instagram',
         'footer_text',
+        'is_cafe_open',
+        'cafe_opening_time',
+        'cafe_closing_time',
+        'auto_schedule_enabled',
+        'cafe_closed_message',
         'whatsapp_notification_template',
         'alarm_sound_enabled',
         'alarm_repeat_interval',
@@ -44,6 +49,8 @@ class Setting extends Model
     ];
 
     protected $casts = [
+        'is_cafe_open' => 'boolean',
+        'auto_schedule_enabled' => 'boolean',
         'require_qr_scan' => 'boolean',
         'enable_gps_radius' => 'boolean',
         'demo_mode_enabled' => 'boolean',
@@ -84,6 +91,38 @@ class Setting extends Model
             return asset(ltrim($this->cafe_banner, '/'));
         }
         return asset('images/sekarsa-cafe.jpg');
+    }
+
+    /**
+     * Cek apakah saat ini kafe sedang buka atau tutup (Bisa diatur Admin & Kasir).
+     */
+    public function isOpenNow(): bool
+    {
+        // 1. Jika sakelar manual dimatikan oleh admin atau kasir, kafe dipastikan tutup
+        if ($this->is_cafe_open === false || $this->is_cafe_open === 0 || $this->is_cafe_open === '0') {
+            return false;
+        }
+
+        // 2. Jika fitur jadwal otomatis aktif dan jam buka-tutup terisi
+        if ($this->auto_schedule_enabled && !empty($this->cafe_opening_time) && !empty($this->cafe_closing_time)) {
+            $currentTime = now()->format('H:i');
+            $open = date('H:i', strtotime($this->cafe_opening_time));
+            $close = date('H:i', strtotime($this->cafe_closing_time));
+
+            if ($open <= $close) {
+                // Jam buka reguler dalam hari yang sama (misal 08:00 s.d 23:00)
+                if ($currentTime < $open || $currentTime > $close) {
+                    return false;
+                }
+            } else {
+                // Jam buka melewati tengah malam (misal 17:00 s.d 02:00)
+                if ($currentTime < $open && $currentTime > $close) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -143,6 +182,11 @@ class Setting extends Model
             'cafe_phone' => '0878-1113-9210',
             'cafe_instagram' => '@sekarsacoffee',
             'footer_text' => '© 2026 Sekarsa Coffee & Space. All rights reserved.',
+            'is_cafe_open' => true,
+            'cafe_opening_time' => '08:00',
+            'cafe_closing_time' => '23:00',
+            'auto_schedule_enabled' => false,
+            'cafe_closed_message' => 'Mohon maaf, Sekarsa Coffee saat ini sedang tutup. Pemesanan menu dibuka kembali pada jam operasional kafe.',
             'whatsapp_notification_template' => "Halo Kak {nama_pelanggan}! ☕\n\nPesanan Anda di Sekarsa Coffee dengan Nomor Antrean *{nomor_antrean}* ({nomor_pesanan}) sudah *SIAP DIAMBIL* di counter barista!\n\nSilakan tunjukkan pesan ini atau sebutkan nomor antrean Anda. Selamat menikmati! ✨",
             'estimated_minutes_per_queue' => 4,
             'qr_permanent_url' => 'http://sekarsacoffee.gt.tc/scan?',
