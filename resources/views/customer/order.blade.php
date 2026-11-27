@@ -66,7 +66,7 @@
                 </h2>
                 <p class="text-[11px] text-emerald-200 flex items-center mt-0.5 line-clamp-1">
                     <i class="fa-solid fa-location-dot mr-1 text-amber-400 shrink-0"></i>
-                    <span>{{ $setting->hero_subtitle ?? ($setting->cafe_address ?? 'Jl. Perhubungan No.26, PERUMAHAN, Perhentian Marpoyan, MArpoyan Damai, Kota Pekanbaru, Riau 28288') }}</span>
+                    <span>Jl. Perhubungan No.26, PERUMAHAN, Perhentian Marpoyan, Marpoyan Damai, Kota Pekanbaru, Riau 28288</span>
                 </p> 
                 @if(!empty($setting->cafe_opening_hours))
                 <p class="text-[10px] text-emerald-300/90 flex items-center mt-0.5">
