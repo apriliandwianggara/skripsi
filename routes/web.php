@@ -29,7 +29,7 @@ Route::get('/', function () {
 
 /*
 |--------------------------------------------------------------------------
-| A. Halaman Pelanggan (Tanpa Perlu Login)
+| A. Halaman Pelanggan (Tanpa Perlu Login)                                 
 |--------------------------------------------------------------------------
 */
 // Gerbang Validasi Scan QR Code di Meja

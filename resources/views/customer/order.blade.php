@@ -60,14 +60,14 @@
             <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent flex flex-col justify-end p-3.5 sm:p-5 text-white">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white w-max mb-1 shadow-sm">
                     <i class="fa-solid fa-mug-hot mr-1 text-[9px]"></i> {{ $setting->cafe_name ?? 'Sekarsa Coffee & Space' }}
-                </span>
+                </span> 
                 <h2 class="text-base sm:text-xl font-bold font-serif leading-tight">
                     {{ $setting->hero_title ?? 'Warmth, Taste & Harmony in Every Sip' }}
                 </h2>
                 <p class="text-[11px] text-emerald-200 flex items-center mt-0.5 line-clamp-1">
                     <i class="fa-solid fa-location-dot mr-1 text-amber-400 shrink-0"></i>
-                    <span>{{ $setting->hero_subtitle ?? ($setting->cafe_address ?? 'Jl. Kaliurang KM 5.8, Manggung, Caturtunggal, Sleman') }}</span>
-                </p>
+                    <span>{{ $setting->hero_subtitle ?? ($setting->cafe_address ?? 'Jl. Perhubungan No.26, PERUMAHAN, Perhentian Marpoyan, MArpoyan Damai, Kota Pekanbaru, Riau 28288') }}</span>
+                </p> 
                 @if(!empty($setting->cafe_opening_hours))
                 <p class="text-[10px] text-emerald-300/90 flex items-center mt-0.5">
                     <i class="fa-solid fa-clock mr-1 text-emerald-400 shrink-0"></i>
