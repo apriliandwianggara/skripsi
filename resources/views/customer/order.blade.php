@@ -66,14 +66,22 @@
                 </h2>
                 <p class="text-[11px] text-emerald-200 flex items-center mt-0.5 line-clamp-1">
                     <i class="fa-solid fa-location-dot mr-1 text-amber-400 shrink-0"></i>
-                    <span>Jl. Perhubungan No.26, PERUMAHAN, Perhentian Marpoyan, Marpoyan Damai, Kota Pekanbaru, Riau 28288</span>
+                    <span>{{ $setting->cafe_address ?? 'Jl. Perhubungan No.26, PERUMAHAN, Perhentian Marpoyan, Marpoyan Damai, Kota Pekanbaru, Riau 28288' }}</span>
                 </p> 
-                @if(!empty($setting->cafe_opening_hours))
-                <p class="text-[10px] text-emerald-300/90 flex items-center mt-0.5">
-                    <i class="fa-solid fa-clock mr-1 text-emerald-400 shrink-0"></i>
-                    <span>{{ $setting->cafe_opening_hours }}</span>
-                </p>
-                @endif
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
+                    @if(!empty($setting->cafe_opening_hours))
+                    <p class="text-[10px] text-emerald-300/90 flex items-center">
+                        <i class="fa-solid fa-clock mr-1 text-emerald-400 shrink-0"></i>
+                        <span>{{ $setting->cafe_opening_hours }}</span>
+                    </p>
+                    @endif
+                    @if(!empty($setting->cafe_wifi))
+                    <p class="text-[10px] text-amber-300/90 flex items-center">
+                        <i class="fa-solid fa-wifi mr-1 text-amber-400 shrink-0"></i>
+                        <span>Wi-Fi: <strong>{{ $setting->cafe_wifi }}</strong></span>
+                    </p>
+                    @endif
+                </div>
             </div>
         </div>
 
@@ -244,12 +252,21 @@
         @endif
 
         <!-- Footer Info Kafe -->
-        <div class="mt-8 pt-6 border-t border-gray-200 text-center text-xs text-gray-500">
-            <p class="font-serif font-bold text-gray-700 text-sm">{{ $setting->cafe_name ?? 'Sekarsa Coffee' }}</p>
-            <p class="mt-1 text-[11px]">{{ $setting->cafe_address ?? 'Jl. Sekarsa, Tempat Santai & Produktif' }}</p>
-            @if($setting->cafe_phone)
-                <p class="mt-0.5 text-[11px]">WhatsApp: {{ $setting->cafe_phone }}</p>
-            @endif
+        <div class="mt-8 pt-6 border-t border-gray-200 text-center text-xs text-gray-500 space-y-1.5">
+            <p class="font-serif font-bold text-gray-800 text-sm">{{ $setting->cafe_name ?? 'Sekarsa Coffee' }}</p>
+            <p class="text-[11px] text-gray-600 max-w-md mx-auto">{{ $setting->cafe_address ?? 'Jl. Perhubungan No.26, PERUMAHAN, Perhentian Marpoyan, Marpoyan Damai, Kota Pekanbaru, Riau 28288' }}</p>
+            <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-gray-500 pt-1">
+                @if(!empty($setting->cafe_phone))
+                    <span class="inline-flex items-center"><i class="fa-brands fa-whatsapp text-emerald-600 mr-1"></i>{{ $setting->cafe_phone }}</span>
+                @endif
+                @if(!empty($setting->cafe_instagram))
+                    <span class="inline-flex items-center"><i class="fa-brands fa-instagram text-pink-600 mr-1"></i>{{ $setting->cafe_instagram }}</span>
+                @endif
+                @if(!empty($setting->cafe_wifi))
+                    <span class="inline-flex items-center"><i class="fa-solid fa-wifi text-emerald-600 mr-1"></i>Wi-Fi: {{ $setting->cafe_wifi }}</span>
+                @endif
+            </div>
+            <p class="text-[10px] text-gray-400 pt-2">{{ $setting->footer_text ?? '© 2026 Sekarsa Coffee & Space. All rights reserved.' }}</p>
         </div>
     </main>
 

@@ -334,10 +334,10 @@
             <div class="standee-footer">
                 <span class="flex items-center gap-1.5">
                     <i class="fa-solid fa-wifi text-amber-400"></i>
-                    <span>Wi-Fi: <strong>Sekarsa-Guest</strong></span>
+                    <span>Wi-Fi: <strong>{{ $setting->cafe_wifi ?? 'Sekarsa-Guest' }}</strong></span>
                 </span>
                 <span class="font-bold text-emerald-300">
-                    Sekarsa Coffee &bull; Dine-In
+                    {{ $setting->cafe_name ?? 'Sekarsa Coffee' }} &bull; Dine-In
                 </span>
             </div>
 

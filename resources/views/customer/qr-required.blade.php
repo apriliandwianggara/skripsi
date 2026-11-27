@@ -9,14 +9,14 @@
         <!-- Top Ornamental Header with Sekarsa Photo & Logo -->
         <div class="relative overflow-hidden text-white p-8 text-center">
             <!-- Background Foto Kafe Sekarsa -->
-            <img src="{{ asset('images/sekarsa-cafe.jpg') }}" alt="Sekarsa Cafe" class="absolute inset-0 w-full h-full object-cover object-center filter brightness-40">
+            <img src="{{ $setting->banner_url }}" alt="Sekarsa Cafe" class="absolute inset-0 w-full h-full object-cover object-center filter brightness-40">
             <!-- Overlay Gradien Hijau Emerald -->
             <div class="absolute inset-0 bg-gradient-to-b from-sekarsa-950/90 via-sekarsa-900/85 to-emerald-950/95"></div>
 
             <div class="relative z-10 flex flex-col items-center">
                 <!-- Logo Sekarsa Coffee -->
                 <div class="w-20 h-20 bg-white p-1.5 rounded-3xl shadow-2xl mb-3 border border-white/40 overflow-hidden flex items-center justify-center">
-                    <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
+                    <img src="{{ $setting->logo_url }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
                 </div>
                 
                 <span class="px-3.5 py-1 bg-amber-400 text-slate-950 text-[10px] font-extrabold uppercase tracking-widest rounded-full shadow-md mb-2">

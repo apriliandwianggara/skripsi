@@ -61,6 +61,7 @@ class SettingController extends Controller
             'cafe_opening_hours' => 'nullable|string|max:150',
             'announcement_text' => 'nullable|string|max:500',
             'cafe_address' => 'nullable|string',
+            'cafe_wifi' => 'nullable|string|max:100',
             'cafe_phone' => 'nullable|string|max:50',
             'cafe_instagram' => 'nullable|string|max:100',
             'footer_text' => 'nullable|string|max:200',
@@ -68,6 +69,9 @@ class SettingController extends Controller
             'estimated_minutes_per_queue' => 'required|integer|min:1|max:30',
             'qr_permanent_url' => 'required|url',
             'qr_access_key' => 'nullable|string|max:64',
+            'require_qr_scan' => 'nullable|boolean',
+            'enable_qris_payment' => 'nullable|boolean',
+            'enable_cash_payment' => 'nullable|boolean',
             'alarm_repeat_interval' => 'nullable|integer|min:1|max:15',
             'qris_dana_number' => 'nullable|string|max:30',
             'qris_merchant_name' => 'nullable|string|max:100',
@@ -102,8 +106,11 @@ class SettingController extends Controller
                 $data['cafe_banner'] = 'images/' . $bannerName;
             }
 
-            // Proteksi QR Gate di Meja selalu aktif
-            $data['require_qr_scan'] = true;
+            // Sakelar Proteksi QR Gate di Meja (Dinamis dari Input Admin)
+            $data['require_qr_scan'] = $request->boolean('require_qr_scan', false);
+            // Sakelar Pembayaran
+            $data['enable_qris_payment'] = $request->boolean('enable_qris_payment', true);
+            $data['enable_cash_payment'] = $request->boolean('enable_cash_payment', true);
             // GPS dinonaktifkan sepenuhnya
             $data['enable_gps_radius'] = false;
             $data['demo_mode_enabled'] = false;
@@ -134,6 +141,7 @@ class SettingController extends Controller
             "ALTER TABLE `settings` ADD `hero_title` VARCHAR(150) NULL DEFAULT 'Selamat Datang di Sekarsa Coffee' AFTER `cafe_tagline`",
             "ALTER TABLE `settings` ADD `hero_subtitle` TEXT NULL AFTER `hero_title`",
             "ALTER TABLE `settings` ADD `cafe_opening_hours` VARCHAR(150) NULL DEFAULT 'Setiap Hari: 08:00 - 23:00 WIB' AFTER `cafe_address`",
+            "ALTER TABLE `settings` ADD `cafe_wifi` VARCHAR(100) NULL DEFAULT 'Sekarsa-Guest' AFTER `cafe_opening_hours`",
             "ALTER TABLE `settings` ADD `announcement_text` TEXT NULL AFTER `hero_subtitle`",
             "ALTER TABLE `settings` ADD `footer_text` VARCHAR(200) NULL DEFAULT '© 2026 Sekarsa Coffee & Space. All rights reserved.' AFTER `cafe_instagram`",
             "ALTER TABLE `settings` ADD `alarm_sound_enabled` TINYINT(1) DEFAULT 1 AFTER `whatsapp_notification_template`",

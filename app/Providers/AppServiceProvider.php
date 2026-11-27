@@ -37,6 +37,9 @@ class AppServiceProvider extends ServiceProvider
                 \Illuminate\Support\Facades\DB::statement("ALTER TABLE `settings` ADD `enable_qris_payment` TINYINT(1) DEFAULT 1");
                 \Illuminate\Support\Facades\DB::statement("ALTER TABLE `settings` ADD `enable_cash_payment` TINYINT(1) DEFAULT 1");
             }
+            if (Schema::hasTable('settings') && !Schema::hasColumn('settings', 'cafe_wifi')) {
+                \Illuminate\Support\Facades\DB::statement("ALTER TABLE `settings` ADD `cafe_wifi` VARCHAR(100) NULL DEFAULT 'Sekarsa-Guest' AFTER `cafe_address`");
+            }
         } catch (\Throwable $e) {
             // Lanjutkan jika koneksi DB belum siap
         }

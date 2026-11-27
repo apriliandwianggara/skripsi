@@ -80,18 +80,22 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                             <label class="block text-xs font-bold uppercase text-gray-700 mb-1">No. WhatsApp</label>
-                            <input type="text" name="cafe_phone" value="{{ old('cafe_phone', $setting->cafe_phone) }}" class="w-full text-xs p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="text" name="cafe_phone" value="{{ old('cafe_phone', $setting->cafe_phone) }}" class="w-full text-xs p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="087811139210">
                         </div>
                         <div>
                             <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Instagram</label>
-                            <input type="text" name="cafe_instagram" value="{{ old('cafe_instagram', $setting->cafe_instagram) }}" class="w-full text-xs p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="text" name="cafe_instagram" value="{{ old('cafe_instagram', $setting->cafe_instagram) }}" class="w-full text-xs p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="@sekarsacoffee">
                         </div>
                         <div>
                             <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Jam Buka Kafe</label>
                             <input type="text" name="cafe_opening_hours" value="{{ old('cafe_opening_hours', $setting->cafe_opening_hours ?? 'Setiap Hari: 08:00 - 23:00 WIB') }}" class="w-full text-xs p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Info Wi-Fi Kafe</label>
+                            <input type="text" name="cafe_wifi" value="{{ old('cafe_wifi', $setting->cafe_wifi ?? 'Sekarsa-Guest') }}" class="w-full text-xs p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Sekarsa-Guest">
                         </div>
                     </div>
 
@@ -190,9 +194,8 @@
                                 </p>
                             </div>
                             <div class="pt-0.5">
-                                <input type="checkbox" id="require_qr_scan" name="require_qr_scan" value="1" checked disabled
-                                       class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300 opacity-80 cursor-not-allowed">
-                                <input type="hidden" name="require_qr_scan" value="1">
+                                <input type="checkbox" id="require_qr_scan" name="require_qr_scan" value="1" {{ old('require_qr_scan', $setting->require_qr_scan) ? 'checked' : '' }}
+                                       class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300 transition cursor-pointer">
                             </div>
                         </div>
 
@@ -206,24 +209,42 @@
                         </div>
                     </div>
 
-
-
-                    <!-- Pengaturan Pembayaran QRIS & DANA -->
-                    <div class="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200/80 space-y-3">
+                    <!-- Pengaturan Pembayaran QRIS & Kasir -->
+                    <div class="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200/80 space-y-4">
                         <div class="flex items-center space-x-2">
-                            <i class="fa-solid fa-qrcode text-emerald-700"></i>
+                            <i class="fa-solid fa-credit-card text-emerald-700"></i>
                             <span class="text-xs font-bold uppercase tracking-wider text-emerald-900">
-                                Pengaturan Pembayaran QRIS & DANA
+                                Metode Pembayaran Pelanggan
                             </span>
                         </div>
+
+                        <!-- Sakelar Metode Pembayaran -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <label class="flex items-center p-3 bg-white rounded-xl border border-emerald-200 cursor-pointer hover:bg-emerald-50/40 transition">
+                                <input type="checkbox" name="enable_qris_payment" value="1" {{ old('enable_qris_payment', $setting->enable_qris_payment ?? true) ? 'checked' : '' }}
+                                       class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300">
+                                <span class="ml-2.5 text-xs font-bold text-gray-800">
+                                    <i class="fa-solid fa-qrcode text-emerald-600 mr-1"></i> Pembayaran QRIS Otomatis
+                                </span>
+                            </label>
+
+                            <label class="flex items-center p-3 bg-white rounded-xl border border-emerald-200 cursor-pointer hover:bg-emerald-50/40 transition">
+                                <input type="checkbox" name="enable_cash_payment" value="1" {{ old('enable_cash_payment', $setting->enable_cash_payment ?? true) ? 'checked' : '' }}
+                                       class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300">
+                                <span class="ml-2.5 text-xs font-bold text-gray-800">
+                                    <i class="fa-solid fa-money-bill-wave text-emerald-600 mr-1"></i> Bayar Tunai di Kasir
+                                </span>
+                            </label>
+                        </div>
+
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-700 mb-1">
-                                    Nomor Akun DANA Penerima
+                                    Nomor Akun DANA Penerima QRIS
                                 </label>
                                 <input type="text" name="qris_dana_number" value="{{ old('qris_dana_number', $setting->qris_dana_number ?? '087811139210') }}" 
                                        class="w-full text-xs p-2.5 bg-white border border-gray-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                                <span class="text-[10px] text-gray-400 mt-1 block">Nomor DANA pemilik untuk menerima pembayaran otomatis QRIS.</span>
+                                <span class="text-[10px] text-gray-400 mt-1 block">Nomor HP DANA pemilik untuk verifikasi QRIS.</span>
                             </div>
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-700 mb-1">
@@ -231,7 +252,7 @@
                                 </label>
                                 <input type="text" name="qris_merchant_name" value="{{ old('qris_merchant_name', $setting->qris_merchant_name ?? 'Sekarsa Coffee') }}" 
                                        class="w-full text-xs p-2.5 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                                <span class="text-[10px] text-gray-400 mt-1 block">Nama bisnis yang tertera pada QRIS.</span>
+                                <span class="text-[10px] text-gray-400 mt-1 block">Nama usaha yang tertera pada invoice QRIS.</span>
                             </div>
                         </div>
                     </div>

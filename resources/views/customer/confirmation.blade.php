@@ -27,7 +27,7 @@
             <!-- Header Status Sukses -->
             <div class="bg-gradient-to-br from-emerald-800 to-emerald-950 text-white p-6 text-center relative overflow-hidden">
                 <div class="w-14 h-14 bg-white p-1 rounded-2xl mx-auto mb-3 shadow-lg border border-white/40 overflow-hidden flex items-center justify-center">
-                    <img src="{{ asset('images/sekarsa-logo.jpg') }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
+                    <img src="{{ $setting->logo_url }}" alt="Sekarsa Logo" class="w-full h-full object-contain">
                 </div>
                 <h1 class="font-bold text-xl font-serif">Pesanan Berhasil Diterima!</h1>
                 <p class="text-xs text-emerald-200/90 mt-0.5">
